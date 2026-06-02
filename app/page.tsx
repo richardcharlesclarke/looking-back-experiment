@@ -25,7 +25,7 @@ import {
 import type { Stats, Submission, SubmissionInput } from "@/lib/types";
 
 const COLORS = ["#e75117", "#2f7d72", "#3b6b8f", "#bca35e", "#8d6f9f", "#6e7f61", "#232322", "#7a6f58"];
-const SHOW_SCREEN_TEST_NAV = true;
+const SHOW_SCREEN_TEST_NAV = false;
 const SCREEN_TEST_STEPS: Step[] = ["intro", "reflect", "ratings", "context", "results"];
 const FORCED_CHOICE_SET = new Set<string>(LIFE_CHOICES);
 
