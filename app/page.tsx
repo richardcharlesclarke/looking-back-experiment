@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, BarChart3, Compass, Globe2, Sparkles } from "lucide-react";
 import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
 import {
@@ -937,8 +937,11 @@ function DemographicComparison({ comparison, choices }: { comparison: Demographi
 }
 
 function ResponseGlobe({ locations, submission }: { locations: Stats["locations"]; submission: Submission }) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const mapLoadedRef = useRef(false);
+  const mapHasEnteredViewportRef = useRef(false);
   const hasFlownRef = useRef(false);
   const locationsKey = locations.map((point) => `${point.latitude.toFixed(3)},${point.longitude.toFixed(3)},${point.choice}`).join("|");
   const submissionLocationKey = [
@@ -948,14 +951,67 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     submission.location.longitude?.toFixed(3) ?? ""
   ].join("|");
 
+  const submittedCenter = useCallback((): [number, number] => {
+    return submission.location.longitude != null && submission.location.latitude != null
+      ? [submission.location.longitude, submission.location.latitude]
+      : [-0.1276, 51.5072];
+  }, [submission.location.latitude, submission.location.longitude]);
+
+  const flyToSubmittedLocation = useCallback(() => {
+    const map = mapRef.current;
+    if (
+      !map ||
+      !mapLoadedRef.current ||
+      !mapHasEnteredViewportRef.current ||
+      hasFlownRef.current ||
+      submission.location.longitude == null ||
+      submission.location.latitude == null
+    ) {
+      return;
+    }
+
+    hasFlownRef.current = true;
+    map.easeTo({
+      center: submittedCenter(),
+      zoom: 4.4,
+      duration: 2800,
+      easing: (value) => 1 - Math.pow(1 - value, 3)
+    });
+  }, [submission.location.latitude, submission.location.longitude, submittedCenter]);
+
+  useEffect(() => {
+    hasFlownRef.current = false;
+    flyToSubmittedLocation();
+  }, [flyToSubmittedLocation, submissionLocationKey]);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    if (!("IntersectionObserver" in window)) {
+      mapHasEnteredViewportRef.current = true;
+      flyToSubmittedLocation();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        mapHasEnteredViewportRef.current = true;
+        flyToSubmittedLocation();
+        observer.disconnect();
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [flyToSubmittedLocation, submissionLocationKey]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const submittedCenter =
-      submission.location.longitude != null && submission.location.latitude != null
-        ? [submission.location.longitude, submission.location.latitude] as [number, number]
-        : [-0.1276, 51.5072] as [number, number];
-    const initialCenter = hasFlownRef.current ? submittedCenter : randomGlobeStart(submittedCenter);
+    const initialCenter = hasFlownRef.current ? submittedCenter() : randomGlobeStart(submittedCenter());
 
     const map = new maplibregl.Map({
       container,
@@ -1063,6 +1119,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     });
 
     mapRef.current = map;
+    mapLoadedRef.current = false;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     let glowAnimationFrame = 0;
@@ -1182,24 +1239,17 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
         glowAnimationFrame = window.requestAnimationFrame(animateMarkerGlow);
       };
       glowAnimationFrame = window.requestAnimationFrame(animateMarkerGlow);
-
-      if (!hasFlownRef.current && submission.location.longitude != null && submission.location.latitude != null) {
-        hasFlownRef.current = true;
-        map.easeTo({
-          center: submittedCenter,
-          zoom: 4.4,
-          duration: 2800,
-          easing: (value) => 1 - Math.pow(1 - value, 3)
-        });
-      }
+      mapLoadedRef.current = true;
+      flyToSubmittedLocation();
     });
 
     return () => {
       if (glowAnimationFrame) window.cancelAnimationFrame(glowAnimationFrame);
       map.remove();
       mapRef.current = null;
+      mapLoadedRef.current = false;
     };
-  }, [locationsKey, submissionLocationKey]);
+  }, [flyToSubmittedLocation, locationsKey, submissionLocationKey, submittedCenter]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1209,7 +1259,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
   }, [locationsKey, submissionLocationKey, locations, submission]);
 
   return (
-    <div className="map-card globe-card tiled-map-card" aria-label="Interactive satellite response globe">
+    <div ref={wrapperRef} className="map-card globe-card tiled-map-card" aria-label="Interactive satellite response globe">
       <div ref={containerRef} className="response-globe" />
       <div className="globe-caption">
         {submission.location.consent && submission.location.latitude != null
