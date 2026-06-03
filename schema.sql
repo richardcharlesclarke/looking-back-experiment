@@ -14,9 +14,20 @@ create table if not exists submissions (
   latitude numeric,
   longitude numeric,
   accuracy numeric,
+  city text,
+  region text,
+  country text,
+  country_code text,
   timezone text,
-  locale text
+  locale text,
+  location_source text
 );
+
+alter table submissions add column if not exists city text;
+alter table submissions add column if not exists region text;
+alter table submissions add column if not exists country text;
+alter table submissions add column if not exists country_code text;
+alter table submissions add column if not exists location_source text;
 
 create index if not exists submissions_created_at_idx on submissions (created_at desc);
 create index if not exists submissions_life_choice_idx on submissions (life_choice);

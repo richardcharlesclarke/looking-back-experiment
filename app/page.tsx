@@ -131,62 +131,70 @@ export default function Home() {
     return () => window.clearInterval(interval);
   }, [includeLegacy, step]);
 
-  function baseLocation(): SubmissionInput["location"] {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const approximateCoordinates: Record<string, { latitude: number; longitude: number }> = {
-      "Europe/London": { latitude: 51.5072, longitude: -0.1276 },
-      "Europe/Dublin": { latitude: 53.3498, longitude: -6.2603 },
-      "Europe/Paris": { latitude: 48.8566, longitude: 2.3522 },
-      "Europe/Berlin": { latitude: 52.52, longitude: 13.405 },
-      "America/New_York": { latitude: 40.7128, longitude: -74.006 },
-      "America/Chicago": { latitude: 41.8781, longitude: -87.6298 },
-      "America/Denver": { latitude: 39.7392, longitude: -104.9903 },
-      "America/Los_Angeles": { latitude: 34.0522, longitude: -118.2437 }
-    };
-
+  function localLocationContext(): SubmissionInput["location"] {
     return {
       consent: true,
-      ...approximateCoordinates[timezone],
-      timezone,
-      locale: navigator.language
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      locale: navigator.language,
+      source: "local"
     };
+  }
+
+  async function ipLocation() {
+    const response = await fetch("/api/location", { cache: "no-store" });
+    if (!response.ok) throw new Error("Location lookup failed.");
+    return (await response.json()) as SubmissionInput["location"];
+  }
+
+  function browserLocation() {
+    if (!navigator.geolocation) {
+      return Promise.reject(new Error("Browser geolocation unavailable."));
+    }
+
+    return new Promise<SubmissionInput["location"]>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            consent: true,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            locale: navigator.language,
+            source: "browser"
+          });
+        },
+        reject,
+        { enableHighAccuracy: false, timeout: 6000, maximumAge: 60_000 }
+      );
+    });
   }
 
   function captureLocation() {
     setLocationConsent(true);
     setLocationStatus("locating");
 
-    if (!navigator.geolocation) {
-      const fallback = baseLocation();
-      setLocation(fallback);
-      setLocationStatus("unavailable");
-      locationPromiseRef.current = Promise.resolve(fallback);
-      return locationPromiseRef.current;
-    }
+    const request = Promise.allSettled([ipLocation(), browserLocation()]).then(([ipResult, browserResult]) => {
+      const ipSnapshot = ipResult.status === "fulfilled" ? ipResult.value : null;
+      const browserSnapshot = browserResult.status === "fulfilled" ? browserResult.value : null;
+      const context = localLocationContext();
+      const captured: SubmissionInput["location"] = {
+        ...context,
+        ...ipSnapshot,
+        ...browserSnapshot,
+        city: ipSnapshot?.city,
+        region: ipSnapshot?.region,
+        country: ipSnapshot?.country,
+        countryCode: ipSnapshot?.countryCode,
+        timezone: browserSnapshot?.timezone ?? ipSnapshot?.timezone ?? context.timezone,
+        locale: context.locale,
+        source: browserSnapshot ? "browser+ipinfo" : ipSnapshot?.source
+      };
 
-    const request = new Promise<SubmissionInput["location"]>((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const captured = {
-            consent: true,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            locale: navigator.language
-          };
-          setLocation(captured);
-          setLocationStatus("captured");
-          resolve(captured);
-        },
-        () => {
-          const fallback = baseLocation();
-          setLocation(fallback);
-          setLocationStatus("unavailable");
-          resolve(fallback);
-        },
-        { enableHighAccuracy: false, timeout: 6000, maximumAge: 60_000 }
-      );
+      const hasCoordinates = captured.latitude != null && captured.longitude != null;
+      setLocation(hasCoordinates ? captured : context);
+      setLocationStatus(hasCoordinates ? "captured" : "unavailable");
+      return hasCoordinates ? captured : context;
     });
 
     locationPromiseRef.current = request;
@@ -440,7 +448,7 @@ export default function Home() {
               <Globe2 />
               <div>
                 <strong>Approximate location</strong>
-                <p>Allow approximate browser location so your result can be compared geographically. We do not store your IP address.</p>
+                <p>Allow approximate location so your result can be compared geographically. We do not store your IP address.</p>
               </div>
               <button
                 className={locationConsent ? "secondary active" : "secondary"}
@@ -454,7 +462,7 @@ export default function Home() {
                 {locationStatus === "captured"
                   ? "Location added for the geographic pattern."
                   : locationStatus === "locating"
-                    ? "Waiting for the browser to return an approximate location."
+                    ? "Looking up an approximate city-level location."
                     : "Location permission was not available, so this response will not add a map point."}
               </p>
             )}
@@ -1056,11 +1064,6 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     if (!container) return;
     const initialCenter = hasFlownRef.current ? submittedCenter() : randomGlobeStart(submittedCenter());
 
-    if (!browserSupportsWebGl()) {
-      setMapError("The interactive map is not available in this browser.");
-      return;
-    }
-
     let map: MapLibreMap;
     try {
       map = new maplibregl.Map({
@@ -1391,15 +1394,6 @@ function submissionCoordinates(submission: Submission) {
 
 function sanitiseLocations(locations: Stats["locations"]) {
   return locations.filter((point) => finiteNumber(point.latitude) != null && finiteNumber(point.longitude) != null);
-}
-
-function browserSupportsWebGl() {
-  try {
-    const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"));
-  } catch {
-    return false;
-  }
 }
 
 function randomGlobeStart(target: [number, number]): [number, number] {

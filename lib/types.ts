@@ -5,8 +5,13 @@ export type LocationSnapshot = {
   latitude?: number;
   longitude?: number;
   accuracy?: number;
+  city?: string;
+  region?: string;
+  country?: string;
+  countryCode?: string;
   timezone?: string;
   locale?: string;
+  source?: string;
 };
 
 export type SubmissionInput = {

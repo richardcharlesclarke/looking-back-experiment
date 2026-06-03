@@ -42,9 +42,20 @@ async function ensureSchema(db: Pool) {
       latitude numeric,
       longitude numeric,
       accuracy numeric,
+      city text,
+      region text,
+      country text,
+      country_code text,
       timezone text,
-      locale text
+      locale text,
+      location_source text
     );
+
+    alter table submissions add column if not exists city text;
+    alter table submissions add column if not exists region text;
+    alter table submissions add column if not exists country text;
+    alter table submissions add column if not exists country_code text;
+    alter table submissions add column if not exists location_source text;
 
     create index if not exists submissions_created_at_idx on submissions (created_at desc);
     create index if not exists submissions_life_choice_idx on submissions (life_choice);
@@ -92,8 +103,13 @@ function rowToSubmission(row: Record<string, unknown>): Submission {
       latitude: row.latitude == null ? undefined : Number(row.latitude),
       longitude: row.longitude == null ? undefined : Number(row.longitude),
       accuracy: row.accuracy == null ? undefined : Number(row.accuracy),
+      city: row.city ? String(row.city) : undefined,
+      region: row.region ? String(row.region) : undefined,
+      country: row.country ? String(row.country) : undefined,
+      countryCode: row.country_code ? String(row.country_code) : undefined,
       timezone: row.timezone ? String(row.timezone) : undefined,
-      locale: row.locale ? String(row.locale) : undefined
+      locale: row.locale ? String(row.locale) : undefined,
+      source: row.location_source ? String(row.location_source) : undefined
     }
   };
 }
@@ -122,8 +138,8 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
   const result = await db.query(
     `insert into submissions
       (ideal_word, guiding_value, life_choice, other_choice, ratings, age_band, gender,
-       location_consent, latitude, longitude, accuracy, timezone, locale)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       location_consent, latitude, longitude, accuracy, city, region, country, country_code, timezone, locale, location_source)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
      returning *`,
     [
       normalized.idealWord,
@@ -137,8 +153,13 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
       normalized.location.latitude ?? null,
       normalized.location.longitude ?? null,
       normalized.location.accuracy ?? null,
+      normalized.location.city ?? null,
+      normalized.location.region ?? null,
+      normalized.location.country ?? null,
+      normalized.location.countryCode ?? null,
       normalized.location.timezone ?? null,
-      normalized.location.locale ?? null
+      normalized.location.locale ?? null,
+      normalized.location.source ?? null
     ]
   );
   return rowToSubmission(result.rows[0]);
@@ -183,21 +204,7 @@ function approximateCoordinates(item: Submission) {
     return { latitude: item.location.latitude, longitude: item.location.longitude };
   }
 
-  const timezone = item.location.timezone;
-  if (!timezone) return null;
-
-  const timezoneCoordinates: Record<string, { latitude: number; longitude: number }> = {
-    "Europe/London": { latitude: 51.5072, longitude: -0.1276 },
-    "Europe/Dublin": { latitude: 53.3498, longitude: -6.2603 },
-    "Europe/Paris": { latitude: 48.8566, longitude: 2.3522 },
-    "Europe/Berlin": { latitude: 52.52, longitude: 13.405 },
-    "America/New_York": { latitude: 40.7128, longitude: -74.006 },
-    "America/Chicago": { latitude: 41.8781, longitude: -87.6298 },
-    "America/Denver": { latitude: 39.7392, longitude: -104.9903 },
-    "America/Los_Angeles": { latitude: 34.0522, longitude: -118.2437 }
-  };
-
-  return timezoneCoordinates[timezone] ?? null;
+  return null;
 }
 
 export function buildStats(items: Submission[]): Stats {
