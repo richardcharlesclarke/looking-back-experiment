@@ -93,6 +93,7 @@ export default function Home() {
     () => Object.fromEntries(RATING_DIMENSIONS.map((dimension) => [dimension, 0]))
   );
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0);
+  const [ratingTransitionDirection, setRatingTransitionDirection] = useState<"forward" | "back">("forward");
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
   const [genderSelfDescription, setGenderSelfDescription] = useState("");
@@ -212,6 +213,7 @@ export default function Home() {
       setError("Choose a word and enter the value you live by before continuing.");
       return;
     }
+    setRatingTransitionDirection("forward");
     setStep("ratings");
   }
 
@@ -240,6 +242,7 @@ export default function Home() {
       return;
     }
     if (currentRatingIndex < RATING_DIMENSIONS.length - 1) {
+      setRatingTransitionDirection("forward");
       setCurrentRatingIndex((index) => index + 1);
       return;
     }
@@ -431,6 +434,7 @@ export default function Home() {
             index={currentRatingIndex}
             total={RATING_DIMENSIONS.length}
             value={ratings[RATING_DIMENSIONS[currentRatingIndex]]}
+            transitionDirection={ratingTransitionDirection}
             onChange={(value) => setRating(RATING_DIMENSIONS[currentRatingIndex], value)}
           />
           {error && <p className="error">{error}</p>}
@@ -438,6 +442,7 @@ export default function Home() {
             back={() => {
               setError("");
               if (currentRatingIndex > 0) {
+                setRatingTransitionDirection("back");
                 setCurrentRatingIndex((index) => index - 1);
                 return;
               }
@@ -596,12 +601,14 @@ function RatingFocusPanel({
   index,
   total,
   value,
+  transitionDirection,
   onChange
 }: {
   dimension: string;
   index: number;
   total: number;
   value?: number;
+  transitionDirection: "forward" | "back";
   onChange: (value: number) => void;
 }) {
   const laneRef = useRef<HTMLDivElement | null>(null);
@@ -613,7 +620,8 @@ function RatingFocusPanel({
     setIsDragging(false);
   }, [dimension, value]);
 
-  const selectedOption = RATING_OPTIONS.find((option) => option.value === value);
+  const visibleRatingValue = isDragging ? snapValue(visualValue) : value;
+  const selectedOption = RATING_OPTIONS.find((option) => option.value === visibleRatingValue);
   const progress = ((index + 1) / total) * 100;
   const thumbSize = 26 + ((visualValue + 2) / 4) * 54;
   const orbPosition = ((visualValue + 2) / 4) * 100;
@@ -652,7 +660,7 @@ function RatingFocusPanel({
           <i style={{ width: `${progress}%` }} />
         </div>
       </div>
-      <div className="rating-widget">
+      <div key={dimension} className={`rating-widget rating-widget-${transitionDirection}`}>
         <div className="rating-copy">
           <h3>{dimension}</h3>
           <p>{selectedOption?.label ?? "Choose a response"}</p>
@@ -707,7 +715,7 @@ function RatingFocusPanel({
             <button
               key={option.value}
               type="button"
-              className={value === option.value ? "rating-scale-option active" : "rating-scale-option"}
+              className={visibleRatingValue === option.value ? "rating-scale-option active" : "rating-scale-option"}
               onClick={() => {
                 setIsDragging(false);
                 setVisualValue(option.value);
