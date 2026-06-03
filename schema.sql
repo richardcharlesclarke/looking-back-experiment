@@ -22,3 +22,19 @@ create index if not exists submissions_created_at_idx on submissions (created_at
 create index if not exists submissions_life_choice_idx on submissions (life_choice);
 create index if not exists submissions_gender_idx on submissions (gender);
 create index if not exists submissions_age_band_idx on submissions (age_band);
+
+create table if not exists legacy_location_points (
+  id uuid primary key default gen_random_uuid(),
+  source text not null,
+  source_row integer not null,
+  captured_at_text text,
+  city text,
+  country text,
+  latitude numeric not null,
+  longitude numeric not null,
+  imported_at timestamptz not null default now(),
+  unique (source, source_row)
+);
+
+create index if not exists legacy_location_points_source_idx on legacy_location_points (source);
+create index if not exists legacy_location_points_country_idx on legacy_location_points (country);

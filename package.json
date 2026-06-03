@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "import:legacy-locations": "node scripts/import-legacy-location-points.mjs"
   },
   "dependencies": {
     "@types/pg": "^8.11.10",

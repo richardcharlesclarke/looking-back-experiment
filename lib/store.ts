@@ -50,6 +50,22 @@ async function ensureSchema(db: Pool) {
     create index if not exists submissions_life_choice_idx on submissions (life_choice);
     create index if not exists submissions_gender_idx on submissions (gender);
     create index if not exists submissions_age_band_idx on submissions (age_band);
+
+    create table if not exists legacy_location_points (
+      id uuid primary key default gen_random_uuid(),
+      source text not null,
+      source_row integer not null,
+      captured_at_text text,
+      city text,
+      country text,
+      latitude numeric not null,
+      longitude numeric not null,
+      imported_at timestamptz not null default now(),
+      unique (source, source_row)
+    );
+
+    create index if not exists legacy_location_points_source_idx on legacy_location_points (source);
+    create index if not exists legacy_location_points_country_idx on legacy_location_points (country);
   `).then(() => undefined);
   await schemaReady;
 }
@@ -216,7 +232,32 @@ export function buildStats(items: Submission[]): Stats {
   };
 }
 
+async function listLegacyLocationPoints() {
+  const db = getPool();
+  if (!db) return [];
+  await ensureSchema(db);
+  const result = await db.query(`
+    select latitude, longitude
+    from legacy_location_points
+    where latitude between -90 and 90
+      and longitude between -180 and 180
+    order by source_row asc
+    limit 5000
+  `);
+  return result.rows.map((row) => ({
+    latitude: Number(row.latitude),
+    longitude: Number(row.longitude),
+    choice: "Legacy participant"
+  }));
+}
+
 export async function getStats(options: { includeLegacy?: boolean } = {}) {
   const current = buildStats(await listSubmissions());
-  return options.includeLegacy ? mergeWithLegacy(current) : current;
+  const stats = options.includeLegacy ? mergeWithLegacy(current) : current;
+  if (!options.includeLegacy) return stats;
+  const legacyLocations = await listLegacyLocationPoints();
+  return {
+    ...stats,
+    locations: [...stats.locations, ...legacyLocations]
+  };
 }
