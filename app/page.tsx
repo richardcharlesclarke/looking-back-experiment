@@ -822,7 +822,6 @@ type DemographicRow = {
   choice: string;
   male: { count: number; percent: number };
   female: { count: number; percent: number };
-  other: { count: number; percent: number };
   difference: number;
   total: number;
 };
@@ -830,14 +829,12 @@ type DemographicRow = {
 type DemographicComparisonData = {
   maleTotal: number;
   femaleTotal: number;
-  otherTotal: number;
   rows: DemographicRow[];
 };
 
 function buildDemographicComparison(groups: Stats["byGender"]): DemographicComparisonData {
   const male = emptyDemographicGroup();
   const female = emptyDemographicGroup();
-  const other = emptyDemographicGroup();
 
   for (const [groupName, values] of Object.entries(groups)) {
     const normalised = groupName.trim().toLowerCase();
@@ -845,7 +842,9 @@ function buildDemographicComparison(groups: Stats["byGender"]): DemographicCompa
       ? male
       : normalised === "woman" || normalised === "female" || normalised === "females"
         ? female
-        : other;
+        : null;
+
+    if (!target) continue;
 
     for (const value of values) {
       if (!FORCED_CHOICE_SET.has(value.choice)) continue;
@@ -854,23 +853,20 @@ function buildDemographicComparison(groups: Stats["byGender"]): DemographicCompa
     }
   }
 
-  const choices = new Set([...male.counts.keys(), ...female.counts.keys(), ...other.counts.keys()]);
+  const choices = new Set([...male.counts.keys(), ...female.counts.keys()]);
   const rows = Array.from(choices)
     .map((choice) => {
       const maleCount = male.counts.get(choice) ?? 0;
       const femaleCount = female.counts.get(choice) ?? 0;
-      const otherCount = other.counts.get(choice) ?? 0;
       const malePercent = male.total ? (maleCount / male.total) * 100 : 0;
       const femalePercent = female.total ? (femaleCount / female.total) * 100 : 0;
-      const otherPercent = other.total ? (otherCount / other.total) * 100 : 0;
 
       return {
         choice,
         male: { count: maleCount, percent: malePercent },
         female: { count: femaleCount, percent: femalePercent },
-        other: { count: otherCount, percent: otherPercent },
         difference: femalePercent - malePercent,
-        total: maleCount + femaleCount + otherCount
+        total: maleCount + femaleCount
       };
     })
     .filter((row) => row.total > 0)
@@ -879,7 +875,6 @@ function buildDemographicComparison(groups: Stats["byGender"]): DemographicCompa
   return {
     maleTotal: male.total,
     femaleTotal: female.total,
-    otherTotal: other.total,
     rows
   };
 }
@@ -895,22 +890,19 @@ function DemographicComparison({ comparison, choices }: { comparison: Demographi
 
   const rowsByChoice = new Map(comparison.rows.map((row) => [row.choice, row]));
   const visibleRows = choices.map((choice) => rowsByChoice.get(choice)).filter((row): row is DemographicRow => row != null);
+  const maxDifference = Math.max(4, ...visibleRows.map((row) => Math.abs(row.difference)));
 
   return (
     <div className="demographic-comparison">
       <div className="demographic-summary">
         <span><strong>Males</strong> {comparison.maleTotal}</span>
         <span><strong>Females</strong> {comparison.femaleTotal}</span>
-        {comparison.otherTotal > 0 && <span><strong>Other</strong> {comparison.otherTotal}</span>}
       </div>
-      <div className={comparison.otherTotal > 0 ? "comparison-head has-other" : "comparison-head"}>
+      <div className="comparison-head">
         <span>Choice</span>
-        <div className="comparison-head-bars">
-          <span>Males</span>
-          <span>Difference</span>
-          <span>Females</span>
-        </div>
-        {comparison.otherTotal > 0 && <span>Other</span>}
+        <span>Males</span>
+        <span>Difference</span>
+        <span>Females</span>
       </div>
       {visibleRows.map((row) => (
         <div className="comparison-row" key={row.choice}>
@@ -918,31 +910,59 @@ function DemographicComparison({ comparison, choices }: { comparison: Demographi
             <strong>{row.choice}</strong>
             <span>{row.total} responses</span>
           </div>
-          <div className="comparison-bars">
-            <div className="comparison-side male-side">
-              <span>{Math.round(row.male.percent)}%</span>
-              <i style={{ width: `${row.male.percent}%` }} />
-            </div>
-            <div className="comparison-delta">
-              {Math.abs(row.difference) < 0.5
-                ? "Even"
-                : `${Math.abs(row.difference).toFixed(1)} pts ${row.difference > 0 ? "female" : "male"}`}
-            </div>
-            <div className="comparison-side female-side">
-              <i style={{ width: `${row.female.percent}%` }} />
-              <span>{Math.round(row.female.percent)}%</span>
-            </div>
-            {comparison.otherTotal > 0 && (
-              <div className="comparison-other">
-                <i style={{ width: `${row.other.percent}%` }} />
-                <span>{Math.round(row.other.percent)}%</span>
-              </div>
-            )}
-          </div>
+          <ComparisonMetric group="male" stat={row.male} />
+          <DifferenceMetric difference={row.difference} maxDifference={maxDifference} />
+          <ComparisonMetric group="female" stat={row.female} />
         </div>
       ))}
     </div>
   );
+}
+
+function ComparisonMetric({
+  group,
+  stat
+}: {
+  group: "male" | "female";
+  stat: { count: number; percent: number };
+}) {
+  return (
+    <div className={`comparison-metric ${group}-metric`}>
+      <div className="comparison-value">
+        <strong>{formatDemographicPercent(stat.percent)}</strong>
+        <span>{stat.count}</span>
+      </div>
+      <div className="comparison-track" aria-hidden="true">
+        <i style={{ width: `${Math.min(stat.percent, 100)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function DifferenceMetric({ difference, maxDifference }: { difference: number; maxDifference: number }) {
+  const absoluteDifference = Math.abs(difference);
+  const direction = difference > 0 ? "female" : "male";
+  const label = absoluteDifference < 0.5
+    ? "Even"
+    : `${absoluteDifference.toFixed(1)} pts ${direction}`;
+
+  return (
+    <div className="comparison-delta">
+      <div className="delta-track" aria-hidden="true">
+        {absoluteDifference >= 0.5 && (
+          <i
+            className={direction}
+            style={{ "--delta-width": `${Math.min((absoluteDifference / maxDifference) * 50, 50)}%` } as React.CSSProperties}
+          />
+        )}
+      </div>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function formatDemographicPercent(value: number) {
+  return `${value >= 10 ? Math.round(value) : value.toFixed(1)}%`;
 }
 
 function ResponseGlobe({ locations, submission }: { locations: Stats["locations"]; submission: Submission }) {

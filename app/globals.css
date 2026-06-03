@@ -802,8 +802,8 @@ a {
 .comparison-head,
 .comparison-row {
   display: grid;
-  grid-template-columns: minmax(120px, 170px) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(120px, 170px) minmax(150px, 1fr) minmax(112px, 148px) minmax(150px, 1fr);
+  gap: 16px;
 }
 
 .comparison-head {
@@ -816,21 +816,7 @@ a {
   text-transform: uppercase;
 }
 
-.comparison-head.has-other {
-  grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) minmax(92px, 120px);
-}
-
-.comparison-head-bars {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 124px minmax(0, 1fr);
-  gap: 10px;
-}
-
-.comparison-head-bars span:first-child {
-  text-align: right;
-}
-
-.comparison-head-bars span:nth-child(2) {
+.comparison-head span:nth-child(3) {
   text-align: center;
 }
 
@@ -854,82 +840,89 @@ a {
   font-size: 12px;
 }
 
-.comparison-bars {
+.comparison-metric {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 124px minmax(0, 1fr);
-  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.comparison-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 10px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.comparison-row:has(.comparison-other) {
-  grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) minmax(92px, 120px);
-}
-
-.comparison-side {
-  display: grid;
-  align-items: center;
-  gap: 8px;
+.comparison-value span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 750;
 }
 
-.male-side {
-  grid-template-columns: 34px minmax(0, 1fr);
-}
-
-.female-side {
-  grid-template-columns: minmax(0, 1fr) 34px;
-}
-
-.comparison-side i,
-.comparison-other i {
-  display: block;
+.comparison-track {
   height: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(35, 35, 34, 0.18);
   max-width: 100%;
-  min-width: 2px;
   border-radius: 999px;
+  background: rgba(35, 35, 34, 0.07);
 }
 
-.male-side i {
-  justify-self: end;
+.comparison-track i {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.male-metric .comparison-track i {
   background: var(--blue);
 }
 
-.female-side i {
-  justify-self: start;
+.female-metric .comparison-track i {
   background: var(--accent);
 }
 
 .comparison-delta {
-  min-height: 30px;
-  width: 124px;
-  border-radius: 999px;
-  background: rgba(35, 35, 34, 0.07);
-  color: var(--ink);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
   font-size: 11px;
   font-weight: 800;
   text-align: center;
   white-space: nowrap;
 }
 
-.comparison-other {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 750;
+.delta-track {
+  position: relative;
+  height: 18px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(35, 35, 34, 0.35) calc(50% - 0.5px), rgba(35, 35, 34, 0.35) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    rgba(35, 35, 34, 0.07);
+  border: 1px solid rgba(35, 35, 34, 0.18);
+  overflow: hidden;
 }
 
-.comparison-other i {
-  justify-self: start;
-  background: var(--teal);
+.delta-track i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--delta-width);
+}
+
+.delta-track i.male {
+  right: 50%;
+  background: var(--blue);
+}
+
+.delta-track i.female {
+  left: 50%;
+  background: var(--accent);
 }
 
 .map-card {
@@ -1247,18 +1240,12 @@ th {
     display: none;
   }
 
-  .comparison-row,
-  .comparison-row:has(.comparison-other) {
+  .comparison-row {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  .comparison-bars {
-    grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
-  }
-
   .comparison-delta {
-    width: 118px;
     font-size: 10px;
   }
 }
