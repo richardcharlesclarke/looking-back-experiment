@@ -43,9 +43,7 @@ export default function ExperimentsHub() {
         <div className="experiments-copy">
           <p className="eyebrow">Experiments</p>
           <h1>Public reflections on how people change.</h1>
-          <p>
-            Short participatory studies from Evolvable. Each experiment turns a private question into a shared pattern.
-          </p>
+          <p>Short participatory studies from Evolve4.</p>
         </div>
       </section>
 
