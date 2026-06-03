@@ -51,13 +51,11 @@ export default function ExperimentsHub() {
 
       <section className="experiment-grid" aria-label="Evolvable experiments">
         {experiments.map((experiment, index) => (
-          <article className={experiment.image ? "experiment-card" : "experiment-card empty"} key={`${experiment.title}-${index}`}>
-            {experiment.image && (
-              <div className="experiment-visual" aria-hidden="true">
-                <Image src={experiment.image} alt="" fill sizes="(max-width: 860px) 100vw, 33vw" />
-                <span>{String(index + 1).padStart(2, "0")}</span>
-              </div>
-            )}
+          <article className={experiment.image ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
+            <div className="experiment-visual" aria-hidden="true">
+              {experiment.image && <Image src={experiment.image} alt="" fill sizes="(max-width: 860px) 100vw, 33vw" />}
+              <span>{String(index + 1).padStart(2, "0")}</span>
+            </div>
             <div className="experiment-card-copy">
               {experiment.status === "Live" && (
                 <div className="experiment-card-topline">
