@@ -116,6 +116,7 @@ a {
   font-weight: 400;
   letter-spacing: 0;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .screen-test-nav {
@@ -178,6 +179,35 @@ a {
   align-items: center;
   gap: 56px;
   padding: 40px 0 92px;
+}
+
+.experiments-hero {
+  width: min(1180px, calc(100% - 120px));
+  min-height: auto;
+  margin: 0 auto;
+  display: flex;
+  align-items: end;
+  padding: 34px 0 22px;
+}
+
+.experiments-copy h1 {
+  margin: 0;
+  max-width: 900px;
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(30px, 4.1vw, 52px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.experiments-copy p:not(.eyebrow) {
+  max-width: 580px;
+  color: var(--muted);
+  font-size: clamp(14px, 1.45vw, 17px);
+  font-weight: 300;
+  line-height: 1.36;
 }
 
 .hero-copy h1,
@@ -294,6 +324,114 @@ a {
   font-size: 30px;
   font-style: italic;
   line-height: 1.2;
+}
+
+.experiment-grid {
+  width: min(1180px, calc(100% - 120px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  padding: 0 0 48px;
+}
+
+.experiment-card {
+  min-width: 0;
+  border: 1px solid var(--ink);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.32);
+  display: grid;
+  grid-template-rows: 128px 1fr auto;
+  overflow: hidden;
+}
+
+.experiment-card.empty {
+  grid-template-rows: 1fr auto;
+  min-height: 286px;
+}
+
+.experiment-card.empty .experiment-card-copy {
+  align-content: center;
+  min-height: 0;
+}
+
+.experiment-visual {
+  position: relative;
+  min-height: 128px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ink);
+}
+
+.experiment-visual img {
+  object-fit: cover;
+}
+
+.experiment-visual span {
+  position: absolute;
+  left: 18px;
+  top: 16px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 9.5px;
+  font-weight: 850;
+  letter-spacing: 0.15em;
+}
+
+.experiment-card-copy {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 13px;
+}
+
+.experiment-card-topline,
+.experiment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.experiment-card h2 {
+  margin: 0;
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(20px, 2.1vw, 28px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.experiment-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+
+.experiment-meta {
+  justify-content: flex-start;
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+}
+
+.experiment-link {
+  width: calc(100% - 26px);
+  min-height: 44px;
+  margin: 0 13px 13px;
+  text-decoration: none;
+}
+
+.experiment-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .stage,
@@ -1138,6 +1276,8 @@ th {
 
 @media (max-width: 1100px) {
   .hero,
+  .experiments-hero,
+  .experiment-grid,
   .stage,
   .results,
   .screen-test-nav {
@@ -1173,6 +1313,8 @@ th {
   }
 
   .hero,
+  .experiments-hero,
+  .experiment-grid,
   .stage,
   .results,
   .screen-test-nav {
@@ -1180,6 +1322,7 @@ th {
   }
 
   .hero,
+  .experiments-hero,
   .form-grid,
   .insight-grid,
   .two-col,
@@ -1187,10 +1330,21 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .experiment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .hero {
     gap: 28px;
     align-items: start;
     padding-top: 24px;
+  }
+
+  .experiments-hero {
+    min-height: auto;
+    gap: 28px;
+    align-items: start;
+    padding-top: 38px;
   }
 
   .choice-grid {
@@ -1255,8 +1409,18 @@ th {
     min-height: 60px;
   }
 
+  .mark {
+    max-width: 210px;
+    font-size: 14px;
+    line-height: 1.1;
+  }
+
   .topbar a {
     display: none;
+  }
+
+  .topbar .mark {
+    display: inline-flex;
   }
 
   .choice-grid {
