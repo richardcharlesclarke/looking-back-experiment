@@ -130,7 +130,7 @@ a {
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid var(--ink);
-  background: rgba(245, 244, 245, 0.94);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(18px);
 }
 
