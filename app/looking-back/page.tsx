@@ -364,7 +364,10 @@ export default function Home() {
             text="Choose the single word that best describes how you would like your life to have been."
           />
           <div className="choice-question">
-            <h3>How would you like your life to have been?</h3>
+            <h3>
+              <span className="question-number">01</span>
+              How would you like your life to have been?
+            </h3>
             <p>Select one word. If none of these fits, choose Other and name your own.</p>
           </div>
           <div className="choice-grid" aria-label="How you would like your life to have been">
@@ -380,10 +383,25 @@ export default function Home() {
               <input value={otherChoice} onChange={(event) => setOtherChoice(event.target.value)} placeholder="The word you would use" maxLength={48} />
             </label>
           )}
+          <div className={lifeChoice ? "selected-choice-shell is-open" : "selected-choice-shell"}>
+            <div className="selected-choice" aria-live="polite" aria-hidden={!lifeChoice}>
+              <span>Your answer</span>
+              <strong>{selectedWord() || "Other"}</strong>
+            </div>
+          </div>
           <div className="form-grid">
-            <label className="field wide">
-              <span>What is the most important value you live your life by?</span>
-              <textarea value={guidingValue} onChange={(event) => setGuidingValue(event.target.value)} placeholder="A word or sentence" rows={3} />
+            <label className={lifeChoice ? "field wide reflect-value-field is-active" : "field wide reflect-value-field is-disabled"}>
+              <span>
+                <span className="question-number">02</span>
+                What is the most important value you live your life by?
+              </span>
+              <textarea
+                value={guidingValue}
+                onChange={(event) => setGuidingValue(event.target.value)}
+                placeholder="A word or sentence"
+                rows={3}
+                disabled={!lifeChoice}
+              />
             </label>
           </div>
           {error && <p className="error">{error}</p>}
