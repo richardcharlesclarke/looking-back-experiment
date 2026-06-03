@@ -57,12 +57,16 @@ export default function ExperimentsHub() {
               <span>{String(index + 1).padStart(2, "0")}</span>
             </div>
             <div className="experiment-card-copy">
-              {experiment.status === "Live" && (
-                <div className="experiment-card-topline">
+              <div className={experiment.status === "Live" ? "experiment-card-topline" : "experiment-card-topline placeholder-topline"}>
+                {experiment.status === "Live" ? (
+                  <>
                   <span>{experiment.status}</span>
                   <Eye size={16} />
-                </div>
-              )}
+                  </>
+                ) : (
+                  <span aria-hidden="true">&nbsp;</span>
+                )}
+              </div>
               <h2>{experiment.title}</h2>
               {experiment.summary && <p>{experiment.summary}</p>}
               {experiment.meta && (
