@@ -265,40 +265,49 @@ export default function Home() {
     }
 
     setIsSubmitting(true);
-    const locationSnapshot = await latestLocation();
-    const payload: SubmissionInput = {
-      idealWord: word,
-      guidingValue,
-      lifeChoice,
-      otherChoice,
-      ratings: ratings as Record<string, number>,
-      ageBand,
-      gender,
-      genderSelfDescription,
-      location: locationSnapshot
-    };
+    try {
+      const locationSnapshot = await latestLocation();
+      const payload: SubmissionInput = {
+        idealWord: word,
+        guidingValue,
+        lifeChoice,
+        otherChoice,
+        ratings: ratings as Record<string, number>,
+        ageBand,
+        gender,
+        genderSelfDescription,
+        location: locationSnapshot
+      };
 
-    const response = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    setIsSubmitting(false);
-    if (!response.ok) {
-      setError(data.error ?? "Something went wrong.");
-      return;
+      const response = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
+
+      if (!response.ok) {
+        setError(data.error ?? "Something went wrong while saving your response.");
+        return;
+      }
+
+      setSubmission(data.submission);
+      if (includeLegacy) {
+        fetch("/api/stats?legacy=1")
+          .then((response) => response.json())
+          .then(setStats)
+          .catch(() => setStats(data.stats));
+      } else {
+        setStats(data.stats);
+      }
+      setStep("results");
+    } catch (submitError) {
+      console.error("Submit failed", submitError);
+      setError("Something went wrong while saving your response. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setSubmission(data.submission);
-    if (includeLegacy) {
-      fetch("/api/stats?legacy=1")
-        .then((response) => response.json())
-        .then(setStats)
-        .catch(() => setStats(data.stats));
-    } else {
-      setStats(data.stats);
-    }
-    setStep("results");
   }
 
   return (
@@ -943,19 +952,22 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
   const mapLoadedRef = useRef(false);
   const mapHasEnteredViewportRef = useRef(false);
   const hasFlownRef = useRef(false);
-  const locationsKey = locations.map((point) => `${point.latitude.toFixed(3)},${point.longitude.toFixed(3)},${point.choice}`).join("|");
+  const [mapError, setMapError] = useState("");
+  const visibleLocations = useMemo(() => sanitiseLocations(locations), [locations]);
+  const submittedCoordinates = useMemo(() => submissionCoordinates(submission), [submission]);
+  const locationsKey = visibleLocations.map((point) => `${point.latitude.toFixed(3)},${point.longitude.toFixed(3)},${point.choice}`).join("|");
   const submissionLocationKey = [
     submission.lifeChoice,
-    submission.location.consent ? "1" : "0",
-    submission.location.latitude?.toFixed(3) ?? "",
-    submission.location.longitude?.toFixed(3) ?? ""
+    submittedCoordinates ? "1" : "0",
+    submittedCoordinates?.latitude.toFixed(3) ?? "",
+    submittedCoordinates?.longitude.toFixed(3) ?? ""
   ].join("|");
 
   const submittedCenter = useCallback((): [number, number] => {
-    return submission.location.longitude != null && submission.location.latitude != null
-      ? [submission.location.longitude, submission.location.latitude]
+    return submittedCoordinates
+      ? [submittedCoordinates.longitude, submittedCoordinates.latitude]
       : [-0.1276, 51.5072];
-  }, [submission.location.latitude, submission.location.longitude]);
+  }, [submittedCoordinates]);
 
   const flyToSubmittedLocation = useCallback(() => {
     const map = mapRef.current;
@@ -964,8 +976,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
       !mapLoadedRef.current ||
       !mapHasEnteredViewportRef.current ||
       hasFlownRef.current ||
-      submission.location.longitude == null ||
-      submission.location.latitude == null
+      !submittedCoordinates
     ) {
       return;
     }
@@ -977,7 +988,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
       duration: 2800,
       easing: (value) => 1 - Math.pow(1 - value, 3)
     });
-  }, [submission.location.latitude, submission.location.longitude, submittedCenter]);
+  }, [submittedCenter, submittedCoordinates]);
 
   useEffect(() => {
     hasFlownRef.current = false;
@@ -1013,26 +1024,33 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     if (!container) return;
     const initialCenter = hasFlownRef.current ? submittedCenter() : randomGlobeStart(submittedCenter());
 
-    const map = new maplibregl.Map({
-      container,
-      style: {
-        version: 8,
-        glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
-        sources: {
-          imagery: {
-            type: "raster",
-            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-            tileSize: 256,
-            attribution: "Tiles © Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-            maxzoom: 19
+    if (!browserSupportsWebGl()) {
+      setMapError("The interactive map is not available in this browser.");
+      return;
+    }
+
+    let map: MapLibreMap;
+    try {
+      map = new maplibregl.Map({
+        container,
+        style: {
+          version: 8,
+          glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+          sources: {
+            imagery: {
+              type: "raster",
+              tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+              tileSize: 256,
+              attribution: "Tiles © Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+              maxzoom: 19
+            },
+            openmaptiles: {
+              type: "vector",
+              url: "https://tiles.openfreemap.org/planet",
+              attribution: "Labels © OpenStreetMap contributors, OpenFreeMap"
+            }
           },
-          openmaptiles: {
-            type: "vector",
-            url: "https://tiles.openfreemap.org/planet",
-            attribution: "Labels © OpenStreetMap contributors, OpenFreeMap"
-          }
-        },
-        layers: [
+          layers: [
           {
             id: "imagery",
             type: "raster",
@@ -1106,55 +1124,66 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
               "text-halo-blur": 0.45
             }
           }
-        ]
-      },
-      center: initialCenter,
-      zoom: hasFlownRef.current ? 4.4 : 1.15,
-      minZoom: 1,
-      maxZoom: 18,
-      pitch: 0,
-      bearing: 0,
-      attributionControl: false,
-      canvasContextAttributes: { antialias: true }
-    });
+          ]
+        },
+        center: initialCenter,
+        zoom: hasFlownRef.current ? 4.4 : 1.15,
+        minZoom: 1,
+        maxZoom: 18,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false,
+        canvasContextAttributes: { antialias: true }
+      });
+    } catch (error) {
+      console.error("Map initialisation failed", error);
+      setMapError("The interactive map is not available in this browser.");
+      return;
+    }
 
     mapRef.current = map;
     mapLoadedRef.current = false;
+    setMapError("");
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     let glowAnimationFrame = 0;
 
     map.on("style.load", () => {
-      map.setProjection({ type: "globe" });
-      map.setSky({
-        "sky-color": "#020711",
-        "horizon-color": "#8fc5ff",
-        "fog-color": "#d8ecff",
-        "fog-ground-blend": 0.12,
-        "horizon-fog-blend": 0.55,
-        "sky-horizon-blend": 0.72,
-        "atmosphere-blend": 0.86
-      });
+      try {
+        map.setProjection({ type: "globe" });
+        map.setSky({
+          "sky-color": "#020711",
+          "horizon-color": "#8fc5ff",
+          "fog-color": "#d8ecff",
+          "fog-ground-blend": 0.12,
+          "horizon-fog-blend": 0.55,
+          "sky-horizon-blend": 0.72,
+          "atmosphere-blend": 0.86
+        });
+      } catch (error) {
+        console.error("Map globe styling failed", error);
+      }
     });
 
     map.on("load", () => {
-      map.addSource("responses", {
-        type: "geojson",
-        data: buildLocationGeoJson(locations, submission)
-      });
+      try {
+        map.addSource("responses", {
+          type: "geojson",
+          data: buildLocationGeoJson(visibleLocations, submission)
+        });
 
-      map.addLayer({
-        id: "response-glow",
-        type: "circle",
-        source: "responses",
-        filter: ["!=", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 18, 6, 24, 12, 34],
-          "circle-color": "#45e7ff",
-          "circle-blur": 0.82,
-          "circle-opacity": 0.55
-        }
-      });
+        map.addLayer({
+          id: "response-glow",
+          type: "circle",
+          source: "responses",
+          filter: ["!=", ["get", "kind"], "user"],
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 18, 6, 24, 12, 34],
+            "circle-color": "#45e7ff",
+            "circle-blur": 0.82,
+            "circle-opacity": 0.55
+          }
+        });
 
       map.addLayer({
         id: "response-halo",
@@ -1211,19 +1240,24 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
         }
       });
 
-      map.addLayer({
-        id: "user-core",
-        type: "circle",
-        source: "responses",
-        filter: ["==", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 5.5, 6, 6.5, 12, 8.5],
-          "circle-color": "#ff5fb0",
-          "circle-stroke-color": "#ffffff",
-          "circle-stroke-width": 1.8,
-          "circle-opacity": 1
-        }
-      });
+        map.addLayer({
+          id: "user-core",
+          type: "circle",
+          source: "responses",
+          filter: ["==", ["get", "kind"], "user"],
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 5.5, 6, 6.5, 12, 8.5],
+            "circle-color": "#ff5fb0",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 1.8,
+            "circle-opacity": 1
+          }
+        });
+      } catch (error) {
+        console.error("Map response markers failed", error);
+        setMapError("The interactive map is not available in this browser.");
+        return;
+      }
 
       const animateMarkerGlow = () => {
         const phase = (Math.sin(performance.now() / 1250) + 1) / 2;
@@ -1249,22 +1283,23 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
       mapRef.current = null;
       mapLoadedRef.current = false;
     };
-  }, [flyToSubmittedLocation, locationsKey, submissionLocationKey, submittedCenter]);
+  }, [flyToSubmittedLocation, locationsKey, submissionLocationKey, submittedCenter, visibleLocations, submission]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.getSource("responses")) return;
     const source = map.getSource("responses") as maplibregl.GeoJSONSource;
-    source.setData(buildLocationGeoJson(locations, submission));
-  }, [locationsKey, submissionLocationKey, locations, submission]);
+    source.setData(buildLocationGeoJson(visibleLocations, submission));
+  }, [locationsKey, submissionLocationKey, visibleLocations, submission]);
 
   return (
     <div ref={wrapperRef} className="map-card globe-card tiled-map-card" aria-label="Interactive satellite response globe">
       <div ref={containerRef} className="response-globe" />
+      {mapError && <div className="map-fallback">{mapError}</div>}
       <div className="globe-caption">
-        {submission.location.consent && submission.location.latitude != null
+        {submittedCoordinates
           ? "Your captured location"
-          : locations.length
+          : visibleLocations.length
             ? "Showing consenting responses"
             : "Awaiting consenting responses"}
       </div>
@@ -1277,6 +1312,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
 }
 
 function buildLocationGeoJson(locations: Stats["locations"], submission: Submission): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  const userCoordinates = submissionCoordinates(submission);
   const features: GeoJSON.Feature<GeoJSON.Point>[] = locations.map((point) => ({
     type: "Feature",
     geometry: {
@@ -1286,26 +1322,22 @@ function buildLocationGeoJson(locations: Stats["locations"], submission: Submiss
     properties: {
       choice: point.choice,
       kind:
-        submission.location.consent &&
-        submission.location.latitude != null &&
-        submission.location.longitude != null &&
-        Math.abs(point.latitude - submission.location.latitude) + Math.abs(point.longitude - submission.location.longitude) < 0.1
+        userCoordinates &&
+        Math.abs(point.latitude - userCoordinates.latitude) + Math.abs(point.longitude - userCoordinates.longitude) < 0.1
           ? "user"
           : "response"
     }
   }));
 
   if (
-    submission.location.consent &&
-    submission.location.latitude != null &&
-    submission.location.longitude != null &&
+    userCoordinates &&
     !features.some((feature) => feature.properties?.kind === "user")
   ) {
     features.push({
       type: "Feature",
       geometry: {
         type: "Point",
-        coordinates: [submission.location.longitude, submission.location.latitude]
+        coordinates: [userCoordinates.longitude, userCoordinates.latitude]
       },
       properties: {
         choice: submission.lifeChoice,
@@ -1318,6 +1350,31 @@ function buildLocationGeoJson(locations: Stats["locations"], submission: Submiss
     type: "FeatureCollection",
     features
   };
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function submissionCoordinates(submission: Submission) {
+  if (!submission.location.consent) return null;
+  const latitude = finiteNumber(submission.location.latitude);
+  const longitude = finiteNumber(submission.location.longitude);
+  if (latitude == null || longitude == null) return null;
+  return { latitude, longitude };
+}
+
+function sanitiseLocations(locations: Stats["locations"]) {
+  return locations.filter((point) => finiteNumber(point.latitude) != null && finiteNumber(point.longitude) != null);
+}
+
+function browserSupportsWebGl() {
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"));
+  } catch {
+    return false;
+  }
 }
 
 function randomGlobeStart(target: [number, number]): [number, number] {

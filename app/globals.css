@@ -957,6 +957,22 @@ a {
   inset: 0;
 }
 
+.map-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(109, 215, 255, 0.16), rgba(109, 215, 255, 0) 36%),
+    linear-gradient(180deg, #07111b, #121313);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  font-weight: 750;
+  text-align: center;
+  z-index: 1;
+}
+
 .response-globe canvas,
 .response-globe .maplibregl-canvas {
   display: block;
