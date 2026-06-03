@@ -64,7 +64,7 @@ export default function ExperimentsHub() {
                   <Eye size={16} />
                   </>
                 ) : (
-                  <span aria-hidden="true">&nbsp;</span>
+                  <span aria-hidden="true" />
                 )}
               </div>
               <h2>{experiment.title}</h2>

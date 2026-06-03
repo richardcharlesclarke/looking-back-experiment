@@ -331,7 +331,7 @@ a {
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 320px;
+  grid-auto-rows: 380px;
   align-items: stretch;
   gap: 12px;
   padding: 0 0 48px;
@@ -380,7 +380,7 @@ a {
 .experiment-card-copy {
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 9px;
   padding: 13px;
 }
 
@@ -397,8 +397,18 @@ a {
   text-transform: uppercase;
 }
 
+.experiment-card-topline {
+  min-height: 16px;
+}
+
 .placeholder-topline {
   visibility: hidden;
+}
+
+.placeholder-topline span {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .experiment-card h2 {
@@ -423,6 +433,7 @@ a {
   justify-content: flex-start;
   margin-top: 2px;
   letter-spacing: 0.1em;
+  line-height: 1.2;
 }
 
 .experiment-link {
@@ -1296,6 +1307,13 @@ th {
   }
 }
 
+@media (max-width: 980px) {
+  .experiment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 380px;
+  }
+}
+
 @media (max-width: 860px) {
   body::before {
     left: 8px;
@@ -1331,11 +1349,6 @@ th {
   .two-col,
   .group-grid {
     grid-template-columns: 1fr;
-  }
-
-  .experiment-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 356px;
   }
 
   .experiment-card {
@@ -1470,7 +1483,7 @@ th {
 
   .experiment-grid {
     grid-template-columns: 1fr;
-    grid-auto-rows: 344px;
+    grid-auto-rows: 368px;
     gap: 12px;
   }
 
