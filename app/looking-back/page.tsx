@@ -471,6 +471,23 @@ export default function Home() {
 
       {step === "ratings" && (
         <section className={stepSurfaceClass("stage ratings-stage")}>
+          <div className="ratings-stage-deco" aria-hidden="true">
+            <VectorDecoration
+              className="ratings-v1"
+              src="/vector-decoration/profile-vector-new-1.svg"
+              delay="0s"
+              drawDuration="22s"
+              stroke="#F4F3F4"
+              activateImmediately
+            />
+            <VectorDecoration
+              className="ratings-v2"
+              src="/vector-decoration/profile-vector-new-2-open.svg"
+              delay="0s"
+              stroke="#F4F3F4"
+              variant="profile-2-hero"
+            />
+          </div>
           <StepHeader index="02" title="Look back over the last year" text="Compared with your usual life, how much did you feel each of these in the last year?" />
           <RatingFocusPanel
             dimension={RATING_DIMENSIONS[currentRatingIndex]}

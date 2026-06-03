@@ -44,6 +44,7 @@ main {
   isolation: isolate;
   min-height: 100vh;
   margin: 0 30px;
+  overflow-x: hidden;
   animation: page-load-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
   background:
     radial-gradient(120% 120% at 92% 86%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 56%),
@@ -206,7 +207,7 @@ a {
 .hero {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   width: min(1180px, calc(100% - 120px));
   min-height: calc(100vh - 96px);
   margin: 0 auto;
@@ -224,7 +225,10 @@ a {
 
 .hero-deco {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: calc((100vw - 100%) / -2);
+  bottom: 0;
+  left: calc((100vw - 100%) / -2);
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
@@ -236,18 +240,18 @@ a {
 }
 
 .hero-deco .v1 {
-  top: -60px;
-  right: -330px;
-  width: 600px;
+  top: calc(-1 * clamp(70px, 12vh, 130px));
+  right: calc(-1 * clamp(180px, 22vw, 320px));
+  width: clamp(440px, 50vw, 640px);
   opacity: 0.78;
   transform: rotate(14deg);
   filter: none;
 }
 
 .hero-deco .v2 {
-  bottom: -92px;
-  left: -260px;
-  width: 600px;
+  bottom: calc(-1 * clamp(80px, 14vh, 150px));
+  left: calc(-1 * clamp(220px, 24vw, 360px));
+  width: clamp(460px, 52vw, 660px);
   opacity: 0.86;
   filter: none;
   mix-blend-mode: normal;
@@ -639,9 +643,51 @@ a {
 
 .stage,
 .results {
+  position: relative;
   width: min(1040px, calc(100% - 120px));
   margin: 0 auto;
   padding: 32px 0 72px;
+}
+
+.ratings-stage {
+  isolation: isolate;
+  overflow: visible;
+}
+
+.ratings-stage > :not(.ratings-stage-deco) {
+  position: relative;
+  z-index: 1;
+}
+
+.ratings-stage-deco {
+  position: absolute;
+  top: 0;
+  right: calc((100vw - 100%) / -2);
+  bottom: 0;
+  left: calc((100vw - 100%) / -2);
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ratings-stage-deco .vector-decoration {
+  position: absolute;
+  display: block;
+}
+
+.ratings-stage-deco .ratings-v1 {
+  top: calc(-1 * clamp(24px, 4vh, 56px));
+  right: calc(-1 * clamp(180px, 22vw, 320px));
+  width: clamp(420px, 47vw, 600px);
+  opacity: 0.64;
+  transform: rotate(14deg);
+}
+
+.ratings-stage-deco .ratings-v2 {
+  bottom: calc(-1 * clamp(140px, 22vh, 240px));
+  left: calc(-1 * clamp(230px, 27vw, 390px));
+  width: clamp(480px, 54vw, 680px);
+  opacity: 0.66;
 }
 
 .step-surface {
@@ -1762,20 +1808,6 @@ th {
 }
 
 @media (max-width: 1100px) {
-  .hero-deco .v1 {
-    width: 380px;
-    top: -30px;
-    right: -210px;
-    opacity: 0.72;
-  }
-
-  .hero-deco .v2 {
-    width: 380px;
-    bottom: -72px;
-    left: -180px;
-    opacity: 0.78;
-  }
-
   .hero,
   .experiments-hero,
   .experiment-grid,
