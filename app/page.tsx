@@ -962,6 +962,14 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     submittedCoordinates?.latitude.toFixed(3) ?? "",
     submittedCoordinates?.longitude.toFixed(3) ?? ""
   ].join("|");
+  const locationGeoJson = useMemo(
+    () => buildLocationGeoJson(visibleLocations, submission),
+    // The map should not refresh just because polling returned new array/object identities.
+    // These keys change only when the actual plotted coordinates or submitted location change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locationsKey, submissionLocationKey]
+  );
+  const locationGeoJsonRef = useRef(locationGeoJson);
 
   const submittedCenter = useCallback((): [number, number] => {
     return submittedCoordinates
@@ -994,6 +1002,10 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     hasFlownRef.current = false;
     flyToSubmittedLocation();
   }, [flyToSubmittedLocation, submissionLocationKey]);
+
+  useEffect(() => {
+    locationGeoJsonRef.current = locationGeoJson;
+  }, [locationGeoJson]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -1169,7 +1181,7 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
       try {
         map.addSource("responses", {
           type: "geojson",
-          data: buildLocationGeoJson(visibleLocations, submission)
+          data: locationGeoJsonRef.current
         });
 
         map.addLayer({
@@ -1283,14 +1295,14 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
       mapRef.current = null;
       mapLoadedRef.current = false;
     };
-  }, [flyToSubmittedLocation, locationsKey, submissionLocationKey, submittedCenter, visibleLocations, submission]);
+  }, [flyToSubmittedLocation, submittedCenter]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.getSource("responses")) return;
     const source = map.getSource("responses") as maplibregl.GeoJSONSource;
-    source.setData(buildLocationGeoJson(visibleLocations, submission));
-  }, [locationsKey, submissionLocationKey, visibleLocations, submission]);
+    source.setData(locationGeoJson);
+  }, [locationGeoJson]);
 
   return (
     <div ref={wrapperRef} className="map-card globe-card tiled-map-card" aria-label="Interactive satellite response globe">
@@ -1321,18 +1333,11 @@ function buildLocationGeoJson(locations: Stats["locations"], submission: Submiss
     },
     properties: {
       choice: point.choice,
-      kind:
-        userCoordinates &&
-        Math.abs(point.latitude - userCoordinates.latitude) + Math.abs(point.longitude - userCoordinates.longitude) < 0.1
-          ? "user"
-          : "response"
+      kind: "response"
     }
   }));
 
-  if (
-    userCoordinates &&
-    !features.some((feature) => feature.properties?.kind === "user")
-  ) {
+  if (userCoordinates) {
     features.push({
       type: "Feature",
       geometry: {
