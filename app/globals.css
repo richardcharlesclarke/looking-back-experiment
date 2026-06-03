@@ -97,6 +97,7 @@ select {
 
 button {
   border: 0;
+  user-select: none;
 }
 
 a {
@@ -320,7 +321,7 @@ a {
 
 .secondary.active,
 .segment.active {
-  border-color: var(--accent);
+  border-color: var(--ink);
   background: var(--ink);
   color: white;
 }
@@ -590,7 +591,8 @@ a {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: var(--accent);
+  border-color: var(--teal);
+  box-shadow: inset 0 0 0 1px var(--teal);
 }
 
 .choice-question {
@@ -954,7 +956,7 @@ a {
 }
 
 .rating-orb-thumb:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--teal);
   outline-offset: 8px;
 }
 
@@ -1081,7 +1083,7 @@ a {
 .legacy-toggle input {
   width: 18px;
   height: 18px;
-  accent-color: var(--accent);
+  accent-color: var(--teal);
 }
 
 .insight-grid,

@@ -96,7 +96,6 @@ export default function Home() {
   const [ratingTransitionDirection, setRatingTransitionDirection] = useState<"forward" | "back">("forward");
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
-  const [genderSelfDescription, setGenderSelfDescription] = useState("");
   const [locationConsent, setLocationConsent] = useState(false);
   const [location, setLocation] = useState<SubmissionInput["location"]>({ consent: false });
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
@@ -294,7 +293,6 @@ export default function Home() {
         ratings: ratings as Record<string, number>,
         ageBand,
         gender,
-        genderSelfDescription,
         location: locationSnapshot
       };
 
@@ -476,12 +474,6 @@ export default function Home() {
                 ))}
               </select>
             </label>
-            {gender === "Prefer to self-describe" && (
-              <label className="field wide">
-                <span>Self-description</span>
-                <input value={genderSelfDescription} onChange={(event) => setGenderSelfDescription(event.target.value)} />
-              </label>
-            )}
             <div className="consent wide">
               <Globe2 />
               <div>

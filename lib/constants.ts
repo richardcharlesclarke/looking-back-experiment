@@ -48,9 +48,7 @@ export const AGE_BANDS = ["Under 18", "18-24", "25-34", "35-44", "45-54", "55-64
 export const GENDERS = [
   "Woman",
   "Man",
-  "Non-binary",
-  "Prefer to self-describe",
-  "Prefer not to say"
+  "Non-binary"
 ] as const;
 
 export const EVOLVABLE_URL = "https://evolvable.me";
