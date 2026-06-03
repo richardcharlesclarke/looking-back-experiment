@@ -44,6 +44,7 @@ main {
   isolation: isolate;
   min-height: 100vh;
   margin: 0 30px;
+  animation: page-load-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
   background:
     radial-gradient(120% 120% at 92% 86%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 56%),
     radial-gradient(120% 120% at 10% 12%, rgba(168, 192, 91, 0.44) 0%, rgba(207, 218, 203, 0) 60%),
@@ -66,6 +67,18 @@ main::after {
 main > * {
   position: relative;
   z-index: 1;
+}
+
+@keyframes page-load-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 body::before,
@@ -191,6 +204,9 @@ a {
 }
 
 .hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   width: min(1180px, calc(100% - 120px));
   min-height: calc(100vh - 96px);
   margin: 0 auto;
@@ -199,6 +215,156 @@ a {
   align-items: center;
   gap: 56px;
   padding: 40px 0 92px;
+}
+
+.hero > :not(.hero-deco) {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-deco {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-deco .vector-decoration {
+  position: absolute;
+  display: block;
+}
+
+.hero-deco .v1 {
+  top: -60px;
+  right: -330px;
+  width: 600px;
+  opacity: 0.78;
+  transform: rotate(14deg);
+  filter: none;
+}
+
+.hero-deco .v2 {
+  bottom: -92px;
+  left: -260px;
+  width: 600px;
+  opacity: 0.86;
+  filter: none;
+  mix-blend-mode: normal;
+}
+
+.vector-decoration {
+  --vector-stroke: #f4f3f4;
+  --vector-path-length: 1;
+  --vector-segment-delay: 0s;
+  --vector-segment-duration: 18s;
+  display: block;
+  height: auto;
+  pointer-events: none;
+  transform-origin: center;
+  width: 100%;
+}
+
+.vector-decoration:not(.is-ready) {
+  visibility: hidden;
+}
+
+.hero-deco .v2.vector-decoration {
+  opacity: 0.78;
+}
+
+.vector-decoration__svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+  width: 100%;
+}
+
+.vector-decoration__path {
+  animation-name: none;
+  animation-duration: var(--vector-segment-duration);
+  animation-fill-mode: both;
+  animation-timing-function: ease-in-out;
+  fill: none;
+  stroke: var(--vector-stroke);
+  stroke-dasharray: 0 var(--vector-path-length);
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.vector-decoration.is-ready .vector-decoration__path {
+  animation-play-state: running;
+}
+
+.vector-decoration__path--forward {
+  animation-delay: var(--vector-segment-delay);
+  stroke-dasharray: 0 var(--vector-path-length);
+  stroke-dashoffset: 0;
+}
+
+.vector-decoration__path--reverse {
+  animation-delay: var(--vector-segment-delay);
+  stroke-dasharray: 0 var(--vector-path-length);
+  stroke-dashoffset: var(--vector-path-length);
+}
+
+.vector-decoration__path--offset {
+  animation-delay: var(--vector-segment-delay);
+  stroke-dasharray: var(--vector-path-length) var(--vector-path-length);
+  stroke-dashoffset: var(--vector-path-length);
+}
+
+.vector-decoration.is-ready .vector-decoration__path--forward {
+  animation-name: vectorPathRevealForward;
+}
+
+.vector-decoration.is-ready .vector-decoration__path--reverse {
+  animation-name: vectorPathRevealReverse;
+}
+
+.vector-decoration.is-ready .vector-decoration__path--offset {
+  animation-name: vectorPathRevealOffset;
+}
+
+.vector-decoration__path--trim-end {
+  stroke-dasharray: calc(var(--vector-path-length) * 0.995) var(--vector-path-length);
+}
+
+@keyframes vectorPathRevealForward {
+  from {
+    stroke-dasharray: 0 var(--vector-path-length);
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dasharray: var(--vector-path-length) var(--vector-path-length);
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes vectorPathRevealReverse {
+  from {
+    stroke-dasharray: 0 var(--vector-path-length);
+    stroke-dashoffset: var(--vector-path-length);
+  }
+
+  to {
+    stroke-dasharray: var(--vector-path-length) var(--vector-path-length);
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes vectorPathRevealOffset {
+  from {
+    stroke-dashoffset: var(--vector-path-length);
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .experiments-hero {
@@ -476,6 +642,37 @@ a {
   width: min(1040px, calc(100% - 120px));
   margin: 0 auto;
   padding: 32px 0 72px;
+}
+
+.step-surface {
+  animation: step-surface-enter 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.step-surface.is-exiting {
+  animation: step-surface-exit 180ms ease both;
+  pointer-events: none;
+}
+
+@keyframes step-surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes step-surface-exit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 .step-header {
@@ -756,6 +953,19 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  main,
+  .step-surface,
+  .step-surface.is-exiting,
+  .vector-decoration,
+  .vector-decoration__path {
+    animation: none;
+  }
+
+  .vector-decoration__path {
+    stroke-dasharray: var(--vector-path-length) var(--vector-path-length);
+    stroke-dashoffset: 0;
+  }
+
   .selected-choice-shell {
     transition: none;
   }
@@ -1552,6 +1762,20 @@ th {
 }
 
 @media (max-width: 1100px) {
+  .hero-deco .v1 {
+    width: 380px;
+    top: -30px;
+    right: -210px;
+    opacity: 0.72;
+  }
+
+  .hero-deco .v2 {
+    width: 380px;
+    bottom: -72px;
+    left: -180px;
+    opacity: 0.78;
+  }
+
   .hero,
   .experiments-hero,
   .experiment-grid,

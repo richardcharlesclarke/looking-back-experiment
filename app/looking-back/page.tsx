@@ -24,6 +24,7 @@ import {
   RATING_OPTIONS
 } from "@/lib/constants";
 import type { Stats, Submission, SubmissionInput } from "@/lib/types";
+import { VectorDecoration } from "./VectorDecoration";
 
 const COLORS = ["#e75117", "#2f7d72", "#3b6b8f", "#bca35e", "#8d6f9f", "#6e7f61", "#232322", "#7a6f58"];
 const SHOW_SCREEN_TEST_NAV = false;
@@ -104,14 +105,24 @@ export default function Home() {
   const [includeLegacy, setIncludeLegacy] = useState(true);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStepExiting, setIsStepExiting] = useState(false);
   const [showTestNavigator, setShowTestNavigator] = useState(SHOW_SCREEN_TEST_NAV);
   const locationPromiseRef = useRef<Promise<SubmissionInput["location"]> | null>(null);
+  const stepTransitionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const requestedScreen = new URLSearchParams(window.location.search).get("screen");
     if (SCREEN_TEST_STEPS.includes(requestedScreen as Step)) {
       setStep(requestedScreen as Step);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (stepTransitionTimeoutRef.current) {
+        window.clearTimeout(stepTransitionTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -206,6 +217,23 @@ export default function Home() {
     return lifeChoice === "Other" ? otherChoice.trim() : lifeChoice;
   }
 
+  function transitionToStep(nextStep: Step) {
+    if (nextStep === step) return;
+    if (stepTransitionTimeoutRef.current) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+    }
+    setIsStepExiting(true);
+    stepTransitionTimeoutRef.current = window.setTimeout(() => {
+      setStep(nextStep);
+      setIsStepExiting(false);
+      stepTransitionTimeoutRef.current = null;
+    }, 180);
+  }
+
+  function stepSurfaceClass(className: string) {
+    return `${className} step-surface${isStepExiting ? " is-exiting" : ""}`;
+  }
+
   function continueToRatings() {
     setError("");
     if (!selectedWord() || !guidingValue.trim()) {
@@ -213,7 +241,7 @@ export default function Home() {
       return;
     }
     setRatingTransitionDirection("forward");
-    setStep("ratings");
+    transitionToStep("ratings");
   }
 
   function handleReflectEnter(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -230,7 +258,7 @@ export default function Home() {
       setError("Answer every last-year reflection before continuing.");
       return;
     }
-    setStep("context");
+    transitionToStep("context");
   }
 
   function continueRatingFlow() {
@@ -265,7 +293,7 @@ export default function Home() {
 
   function jumpToScreen(nextStep: Step) {
     setError("");
-    setStep(nextStep);
+    transitionToStep(nextStep);
   }
 
   async function submit() {
@@ -273,12 +301,12 @@ export default function Home() {
     const word = selectedWord();
     if (!word || !guidingValue.trim()) {
       setError("Choose your word and add your value before continuing.");
-      setStep("reflect");
+      transitionToStep("reflect");
       return;
     }
     if (lifeChoice === "Other" && !otherChoice.trim()) {
       setError("Name your other choice before submitting.");
-      setStep("reflect");
+      transitionToStep("reflect");
       return;
     }
 
@@ -318,7 +346,7 @@ export default function Home() {
       } else {
         setStats(data.stats);
       }
-      setStep("results");
+      transitionToStep("results");
     } catch (submitError) {
       console.error("Submit failed", submitError);
       setError("Something went wrong while saving your response. Please try again.");
@@ -343,7 +371,24 @@ export default function Home() {
       )}
 
       {step === "intro" && (
-        <section className="hero">
+        <section className={stepSurfaceClass("hero")}>
+          <div className="hero-deco" aria-hidden="true">
+            <VectorDecoration
+              className="v1"
+              src="/vector-decoration/profile-vector-new-1.svg"
+              delay="0s"
+              drawDuration="22s"
+              stroke="#F4F3F4"
+              activateImmediately
+            />
+            <VectorDecoration
+              className="v2"
+              src="/vector-decoration/profile-vector-new-2-open.svg"
+              delay="0s"
+              stroke="#F4F3F4"
+              variant="profile-2-hero"
+            />
+          </div>
           <div className="hero-copy">
             <p className="eyebrow">Looking Back</p>
             <h1>What would you want your life to have been?</h1>
@@ -351,7 +396,7 @@ export default function Home() {
               A short public experiment about the qualities we hope our lives express. Take a few minutes, answer honestly,
               then see how your reflection sits within the wider pattern.
             </p>
-            <button className="primary" onClick={() => setStep("reflect")}>
+            <button className="primary" onClick={() => transitionToStep("reflect")}>
               Begin <ArrowRight size={18} />
             </button>
           </div>
@@ -365,7 +410,7 @@ export default function Home() {
       )}
 
       {step === "reflect" && (
-        <section className="stage reflect-stage">
+        <section className={stepSurfaceClass("stage reflect-stage")}>
           <StepHeader
             index="01"
             title="Choose the word"
@@ -420,12 +465,12 @@ export default function Home() {
             </label>
           </div>
           {error && <p className="error">{error}</p>}
-          <NavActions back={() => setStep("intro")} next={continueToRatings} />
+          <NavActions back={() => transitionToStep("intro")} next={continueToRatings} />
         </section>
       )}
 
       {step === "ratings" && (
-        <section className="stage ratings-stage">
+        <section className={stepSurfaceClass("stage ratings-stage")}>
           <StepHeader index="02" title="Look back over the last year" text="Compared with your usual life, how much did you feel each of these in the last year?" />
           <RatingFocusPanel
             dimension={RATING_DIMENSIONS[currentRatingIndex]}
@@ -444,7 +489,7 @@ export default function Home() {
                 setCurrentRatingIndex((index) => index - 1);
                 return;
               }
-              setStep("reflect");
+              transitionToStep("reflect");
             }}
             next={continueRatingFlow}
             nextLabel={currentRatingIndex === RATING_DIMENSIONS.length - 1 ? "Continue" : "Next"}
@@ -453,7 +498,7 @@ export default function Home() {
       )}
 
       {step === "context" && (
-        <section className="stage">
+        <section className={stepSurfaceClass("stage")}>
           <StepHeader index="03" title="Add context" text="These fields are optional, but they make the public pattern more meaningful." />
           <div className="form-grid">
             <label className="field">
@@ -498,7 +543,7 @@ export default function Home() {
             )}
           </div>
           {error && <p className="error">{error}</p>}
-          <NavActions back={() => setStep("ratings")} next={submit} nextLabel={isSubmitting ? "Saving..." : "See results"} disabled={isSubmitting} />
+          <NavActions back={() => transitionToStep("ratings")} next={submit} nextLabel={isSubmitting ? "Saving..." : "See results"} disabled={isSubmitting} />
         </section>
       )}
 
@@ -507,6 +552,7 @@ export default function Home() {
           stats={stats ?? PREVIEW_STATS}
           submission={submission ?? PREVIEW_SUBMISSION}
           includeLegacy={includeLegacy}
+          className={stepSurfaceClass("")}
           setIncludeLegacy={setIncludeLegacy}
         />
       )}
@@ -727,11 +773,13 @@ function Results({
   stats,
   submission,
   includeLegacy,
+  className,
   setIncludeLegacy
 }: {
   stats: Stats;
   submission: Submission;
   includeLegacy: boolean;
+  className?: string;
   setIncludeLegacy: (value: boolean) => void;
 }) {
   const forcedChoices = useMemo(() => {
@@ -754,7 +802,7 @@ function Results({
   const demographicComparison = useMemo(() => buildDemographicComparison(stats.byGender), [stats.byGender]);
 
   return (
-    <section className="results">
+    <section className={`results ${className ?? ""}`}>
       <div className="result-hero">
         <p className="eyebrow">Your result</p>
         <h1>You chose {submission.lifeChoice}.</h1>
