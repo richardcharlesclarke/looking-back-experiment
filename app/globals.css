@@ -287,6 +287,10 @@ a {
   text-transform: uppercase;
 }
 
+.nav-back {
+  width: 175px;
+}
+
 .primary:hover,
 .secondary:hover,
 .ghost:hover,
@@ -619,6 +623,52 @@ a {
   gap: 10px;
 }
 
+.reflect-stage {
+  padding-top: 24px;
+}
+
+.reflect-stage .step-header {
+  margin-bottom: 18px;
+}
+
+.reflect-stage .step-header h2 {
+  margin: 6px 0 8px;
+}
+
+.reflect-stage .choice-question {
+  margin-bottom: 14px;
+}
+
+.reflect-stage .choice-grid {
+  margin-bottom: 18px;
+  gap: 8px 10px;
+}
+
+.reflect-stage .choice {
+  min-height: 38px;
+}
+
+.reflect-stage .selected-choice-shell.is-open {
+  margin-bottom: 18px;
+}
+
+.reflect-stage .selected-choice {
+  padding: 10px 0;
+}
+
+.reflect-stage .reflect-value-field > span {
+  margin-bottom: 10px;
+}
+
+.reflect-stage .field textarea {
+  height: 82px;
+  min-height: 82px;
+}
+
+.reflect-stage .actions {
+  margin-top: 18px;
+}
+
 .other-choice {
   max-width: 520px;
   margin-bottom: 24px;
@@ -713,6 +763,10 @@ a {
   max-width: 860px;
 }
 
+.ratings-stage .actions {
+  max-width: 860px;
+}
+
 .rating-focus-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -790,15 +844,34 @@ a {
   touch-action: none;
 }
 
+.rating-orb-hit-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--rating-option-gap);
+}
+
+.rating-orb-hit-grid button {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .rating-orb-lane {
   position: relative;
+  z-index: 2;
   width: calc(100% - var(--rating-option-width));
   height: 68px;
   margin-inline: calc(var(--rating-option-width) / 2);
+  pointer-events: none;
 }
 
 .rating-orb-thumb {
   position: absolute;
+  z-index: 3;
   left: var(--rating-orb-position);
   top: 50%;
   width: var(--rating-thumb-size);
@@ -821,6 +894,7 @@ a {
     height 620ms cubic-bezier(0.18, 1.35, 0.28, 1),
     box-shadow 620ms cubic-bezier(0.18, 1.35, 0.28, 1);
   animation: rating-orb-halo 2600ms ease-in-out infinite;
+  pointer-events: auto;
 }
 
 .rating-orb-thumb.dragging {
@@ -906,9 +980,14 @@ a {
 
 .actions {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   margin-top: 20px;
   gap: 12px;
+}
+
+.actions .primary {
+  width: 175px;
 }
 
 .error {

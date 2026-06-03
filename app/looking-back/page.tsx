@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, BarChart3, Compass, Globe2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, Compass, Globe2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
 import {
@@ -215,6 +215,13 @@ export default function Home() {
     setStep("ratings");
   }
 
+  function handleReflectEnter(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (!selectedWord() || !guidingValue.trim()) return;
+    event.preventDefault();
+    continueToRatings();
+  }
+
   function continueToContext() {
     setError("");
     const missing = RATING_DIMENSIONS.find((dimension) => typeof ratings[dimension] !== "number");
@@ -357,7 +364,7 @@ export default function Home() {
       )}
 
       {step === "reflect" && (
-        <section className="stage">
+        <section className="stage reflect-stage">
           <StepHeader
             index="01"
             title="Choose the word"
@@ -380,7 +387,13 @@ export default function Home() {
           {lifeChoice === "Other" && (
             <label className="field other-choice">
               <span>Your word</span>
-              <input value={otherChoice} onChange={(event) => setOtherChoice(event.target.value)} placeholder="The word you would use" maxLength={48} />
+              <input
+                value={otherChoice}
+                onChange={(event) => setOtherChoice(event.target.value)}
+                onKeyDown={handleReflectEnter}
+                placeholder="The word you would use"
+                maxLength={48}
+              />
             </label>
           )}
           <div className={lifeChoice ? "selected-choice-shell is-open" : "selected-choice-shell"}>
@@ -398,6 +411,7 @@ export default function Home() {
               <textarea
                 value={guidingValue}
                 onChange={(event) => setGuidingValue(event.target.value)}
+                onKeyDown={handleReflectEnter}
                 placeholder="A word or sentence"
                 rows={3}
                 disabled={!lifeChoice}
@@ -410,7 +424,7 @@ export default function Home() {
       )}
 
       {step === "ratings" && (
-        <section className="stage">
+        <section className="stage ratings-stage">
           <StepHeader index="02" title="Look back over the last year" text="Compared with your usual life, how much did you feel each of these in the last year?" />
           <RatingFocusPanel
             dimension={RATING_DIMENSIONS[currentRatingIndex]}
@@ -566,7 +580,8 @@ function NavActions({
 }) {
   return (
     <div className="actions">
-      <button className="ghost" onClick={back}>
+      <button className="primary nav-back" onClick={back}>
+        <ArrowLeft size={18} />
         Back
       </button>
       <button className="primary" onClick={next} disabled={disabled}>
@@ -648,6 +663,20 @@ function RatingFocusPanel({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
+          <div className="rating-orb-hit-grid" aria-hidden="true">
+            {RATING_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                tabIndex={-1}
+                onClick={() => {
+                  setIsDragging(false);
+                  setVisualValue(option.value);
+                  onChange(option.value);
+                }}
+              />
+            ))}
+          </div>
           <div ref={laneRef} className="rating-orb-lane">
             <button
               className={isDragging ? "rating-orb-thumb dragging" : "rating-orb-thumb"}
