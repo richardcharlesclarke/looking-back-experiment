@@ -10,6 +10,8 @@ create table if not exists submissions (
   ratings jsonb not null,
   age_band text,
   gender text,
+  cohort_slug text,
+  cohort_label text,
   location_consent boolean not null default false,
   latitude numeric,
   longitude numeric,
@@ -28,11 +30,14 @@ alter table submissions add column if not exists region text;
 alter table submissions add column if not exists country text;
 alter table submissions add column if not exists country_code text;
 alter table submissions add column if not exists location_source text;
+alter table submissions add column if not exists cohort_slug text;
+alter table submissions add column if not exists cohort_label text;
 
 create index if not exists submissions_created_at_idx on submissions (created_at desc);
 create index if not exists submissions_life_choice_idx on submissions (life_choice);
 create index if not exists submissions_gender_idx on submissions (gender);
 create index if not exists submissions_age_band_idx on submissions (age_band);
+create index if not exists submissions_cohort_slug_idx on submissions (cohort_slug);
 
 create table if not exists legacy_location_points (
   id uuid primary key default gen_random_uuid(),

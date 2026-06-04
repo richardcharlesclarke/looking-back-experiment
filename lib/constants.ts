@@ -52,3 +52,6 @@ export const GENDERS = [
 ] as const;
 
 export const EVOLVABLE_URL = "https://evolvable.me";
+
+export const CONFIGURED_COHORT_SLUG = process.env.NEXT_PUBLIC_LOOKING_BACK_COHORT_SLUG?.trim() || "conference-2026";
+export const CONFIGURED_COHORT_LABEL = process.env.NEXT_PUBLIC_LOOKING_BACK_COHORT_LABEL?.trim() || "Conference population";

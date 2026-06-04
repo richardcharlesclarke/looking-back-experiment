@@ -23,6 +23,8 @@ export type SubmissionInput = {
   ageBand?: string;
   gender?: string;
   genderSelfDescription?: string;
+  cohortSlug?: string;
+  cohortLabel?: string;
   location: LocationSnapshot;
 };
 
@@ -45,10 +47,22 @@ export type RatingStat = {
 export type Stats = {
   total: number;
   choices: ChoiceStat[];
+  cohortComparison?: CohortComparison;
   byGender: Record<string, ChoiceStat[]>;
   byAge: Record<string, ChoiceStat[]>;
   ratings: RatingStat[];
   words: string[];
   values: string[];
   locations: Array<{ latitude: number; longitude: number; choice: string }>;
+};
+
+export type CohortComparison = {
+  populationLabel: string;
+  cohortLabel: string;
+  populationTotal: number;
+  cohortTotal: number;
+  population: ChoiceStat[];
+  cohort: ChoiceStat[];
+  populationRatings: RatingStat[];
+  cohortRatings: RatingStat[];
 };

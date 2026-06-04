@@ -3,8 +3,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Evolvable Experiments",
-  description: "Public reflective experiments from Evolvable."
+  title: "evolvable.me Experiments",
+  description: "Public reflective experiments from evolvable.me."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

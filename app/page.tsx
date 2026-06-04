@@ -35,19 +35,19 @@ export default function ExperimentsHub() {
   return (
     <main>
       <header className="topbar">
-        <Link className="mark" href="/">Experiments at Evolvable</Link>
-        <a href="https://evolvable.me">Explore Evolvable</a>
+        <Link className="mark" href="/">Experiments at evolvable.me</Link>
+        <a href="https://evolvable.me">Explore evolvable.me</a>
       </header>
 
       <section className="experiments-hero">
         <div className="experiments-copy">
           <p className="eyebrow">Experiments</p>
           <h1>Public reflections on how people change.</h1>
-          <p>Short participatory studies from Evolvable.</p>
+          <p>Short participatory studies from evolvable.me.</p>
         </div>
       </section>
 
-      <section className="experiment-grid" aria-label="Evolvable experiments">
+      <section className="experiment-grid" aria-label="evolvable.me experiments">
         {experiments.map((experiment, index) => (
           <article className={experiment.image ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
             <div className="experiment-visual" aria-hidden="true">

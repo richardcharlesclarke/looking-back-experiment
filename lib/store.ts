@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import { LIFE_CHOICES, RATING_DIMENSIONS } from "./constants";
 import { mergeWithLegacy } from "./legacy";
-import type { ChoiceStat, Stats, Submission, SubmissionInput } from "./types";
+import type { ChoiceStat, CohortComparison, Stats, Submission, SubmissionInput } from "./types";
 
 let pool: Pool | null = null;
 let schemaReady: Promise<void> | null = null;
@@ -38,6 +38,8 @@ async function ensureSchema(db: Pool) {
       ratings jsonb not null,
       age_band text,
       gender text,
+      cohort_slug text,
+      cohort_label text,
       location_consent boolean not null default false,
       latitude numeric,
       longitude numeric,
@@ -56,11 +58,14 @@ async function ensureSchema(db: Pool) {
     alter table submissions add column if not exists country text;
     alter table submissions add column if not exists country_code text;
     alter table submissions add column if not exists location_source text;
+    alter table submissions add column if not exists cohort_slug text;
+    alter table submissions add column if not exists cohort_label text;
 
     create index if not exists submissions_created_at_idx on submissions (created_at desc);
     create index if not exists submissions_life_choice_idx on submissions (life_choice);
     create index if not exists submissions_gender_idx on submissions (gender);
     create index if not exists submissions_age_band_idx on submissions (age_band);
+    create index if not exists submissions_cohort_slug_idx on submissions (cohort_slug);
 
     create table if not exists legacy_location_points (
       id uuid primary key default gen_random_uuid(),
@@ -98,6 +103,8 @@ function rowToSubmission(row: Record<string, unknown>): Submission {
     ratings: row.ratings as Record<string, number>,
     ageBand: row.age_band ? String(row.age_band) : undefined,
     gender,
+    cohortSlug: row.cohort_slug ? String(row.cohort_slug) : undefined,
+    cohortLabel: row.cohort_label ? String(row.cohort_label) : undefined,
     location: {
       consent: Boolean(row.location_consent),
       latitude: row.latitude == null ? undefined : Number(row.latitude),
@@ -120,7 +127,9 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
     lifeChoice: normalizeChoice(input),
     idealWord: input.idealWord.trim(),
     guidingValue: input.guidingValue.trim(),
-    otherChoice: input.otherChoice?.trim() || undefined
+    otherChoice: input.otherChoice?.trim() || undefined,
+    cohortSlug: input.cohortSlug?.trim() || undefined,
+    cohortLabel: input.cohortLabel?.trim() || undefined
   };
 
   const db = getPool();
@@ -137,9 +146,9 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
   await ensureSchema(db);
   const result = await db.query(
     `insert into submissions
-      (ideal_word, guiding_value, life_choice, other_choice, ratings, age_band, gender,
+      (ideal_word, guiding_value, life_choice, other_choice, ratings, age_band, gender, cohort_slug, cohort_label,
        location_consent, latitude, longitude, accuracy, city, region, country, country_code, timezone, locale, location_source)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
      returning *`,
     [
       normalized.idealWord,
@@ -149,6 +158,8 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
       JSON.stringify(normalized.ratings),
       normalized.ageBand ?? null,
       normalized.genderSelfDescription || normalized.gender || null,
+      normalized.cohortSlug ?? null,
+      normalized.cohortLabel ?? null,
       normalized.location.consent,
       normalized.location.latitude ?? null,
       normalized.location.longitude ?? null,
@@ -239,6 +250,29 @@ export function buildStats(items: Submission[]): Stats {
   };
 }
 
+function buildCohortComparison(
+  items: Submission[],
+  cohortSlug: string,
+  cohortLabel: string,
+  includeLegacy: boolean
+): CohortComparison {
+  const currentPopulation = items.filter((item) => !item.cohortSlug);
+  const cohort = items.filter((item) => item.cohortSlug === cohortSlug);
+  const populationStats = includeLegacy ? mergeWithLegacy(buildStats(currentPopulation)) : buildStats([]);
+  const cohortStats = buildStats(cohort);
+
+  return {
+    populationLabel: "Historic Data",
+    cohortLabel,
+    populationTotal: populationStats.total,
+    cohortTotal: cohort.length,
+    population: populationStats.choices,
+    cohort: cohortStats.choices,
+    populationRatings: includeLegacy ? populationStats.ratings : [],
+    cohortRatings: cohortStats.ratings
+  };
+}
+
 async function listLegacyLocationPoints() {
   const db = getPool();
   if (!db) return [];
@@ -258,13 +292,19 @@ async function listLegacyLocationPoints() {
   }));
 }
 
-export async function getStats(options: { includeLegacy?: boolean } = {}) {
-  const current = buildStats(await listSubmissions());
+export async function getStats(options: { includeLegacy?: boolean; cohortSlug?: string; cohortLabel?: string } = {}) {
+  const submissions = await listSubmissions();
+  const current = buildStats(submissions);
   const stats = options.includeLegacy ? mergeWithLegacy(current) : current;
-  if (!options.includeLegacy) return stats;
+  const cohortSlug = options.cohortSlug?.trim();
+  const cohortComparison = cohortSlug
+    ? buildCohortComparison(submissions, cohortSlug, options.cohortLabel?.trim() || "Conference population", Boolean(options.includeLegacy))
+    : undefined;
+  const statsWithComparison = cohortComparison ? { ...stats, cohortComparison } : stats;
+  if (!options.includeLegacy) return statsWithComparison;
   const legacyLocations = await listLegacyLocationPoints();
   return {
-    ...stats,
-    locations: [...stats.locations, ...legacyLocations]
+    ...statsWithComparison,
+    locations: [...statsWithComparison.locations, ...legacyLocations]
   };
 }

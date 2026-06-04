@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { AGE_BANDS, GENDERS, LIFE_CHOICES, RATING_DIMENSIONS } from "@/lib/constants";
+import {
+  AGE_BANDS,
+  CONFIGURED_COHORT_LABEL,
+  CONFIGURED_COHORT_SLUG,
+  GENDERS,
+  LIFE_CHOICES,
+  RATING_DIMENSIONS
+} from "@/lib/constants";
 import { createSubmission, getStats } from "@/lib/store";
 import type { SubmissionInput } from "@/lib/types";
 
@@ -7,8 +14,14 @@ function isString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isSafeCohortSlug(value: string) {
+  return /^[a-z0-9][a-z0-9-]{0,63}$/i.test(value);
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as SubmissionInput;
+  const cohortSlug = body.cohortSlug?.trim() || CONFIGURED_COHORT_SLUG;
+  const cohortLabel = body.cohortLabel?.trim() || CONFIGURED_COHORT_LABEL;
 
   if (!isString(body.idealWord) || !isString(body.guidingValue) || !isString(body.lifeChoice)) {
     return NextResponse.json({ error: "Missing required reflection fields." }, { status: 400 });
@@ -38,7 +51,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown gender." }, { status: 400 });
   }
 
-  const submission = await createSubmission(body);
-  const stats = await getStats();
+  if (cohortSlug && !isSafeCohortSlug(cohortSlug)) {
+    return NextResponse.json({ error: "Unknown event cohort." }, { status: 400 });
+  }
+
+  const submission = await createSubmission({
+    ...body,
+    cohortSlug,
+    cohortLabel: cohortSlug ? cohortLabel : undefined
+  });
+  const stats = await getStats({
+    cohortSlug,
+    cohortLabel
+  });
   return NextResponse.json({ submission, stats });
 }

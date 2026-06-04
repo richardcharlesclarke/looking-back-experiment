@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, BarChart3, Compass, Globe2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
@@ -8,8 +8,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,6 +15,8 @@ import {
 } from "recharts";
 import {
   AGE_BANDS,
+  CONFIGURED_COHORT_LABEL,
+  CONFIGURED_COHORT_SLUG,
   EVOLVABLE_URL,
   GENDERS,
   LIFE_CHOICES,
@@ -27,6 +27,9 @@ import type { Stats, Submission, SubmissionInput } from "@/lib/types";
 import { VectorDecoration } from "./VectorDecoration";
 
 const COLORS = ["#e75117", "#2f7d72", "#3b6b8f", "#bca35e", "#8d6f9f", "#6e7f61", "#232322", "#7a6f58"];
+const CHOICE_COLORS = new Map<string, string>(
+  LIFE_CHOICES.map((choice, index) => [choice, COLORS[index % COLORS.length]])
+);
 const SHOW_SCREEN_TEST_NAV = false;
 const SCREEN_TEST_STEPS: Step[] = ["intro", "reflect", "ratings", "context", "results"];
 const FORCED_CHOICE_SET = new Set<string>(LIFE_CHOICES);
@@ -49,6 +52,8 @@ const PREVIEW_SUBMISSION: Submission = {
   },
   ageBand: "35-44",
   gender: "Prefer not to say",
+  cohortSlug: "conference-preview",
+  cohortLabel: "Conference population",
   location: { consent: true, latitude: 51.5072, longitude: -0.1276, timezone: "Europe/London", locale: "en-GB" }
 };
 
@@ -67,6 +72,38 @@ const PREVIEW_STATS: Stats = {
       { choice: "Courage", count: 7, percent: 0.292 },
       { choice: "Kindness", count: 5, percent: 0.208 },
       { choice: "Freedom", count: 4, percent: 0.167 }
+    ]
+  },
+  cohortComparison: {
+    populationLabel: "Historic Data",
+    cohortLabel: "Conference population",
+    populationTotal: 720,
+    cohortTotal: 24,
+    population: [
+      { choice: "Meaningful", count: 145, percent: 0.201 },
+      { choice: "Happy", count: 137, percent: 0.19 },
+      { choice: "Without Fear", count: 72, percent: 0.1 },
+      { choice: "Authentic", count: 65, percent: 0.09 }
+    ],
+    cohort: [
+      { choice: "Courage", count: 7, percent: 0.292 },
+      { choice: "Kindness", count: 5, percent: 0.208 },
+      { choice: "Freedom", count: 4, percent: 0.167 },
+      { choice: "Love", count: 3, percent: 0.125 }
+    ],
+    populationRatings: [
+      { dimension: "Joy", average: 0.4 },
+      { dimension: "Purpose", average: 0.8 },
+      { dimension: "Connection", average: 0.3 },
+      { dimension: "Freedom", average: 0.1 },
+      { dimension: "Growth", average: 1.1 }
+    ],
+    cohortRatings: [
+      { dimension: "Joy", average: 1.1 },
+      { dimension: "Purpose", average: 1.4 },
+      { dimension: "Connection", average: 0.8 },
+      { dimension: "Freedom", average: 0.6 },
+      { dimension: "Growth", average: 1.7 }
     ]
   },
   byAge: {},
@@ -102,7 +139,10 @@ export default function Home() {
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
   const [stats, setStats] = useState<Stats | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const [includeLegacy, setIncludeLegacy] = useState(true);
+  const [cohortConfig, setCohortConfig] = useState<{ slug: string; label: string }>(() => ({
+    slug: CONFIGURED_COHORT_SLUG,
+    label: CONFIGURED_COHORT_LABEL
+  }));
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStepExiting, setIsStepExiting] = useState(false);
@@ -111,9 +151,15 @@ export default function Home() {
   const stepTransitionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const requestedScreen = new URLSearchParams(window.location.search).get("screen");
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedScreen = searchParams.get("screen");
+    const cohortSlug = searchParams.get("cohort")?.trim() || CONFIGURED_COHORT_SLUG;
+    const cohortLabel = searchParams.get("cohortLabel")?.trim() || searchParams.get("event")?.trim() || CONFIGURED_COHORT_LABEL;
     if (SCREEN_TEST_STEPS.includes(requestedScreen as Step)) {
       setStep(requestedScreen as Step);
+    }
+    if (cohortSlug) {
+      setCohortConfig({ slug: cohortSlug, label: cohortLabel || "Conference population" });
     }
   }, []);
 
@@ -126,22 +172,22 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`/api/stats${includeLegacy ? "?legacy=1" : ""}`)
+    fetch(statsPath(cohortConfig))
       .then((response) => response.json())
       .then(setStats)
       .catch(() => undefined);
-  }, [includeLegacy]);
+  }, [cohortConfig]);
 
   useEffect(() => {
     if (step !== "results") return;
     const interval = window.setInterval(() => {
-      fetch(`/api/stats${includeLegacy ? "?legacy=1" : ""}`)
+      fetch(statsPath(cohortConfig))
         .then((response) => response.json())
         .then(setStats)
         .catch(() => undefined);
     }, 8000);
     return () => window.clearInterval(interval);
-  }, [includeLegacy, step]);
+  }, [cohortConfig, step]);
 
   function localLocationContext(): SubmissionInput["location"] {
     return {
@@ -321,6 +367,8 @@ export default function Home() {
         ratings: ratings as Record<string, number>,
         ageBand,
         gender,
+        cohortSlug: cohortConfig.slug || undefined,
+        cohortLabel: cohortConfig.slug ? cohortConfig.label : undefined,
         location: locationSnapshot
       };
 
@@ -338,14 +386,10 @@ export default function Home() {
       }
 
       setSubmission(data.submission);
-      if (includeLegacy) {
-        fetch("/api/stats?legacy=1")
-          .then((response) => response.json())
-          .then(setStats)
-          .catch(() => setStats(data.stats));
-      } else {
-        setStats(data.stats);
-      }
+      fetch(statsPath(cohortConfig))
+        .then((response) => response.json())
+        .then(setStats)
+        .catch(() => setStats(data.stats));
       transitionToStep("results");
     } catch (submitError) {
       console.error("Submit failed", submitError);
@@ -358,8 +402,8 @@ export default function Home() {
   return (
     <main>
       <header className="topbar">
-        <Link className="mark" href="/">Experiments at Evolvable</Link>
-        <a href={EVOLVABLE_URL}>Explore Evolvable</a>
+        <Link className="mark" href="/">Experiments at evolvable.me</Link>
+        <a href={EVOLVABLE_URL}>Explore evolvable.me</a>
       </header>
 
       {showTestNavigator && (
@@ -568,13 +612,24 @@ export default function Home() {
         <Results
           stats={stats ?? PREVIEW_STATS}
           submission={submission ?? PREVIEW_SUBMISSION}
-          includeLegacy={includeLegacy}
+          hasSubmission={submission != null}
+          cohortLabel={cohortConfig.label}
           className={stepSurfaceClass("")}
-          setIncludeLegacy={setIncludeLegacy}
         />
       )}
     </main>
   );
+}
+
+function statsPath(cohortConfig: { slug: string; label: string }) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("legacy", "1");
+  if (cohortConfig.slug) {
+    searchParams.set("cohort", cohortConfig.slug);
+    searchParams.set("cohortLabel", cohortConfig.label || "Conference population");
+  }
+  const query = searchParams.toString();
+  return `/api/stats${query ? `?${query}` : ""}`;
 }
 
 function ScreenTestNavigator({
@@ -789,54 +844,64 @@ function RatingFocusPanel({
 function Results({
   stats,
   submission,
-  includeLegacy,
-  className,
-  setIncludeLegacy
+  hasSubmission,
+  cohortLabel,
+  className
 }: {
   stats: Stats;
   submission: Submission;
-  includeLegacy: boolean;
+  hasSubmission: boolean;
+  cohortLabel: string;
   className?: string;
-  setIncludeLegacy: (value: boolean) => void;
 }) {
+  const [choiceChartView, setChoiceChartView] = useState<"cohort" | "population">("cohort");
+  const [ratingChartView, setRatingChartView] = useState<"cohort" | "population">("cohort");
   const forcedChoices = useMemo(() => {
-    const visibleChoices = stats.choices.filter((item) => FORCED_CHOICE_SET.has(item.choice));
+    const sourceChoices = stats.cohortComparison?.cohort ?? stats.choices;
+    const visibleChoices = sourceChoices.filter((item) => FORCED_CHOICE_SET.has(item.choice));
     const visibleTotal = visibleChoices.reduce((sum, item) => sum + item.count, 0);
     return visibleChoices.map((item) => ({
       ...item,
       percent: visibleTotal ? item.count / visibleTotal : 0
     }));
-  }, [stats.choices]);
+  }, [stats.choices, stats.cohortComparison]);
   const forcedTotal = forcedChoices.reduce((sum, item) => sum + item.count, 0);
   const choice = forcedChoices.find((item) => item.choice === submission.lifeChoice);
   const topChoice = forcedChoices[0];
-  const chartData = forcedChoices.map((item) => ({
-    name: item.choice,
-    count: item.count,
-    percent: Math.round(item.percent * 1000) / 10
-  }));
-  const ratingData = stats.ratings.map((item) => ({ name: item.dimension, average: Number(item.average.toFixed(2)) }));
-  const demographicComparison = useMemo(() => buildDemographicComparison(stats.byGender), [stats.byGender]);
+  const cohortComparison = stats.cohortComparison;
+  const effectiveCohortLabel = cohortComparison?.cohortLabel || cohortLabel || "Conference population";
+  const historicLabel = cohortComparison?.populationLabel || "Historic Data";
+  const comparisonData = useMemo(() => buildCohortChartData(cohortComparison), [cohortComparison]);
+  const populationTopChoice = cohortComparison?.population[0]?.choice;
+  const cohortTopChoice = cohortComparison?.cohort[0]?.choice;
+  const choiceChartChoices = cohortComparison
+    ? choiceChartView === "cohort"
+      ? cohortComparison.cohort
+      : cohortComparison.population
+    : forcedChoices;
+  const chartData = useMemo(() => buildChoiceChartData(choiceChartChoices), [choiceChartChoices]);
+  const choiceChartLabel = choiceChartView === "cohort" ? effectiveCohortLabel : historicLabel;
+  const ratingChartSource = cohortComparison
+    ? ratingChartView === "cohort"
+      ? cohortComparison.cohortRatings
+      : cohortComparison.populationRatings
+    : stats.ratings;
+  const ratingData = ratingChartSource.map((item) => ({ name: item.dimension, average: Number(item.average.toFixed(2)) }));
+  const ratingChartLabel = ratingChartView === "cohort" ? effectiveCohortLabel : historicLabel;
 
   return (
     <section className={`results ${className ?? ""}`}>
       <div className="result-hero">
-        <p className="eyebrow">Your result</p>
-        <h1>You chose {submission.lifeChoice}.</h1>
+        <p className="eyebrow">{hasSubmission ? "Your result" : "Results"}</p>
+        <h1>{hasSubmission ? `You chose ${submission.lifeChoice}.` : `${effectiveCohortLabel} results.`}</h1>
         <p>
-          {choice
-            ? `${choice.count} ${choice.count === 1 ? "person has" : "people have"} chosen this so far.`
-            : "You are the first person in this category."}{" "}
+          {hasSubmission
+            ? choice
+              ? `${choice.count} ${choice.count === 1 ? "person has" : "people have"} chosen this so far.`
+              : "You are the first person in this category."
+            : `${forcedTotal} ${forcedTotal === 1 ? "response" : "responses"} in this view.`}{" "}
           {topChoice ? `The current leading pattern is ${topChoice.choice}.` : ""}
         </p>
-        <label className="legacy-toggle">
-          <input
-            type="checkbox"
-            checked={includeLegacy}
-            onChange={(event) => setIncludeLegacy(event.target.checked)}
-          />
-          <span>Include old Looking Back data</span>
-        </label>
       </div>
 
       <div className="insight-grid">
@@ -846,48 +911,97 @@ function Results({
       </div>
 
       <div className="chart-section">
-        <div>
-          <h2>How people are choosing</h2>
-          <p>The public pattern updates as new people take part.</p>
+        <div className="chart-section-header">
+          <div>
+            <h2>How people are choosing</h2>
+            <p>{choiceChartLabel} results, ordered by the most chosen answers in that group.</p>
+          </div>
+          {cohortComparison && (
+            <div className="chart-view-toggle" aria-label="Choose results group">
+              <button
+                className={choiceChartView === "cohort" ? "segment active" : "segment"}
+                type="button"
+                onClick={() => setChoiceChartView("cohort")}
+              >
+                {effectiveCohortLabel}
+              </button>
+              <button
+                className={choiceChartView === "population" ? "segment active" : "segment"}
+                type="button"
+                onClick={() => setChoiceChartView("population")}
+              >
+                {historicLabel}
+              </button>
+            </div>
+          )}
         </div>
         <div className="chart-card">
-          <ResponsiveContainer width="100%" height={Math.max(340, chartData.length * 22 + 56)}>
-            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 44, bottom: 24, left: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ded7cc" />
-              <XAxis
-                type="number"
-                allowDecimals={false}
-                tick={{ fill: "#6d675d", fontSize: 12 }}
-                axisLine={{ stroke: "#bdb5a9" }}
-                tickLine={{ stroke: "#bdb5a9" }}
-                label={{ value: "Number of responses", position: "insideBottom", offset: -12, fill: "#6d675d", fontSize: 11 }}
-              />
-              <YAxis dataKey="name" type="category" width={142} tick={{ fill: "#302f2b", fontSize: 11 }} />
-              <Tooltip formatter={(value) => [`${value}`, "Responses"]} />
-              <Bar dataKey="count" radius={[0, 5, 5, 0]} barSize={16}>
-                <LabelList dataKey="count" position="right" fill="#302f2b" fontSize={11} fontWeight={700} />
-                {chartData.map((entry, index) => (
-                  <Cell key={entry.name} fill={entry.name === submission.lifeChoice ? "#e75117" : COLORS[index % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length ? (
+            <AnimatedChoiceChart
+              data={chartData}
+              submissionChoice={hasSubmission ? submission.lifeChoice : ""}
+              animationKey={choiceChartView}
+            />
+          ) : (
+            <p className="muted empty-chart-message">No responses yet for {choiceChartLabel}.</p>
+          )}
         </div>
       </div>
 
       <div className="chart-section">
         <div className="chart-card">
-          <h3>Last-year feeling profile</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={ratingData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ded7cc" />
-              <XAxis dataKey="name" tick={{ fill: "#302f2b", fontSize: 11 }} interval={0} angle={-35} textAnchor="end" height={70} />
-              <YAxis domain={[-2, 2]} tick={{ fill: "#302f2b", fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="average" fill="#2f7d72" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="chart-card-header">
+            <div>
+              <h3>Last-year feeling profile</h3>
+              <p>{ratingChartLabel} averages.</p>
+            </div>
+            {cohortComparison && (
+              <div className="chart-view-toggle compact" aria-label="Choose feeling results group">
+                <button
+                  className={ratingChartView === "cohort" ? "segment active" : "segment"}
+                  type="button"
+                  onClick={() => setRatingChartView("cohort")}
+                >
+                  {effectiveCohortLabel}
+                </button>
+                <button
+                  className={ratingChartView === "population" ? "segment active" : "segment"}
+                  type="button"
+                  onClick={() => setRatingChartView("population")}
+                >
+                  {historicLabel}
+                </button>
+              </div>
+            )}
+          </div>
+          {ratingData.length ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={ratingData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ded7cc" />
+                <XAxis dataKey="name" tick={{ fill: "#302f2b", fontSize: 11 }} interval={0} angle={-35} textAnchor="end" height={70} />
+                <YAxis domain={[-2, 2]} tick={{ fill: "#302f2b", fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="average" fill={ratingChartView === "cohort" ? "#e75117" : "#3b6b8f"} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={620} animationEasing="ease-in-out" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="muted empty-chart-message">No feeling data yet for {ratingChartLabel}.</p>
+          )}
         </div>
+      </div>
+
+      <div className="chart-section">
+        <div>
+          <h2>{effectiveCohortLabel} vs {historicLabel}</h2>
+          <p>A direct comparison between people taking part at this event and the fixed historical dataset.</p>
+        </div>
+        <CohortComparisonView
+          data={comparisonData}
+          comparison={cohortComparison}
+          populationTopChoice={populationTopChoice}
+          cohortTopChoice={cohortTopChoice}
+          cohortLabel={effectiveCohortLabel}
+        />
       </div>
 
       <div className="chart-section">
@@ -902,22 +1016,19 @@ function Results({
         <ResponseGlobe locations={stats.locations} submission={submission} />
       </div>
 
-      <div className="chart-section">
-        <div>
-          <h2>Demographic patterns</h2>
-          <p>Where choices differ between males and females.</p>
-        </div>
-        <DemographicComparison comparison={demographicComparison} choices={chartData.slice(0, 10).map((item) => item.name)} />
-      </div>
-
       <div className="closing">
-        <h2>What would it mean to live closer to that choice?</h2>
+        <h2>Explore what drives your choices in evolvable.me</h2>
         <p>
-          Your answer is not a score. It is a direction of attention: a way to notice whether your words, actions, and
-          values are moving together.
+          Continue into evolvable.me to learn more about yourself, understand what shapes your decisions, and explore your
+          personal journey in more depth.
         </p>
-        <a className="primary link-button" href={EVOLVABLE_URL}>
-          Explore Evolvable <ArrowRight size={18} />
+        <a className="primary link-button cta-button cta-glow-button" href={EVOLVABLE_URL}>
+          <span className="cta-glow-band" aria-hidden="true" />
+          <span className="cta-glow-plate" aria-hidden="true" />
+          <span className="cta-glow-outline" aria-hidden="true" />
+          <span className="cta-glow-label">
+            <span className="cta-glow-label-text">Explore evolvable.me</span>
+          </span>
         </a>
       </div>
     </section>
@@ -934,106 +1045,353 @@ function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; 
   );
 }
 
-type DemographicGroup = {
-  total: number;
-  counts: Map<string, number>;
+type ChoiceChartRow = {
+  name: string;
+  count: number;
+  percent: number;
 };
 
-type DemographicRow = {
-  choice: string;
-  male: { count: number; percent: number };
-  female: { count: number; percent: number };
-  difference: number;
-  total: number;
-};
+const CHOICE_CHART_ANIMATION_MS = 1400;
+const CHOICE_CHART_EASING = "cubic-bezier(0.65, 0, 0.35, 1)";
 
-type DemographicComparisonData = {
-  maleTotal: number;
-  femaleTotal: number;
-  rows: DemographicRow[];
-};
+function AnimatedChoiceChart({
+  data,
+  submissionChoice,
+  animationKey
+}: {
+  data: ChoiceChartRow[];
+  submissionChoice: string;
+  animationKey: string;
+}) {
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const previousPositionsRef = useRef(new Map<string, number>());
+  const previousAnimationKeyRef = useRef(animationKey);
+  const previousHeightRef = useRef<number | null>(null);
+  const heightFrameRef = useRef<number | null>(null);
+  const heightTimeoutRef = useRef<number | null>(null);
+  const [chartHeight, setChartHeight] = useState<number | null>(null);
+  const maxCount = Math.max(...data.map((item) => item.count), 1);
 
-function buildDemographicComparison(groups: Stats["byGender"]): DemographicComparisonData {
-  const male = emptyDemographicGroup();
-  const female = emptyDemographicGroup();
-
-  for (const [groupName, values] of Object.entries(groups)) {
-    const normalised = groupName.trim().toLowerCase();
-    const target = normalised === "man" || normalised === "male" || normalised === "males"
-      ? male
-      : normalised === "woman" || normalised === "female" || normalised === "females"
-        ? female
-        : null;
-
-    if (!target) continue;
-
-    for (const value of values) {
-      if (!FORCED_CHOICE_SET.has(value.choice)) continue;
-      target.counts.set(value.choice, (target.counts.get(value.choice) ?? 0) + value.count);
-      target.total += value.count;
+  useLayoutEffect(() => {
+    if (heightFrameRef.current) {
+      window.cancelAnimationFrame(heightFrameRef.current);
+      heightFrameRef.current = null;
     }
-  }
+    if (heightTimeoutRef.current) {
+      window.clearTimeout(heightTimeoutRef.current);
+      heightTimeoutRef.current = null;
+    }
 
-  const choices = new Set([...male.counts.keys(), ...female.counts.keys()]);
-  const rows = Array.from(choices)
-    .map((choice) => {
-      const maleCount = male.counts.get(choice) ?? 0;
-      const femaleCount = female.counts.get(choice) ?? 0;
-      const malePercent = male.total ? (maleCount / male.total) * 100 : 0;
-      const femalePercent = female.total ? (femaleCount / female.total) * 100 : 0;
+    const nextHeight = chartRef.current?.scrollHeight ?? null;
+    const previousHeight = previousHeightRef.current;
+    const shouldAnimateChartHeight =
+      previousAnimationKeyRef.current !== animationKey &&
+      previousHeight != null &&
+      nextHeight != null &&
+      Math.abs(previousHeight - nextHeight) > 1;
 
-      return {
-        choice,
-        male: { count: maleCount, percent: malePercent },
-        female: { count: femaleCount, percent: femalePercent },
-        difference: femalePercent - malePercent,
-        total: maleCount + femaleCount
-      };
-    })
-    .filter((row) => row.total > 0)
-    .sort((a, b) => b.total - a.total);
+    if (shouldAnimateChartHeight) {
+      setChartHeight(previousHeight);
+      heightFrameRef.current = window.requestAnimationFrame(() => {
+        setChartHeight(nextHeight);
+      });
+      heightTimeoutRef.current = window.setTimeout(() => {
+        setChartHeight(null);
+        heightTimeoutRef.current = null;
+      }, 1450);
+    } else {
+      setChartHeight(null);
+    }
 
-  return {
-    maleTotal: male.total,
-    femaleTotal: female.total,
-    rows
-  };
-}
+    const currentPositions = new Map<string, number>();
 
-function emptyDemographicGroup(): DemographicGroup {
-  return { total: 0, counts: new Map() };
-}
+    for (const [name, element] of rowRefs.current.entries()) {
+      currentPositions.set(name, element.offsetTop);
+    }
 
-function DemographicComparison({ comparison, choices }: { comparison: DemographicComparisonData; choices: string[] }) {
-  if (!comparison.rows.length) {
-    return <p className="muted">Demographic patterns will appear as people add context.</p>;
-  }
+    if (previousAnimationKeyRef.current !== animationKey) {
+      for (const [name, element] of rowRefs.current.entries()) {
+        const previousTop = previousPositionsRef.current.get(name);
+        const currentTop = currentPositions.get(name);
+        if (previousTop == null || currentTop == null) continue;
 
-  const rowsByChoice = new Map(comparison.rows.map((row) => [row.choice, row]));
-  const visibleRows = choices.map((choice) => rowsByChoice.get(choice)).filter((row): row is DemographicRow => row != null);
-  const maxDifference = Math.max(4, ...visibleRows.map((row) => Math.abs(row.difference)));
+        const delta = previousTop - currentTop;
+        if (Math.abs(delta) < 1) continue;
+
+        element.animate(
+          [
+            { transform: `translateY(${delta}px)` },
+            { transform: "translateY(0)" }
+          ],
+          {
+            duration: CHOICE_CHART_ANIMATION_MS,
+            easing: CHOICE_CHART_EASING
+          }
+        );
+      }
+    }
+
+    previousPositionsRef.current = currentPositions;
+    previousAnimationKeyRef.current = animationKey;
+
+    if (nextHeight != null) {
+      previousHeightRef.current = nextHeight;
+    }
+
+    return () => {
+      if (heightFrameRef.current) {
+        window.cancelAnimationFrame(heightFrameRef.current);
+        heightFrameRef.current = null;
+      }
+      if (heightTimeoutRef.current) {
+        window.clearTimeout(heightTimeoutRef.current);
+        heightTimeoutRef.current = null;
+      }
+    };
+  }, [animationKey, data]);
 
   return (
-    <div className="demographic-comparison">
-      <div className="demographic-summary">
-        <span><strong>Males</strong> {comparison.maleTotal}</span>
-        <span><strong>Females</strong> {comparison.femaleTotal}</span>
+    <div
+      className={chartHeight == null ? "animated-choice-chart-shell" : "animated-choice-chart-shell is-resizing"}
+      style={chartHeight == null ? undefined : { height: chartHeight }}
+    >
+      <div className="animated-choice-chart" ref={chartRef}>
+        {data.map((item, index) => (
+          <div
+            className={item.name === submissionChoice ? "ranked-bar-row highlighted" : "ranked-bar-row"}
+            key={item.name}
+            ref={(element) => {
+              if (element) {
+                rowRefs.current.set(item.name, element);
+              } else {
+                rowRefs.current.delete(item.name);
+              }
+            }}
+          >
+            <div className="ranked-label">
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{item.name}</strong>
+            </div>
+            <div className="ranked-track" aria-hidden="true">
+              <AnimatedChoiceBar
+                color={stableChoiceColor(item.name)}
+                width={Math.max((item.count / maxCount) * 100, 2)}
+              />
+            </div>
+            <div className="ranked-count">
+              <AnimatedNumber className="ranked-count-value" value={item.count} decimals={0} />
+              <AnimatedNumber className="ranked-count-percent" value={item.percent} decimals={1} suffix="%" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnimatedChoiceBar({ color, width }: { color: string; width: number }) {
+  const previousWidthRef = useRef(width);
+  const barRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const previousWidth = previousWidthRef.current;
+    if (barRef.current && Math.abs(previousWidth - width) > 0.1) {
+      barRef.current.animate(
+        [
+          { width: `${previousWidth}%` },
+          { width: `${width}%` }
+        ],
+        {
+          duration: CHOICE_CHART_ANIMATION_MS,
+          easing: CHOICE_CHART_EASING
+        }
+      );
+    }
+    previousWidthRef.current = width;
+  }, [width]);
+
+  return <i ref={barRef} style={{ width: `${width}%`, background: color }} />;
+}
+
+function AnimatedNumber({
+  className,
+  value,
+  decimals,
+  suffix = ""
+}: {
+  className?: string;
+  value: number;
+  decimals: number;
+  suffix?: string;
+}) {
+  const previousValueRef = useRef(value);
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    const previousValue = previousValueRef.current;
+    if (Math.abs(previousValue - value) < 0.001) {
+      setDisplayValue(value);
+      previousValueRef.current = value;
+      return;
+    }
+
+    let animationFrame = 0;
+    const startTime = performance.now();
+    const duration = CHOICE_CHART_ANIMATION_MS;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = easeInOut(progress);
+      setDisplayValue(previousValue + (value - previousValue) * eased);
+
+      if (progress < 1) {
+        animationFrame = window.requestAnimationFrame(tick);
+      } else {
+        previousValueRef.current = value;
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      previousValueRef.current = value;
+    };
+  }, [value]);
+
+  return <strong className={className}>{formatAnimatedNumber(displayValue, decimals, suffix)}</strong>;
+}
+
+function easeInOut(progress: number) {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function formatAnimatedNumber(value: number, decimals: number, suffix: string) {
+  return `${decimals === 0 ? Math.round(value).toString() : value.toFixed(decimals)}${suffix}`;
+}
+
+function stableChoiceColor(choice: string) {
+  return CHOICE_COLORS.get(choice) ?? COLORS[Math.abs(hashChoice(choice)) % COLORS.length];
+}
+
+function hashChoice(choice: string) {
+  let hash = 0;
+  for (let index = 0; index < choice.length; index++) {
+    hash = (hash * 31 + choice.charCodeAt(index)) | 0;
+  }
+  return hash;
+}
+
+type CohortComparisonRow = {
+  choice: string;
+  population: { count: number; percent: number };
+  cohort: { count: number; percent: number };
+  total: number;
+};
+
+function buildChoiceChartData(choices: Stats["choices"]): ChoiceChartRow[] {
+  return choices
+    .filter((item) => FORCED_CHOICE_SET.has(item.choice) && item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((item) => ({
+      name: item.choice,
+      count: item.count,
+      percent: Math.round(item.percent * 1000) / 10
+    }));
+}
+
+function buildCohortChartData(comparison?: Stats["cohortComparison"]): CohortComparisonRow[] {
+  if (!comparison) return [];
+  const rowsByChoice = new Map<string, CohortComparisonRow>();
+
+  for (const item of [...comparison.population, ...comparison.cohort]) {
+    if (!FORCED_CHOICE_SET.has(item.choice)) continue;
+    rowsByChoice.set(item.choice, {
+      choice: item.choice,
+      population: { count: 0, percent: 0 },
+      cohort: { count: 0, percent: 0 },
+      total: 0
+    });
+  }
+
+  for (const item of comparison.population) {
+    const row = rowsByChoice.get(item.choice);
+    if (!row) continue;
+    row.population = { count: item.count, percent: item.percent * 100 };
+    row.total += item.count;
+  }
+
+  for (const item of comparison.cohort) {
+    const row = rowsByChoice.get(item.choice);
+    if (!row) continue;
+    row.cohort = { count: item.count, percent: item.percent * 100 };
+    row.total += item.count;
+  }
+
+  return Array.from(rowsByChoice.values())
+    .filter((row) => row.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+}
+
+function CohortComparisonView({
+  data,
+  comparison,
+  populationTopChoice,
+  cohortTopChoice,
+  cohortLabel
+}: {
+  data: CohortComparisonRow[];
+  comparison?: Stats["cohortComparison"];
+  populationTopChoice?: string;
+  cohortTopChoice?: string;
+  cohortLabel: string;
+}) {
+  if (!comparison) {
+    return <p className="muted">Event comparison appears when an event cohort is configured.</p>;
+  }
+
+  if (!data.length) {
+    return <p className="muted">The event comparison will appear as conference responses come in.</p>;
+  }
+
+  const maxDifference = Math.max(4, ...data.map((row) => Math.abs(row.cohort.percent - row.population.percent)));
+  const historicLabel = comparison.populationLabel || "Historic Data";
+
+  return (
+    <div className="cohort-comparison">
+      <div className="cohort-summary">
+        <span><strong>{cohortLabel}</strong> {comparison.cohortTotal}</span>
+        <span><strong>{historicLabel}</strong> {comparison.populationTotal}</span>
+      </div>
+      <div className="cohort-topline">
+        <strong>Most chosen</strong>
+        <span>{cohortLabel}: {cohortTopChoice ?? "Awaiting data"}</span>
+        <span>{historicLabel}: {populationTopChoice ?? "Awaiting data"}</span>
       </div>
       <div className="comparison-head">
         <span>Choice</span>
-        <span>Males</span>
+        <span>{cohortLabel}</span>
         <span>Difference</span>
-        <span>Females</span>
+        <span>{historicLabel}</span>
       </div>
-      {visibleRows.map((row) => (
+      {data.map((row) => (
         <div className="comparison-row" key={row.choice}>
           <div className="comparison-choice">
             <strong>{row.choice}</strong>
             <span>{row.total} responses</span>
           </div>
-          <ComparisonMetric group="male" stat={row.male} />
-          <DifferenceMetric difference={row.difference} maxDifference={maxDifference} />
-          <ComparisonMetric group="female" stat={row.female} />
+          <ComparisonMetric group="cohort" stat={row.cohort} />
+          <DifferenceMetric
+            difference={row.cohort.percent - row.population.percent}
+            maxDifference={maxDifference}
+            cohortLabel={cohortLabel}
+            historicLabel={historicLabel}
+          />
+          <ComparisonMetric group="population" stat={row.population} />
         </div>
       ))}
     </div>
@@ -1044,13 +1402,13 @@ function ComparisonMetric({
   group,
   stat
 }: {
-  group: "male" | "female";
+  group: "population" | "cohort";
   stat: { count: number; percent: number };
 }) {
   return (
     <div className={`comparison-metric ${group}-metric`}>
       <div className="comparison-value">
-        <strong>{formatDemographicPercent(stat.percent)}</strong>
+        <strong>{formatComparisonPercent(stat.percent)}</strong>
         <span>{stat.count}</span>
       </div>
       <div className="comparison-track" aria-hidden="true">
@@ -1060,12 +1418,22 @@ function ComparisonMetric({
   );
 }
 
-function DifferenceMetric({ difference, maxDifference }: { difference: number; maxDifference: number }) {
+function DifferenceMetric({
+  difference,
+  maxDifference,
+  cohortLabel,
+  historicLabel
+}: {
+  difference: number;
+  maxDifference: number;
+  cohortLabel: string;
+  historicLabel: string;
+}) {
   const absoluteDifference = Math.abs(difference);
-  const direction = difference > 0 ? "female" : "male";
+  const direction = difference > 0 ? "cohort" : "population";
   const label = absoluteDifference < 0.5
     ? "Even"
-    : `${absoluteDifference.toFixed(1)} pts ${direction}`;
+    : `${absoluteDifference.toFixed(1)} pts ${direction === "cohort" ? cohortLabel : historicLabel}`;
 
   return (
     <div className="comparison-delta">
@@ -1082,7 +1450,7 @@ function DifferenceMetric({ difference, maxDifference }: { difference: number; m
   );
 }
 
-function formatDemographicPercent(value: number) {
+function formatComparisonPercent(value: number) {
   return `${value >= 10 ? Math.round(value) : value.toFixed(1)}%`;
 }
 
@@ -1292,6 +1660,8 @@ function ResponseGlobe({ locations, submission }: { locations: Stats["locations"
     mapRef.current = map;
     mapLoadedRef.current = false;
     setMapError("");
+    map.scrollZoom.disable();
+    map.touchZoomRotate.disable();
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     let glowAnimationFrame = 0;

@@ -75,6 +75,7 @@ export default function AdminPage() {
                       <th>Value</th>
                       <th>Age</th>
                       <th>Gender</th>
+                      <th>Cohort</th>
                       <th>Location</th>
                     </tr>
                   </thead>
@@ -87,6 +88,7 @@ export default function AdminPage() {
                         <td>{submission.guidingValue}</td>
                         <td>{submission.ageBand}</td>
                         <td>{submission.gender}</td>
+                        <td>{submission.cohortLabel || submission.cohortSlug || "Population"}</td>
                         <td>
                           {[submission.location.city, submission.location.country].filter(Boolean).join(", ") || "None"}
                         </td>
