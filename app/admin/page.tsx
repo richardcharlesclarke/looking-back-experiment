@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { RATING_DIMENSIONS } from "@/lib/constants";
 import type { Submission } from "@/lib/types";
 
 export default function AdminPage() {
@@ -76,6 +77,7 @@ export default function AdminPage() {
                       <th>Age</th>
                       <th>Gender</th>
                       <th>Cohort</th>
+                      <th>Ratings</th>
                       <th>Location</th>
                     </tr>
                   </thead>
@@ -89,6 +91,9 @@ export default function AdminPage() {
                         <td>{submission.ageBand}</td>
                         <td>{submission.gender}</td>
                         <td>{submission.cohortLabel || submission.cohortSlug || "Population"}</td>
+                        <td>
+                          {RATING_DIMENSIONS.map((dimension) => `${dimension}: ${submission.ratings[dimension] ?? ""}`).join(" | ")}
+                        </td>
                         <td>
                           {[submission.location.city, submission.location.country].filter(Boolean).join(", ") || "None"}
                         </td>
