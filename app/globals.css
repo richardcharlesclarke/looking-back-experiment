@@ -1659,15 +1659,26 @@ a {
   display: grid;
   gap: 6px;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
   text-align: center;
+}
+
+.comparison-delta span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .delta-track {
   position: relative;
+  width: 100%;
+  max-width: 148px;
+  justify-self: center;
   height: 18px;
   border-radius: 999px;
   background:

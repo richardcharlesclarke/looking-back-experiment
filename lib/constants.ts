@@ -54,4 +54,4 @@ export const GENDERS = [
 export const EVOLVABLE_URL = "https://evolvable.me";
 
 export const CONFIGURED_COHORT_SLUG = process.env.NEXT_PUBLIC_LOOKING_BACK_COHORT_SLUG?.trim() || "conference-2026";
-export const CONFIGURED_COHORT_LABEL = process.env.NEXT_PUBLIC_LOOKING_BACK_COHORT_LABEL?.trim() || "WMC2026 Conference Population";
+export const CONFIGURED_COHORT_LABEL = process.env.NEXT_PUBLIC_LOOKING_BACK_COHORT_LABEL?.trim() || "WMC2026 Conference";
