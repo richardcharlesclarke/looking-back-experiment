@@ -298,7 +298,7 @@ export async function getStats(options: { includeLegacy?: boolean; cohortSlug?: 
   const stats = options.includeLegacy ? mergeWithLegacy(current) : current;
   const cohortSlug = options.cohortSlug?.trim();
   const cohortComparison = cohortSlug
-    ? buildCohortComparison(submissions, cohortSlug, options.cohortLabel?.trim() || "Conference population", Boolean(options.includeLegacy))
+    ? buildCohortComparison(submissions, cohortSlug, options.cohortLabel?.trim() || "WMC2026 Conference Population", Boolean(options.includeLegacy))
     : undefined;
   const statsWithComparison = cohortComparison ? { ...stats, cohortComparison } : stats;
   if (!options.includeLegacy) return statsWithComparison;

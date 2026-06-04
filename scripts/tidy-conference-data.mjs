@@ -2,7 +2,7 @@ import { Pool } from "pg";
 
 const databaseUrl = process.env.DATABASE_URL;
 const cohortSlug = process.env.CONFERENCE_COHORT_SLUG || "conference-2026";
-const cohortLabel = process.env.CONFERENCE_COHORT_LABEL || "Conference population";
+const cohortLabel = process.env.CONFERENCE_COHORT_LABEL || "WMC2026 Conference Population";
 const tagUntaggedSince = process.env.CONFERENCE_SUBMISSIONS_SINCE;
 const shouldApply = process.env.APPLY_CONFERENCE_DATA_TIDY === "1";
 

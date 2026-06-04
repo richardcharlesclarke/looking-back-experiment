@@ -53,7 +53,7 @@ const PREVIEW_SUBMISSION: Submission = {
   ageBand: "35-44",
   gender: "Prefer not to say",
   cohortSlug: "conference-preview",
-  cohortLabel: "Conference population",
+  cohortLabel: "WMC2026 Conference Population",
   location: { consent: true, latitude: 51.5072, longitude: -0.1276, timezone: "Europe/London", locale: "en-GB" }
 };
 
@@ -76,7 +76,7 @@ const PREVIEW_STATS: Stats = {
   },
   cohortComparison: {
     populationLabel: "Historic Data",
-    cohortLabel: "Conference population",
+    cohortLabel: "WMC2026 Conference Population",
     populationTotal: 720,
     cohortTotal: 24,
     population: [
@@ -159,7 +159,7 @@ export default function Home() {
       setStep(requestedScreen as Step);
     }
     if (cohortSlug) {
-      setCohortConfig({ slug: cohortSlug, label: cohortLabel || "Conference population" });
+      setCohortConfig({ slug: cohortSlug, label: cohortLabel || "WMC2026 Conference Population" });
     }
   }, []);
 
@@ -626,7 +626,7 @@ function statsPath(cohortConfig: { slug: string; label: string }) {
   searchParams.set("legacy", "1");
   if (cohortConfig.slug) {
     searchParams.set("cohort", cohortConfig.slug);
-    searchParams.set("cohortLabel", cohortConfig.label || "Conference population");
+    searchParams.set("cohortLabel", cohortConfig.label || "WMC2026 Conference Population");
   }
   const query = searchParams.toString();
   return `/api/stats${query ? `?${query}` : ""}`;
@@ -869,7 +869,7 @@ function Results({
   const choice = forcedChoices.find((item) => item.choice === submission.lifeChoice);
   const topChoice = forcedChoices[0];
   const cohortComparison = stats.cohortComparison;
-  const effectiveCohortLabel = cohortComparison?.cohortLabel || cohortLabel || "Conference population";
+  const effectiveCohortLabel = cohortComparison?.cohortLabel || cohortLabel || "WMC2026 Conference Population";
   const historicLabel = cohortComparison?.populationLabel || "Historic Data";
   const comparisonData = useMemo(() => buildCohortChartData(cohortComparison), [cohortComparison]);
   const populationTopChoice = cohortComparison?.population[0]?.choice;

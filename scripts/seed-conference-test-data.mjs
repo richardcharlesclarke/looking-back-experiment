@@ -1,6 +1,6 @@
 const baseUrl = process.env.SEED_BASE_URL || "http://localhost:3000";
 const cohortSlug = process.env.SEED_COHORT_SLUG || "conference-2026";
-const cohortLabel = process.env.SEED_COHORT_LABEL || "Conference population";
+const cohortLabel = process.env.SEED_COHORT_LABEL || "WMC2026 Conference Population";
 
 const dimensions = [
   "Stress",
