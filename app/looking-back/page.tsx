@@ -1656,6 +1656,13 @@ function CohortComparisonView({
   }
 
   const maxDifference = Math.max(4, ...data.map((row) => Math.abs(row.cohort.percent - row.population.percent)));
+  const maxComparisonPercent = Math.max(
+    10,
+    Math.min(
+      50,
+      Math.ceil(Math.max(...data.flatMap((row) => [row.cohort.percent, row.population.percent])) / 5) * 5
+    )
+  );
   const historicLabel = comparison.populationLabel || "Historic Data";
 
   return (
@@ -1671,46 +1678,100 @@ function CohortComparisonView({
       </div>
       <div className="comparison-head">
         <span>Choice</span>
-        <span>{cohortLabel}</span>
+        <span className="comparison-scale-head">
+          <span>{cohortLabel}</span>
+          <span>{historicLabel}</span>
+        </span>
         <span>Difference</span>
-        <span>{historicLabel}</span>
       </div>
-      {data.map((row) => (
+      {data.map((row, index) => (
         <div className="comparison-row" key={row.choice}>
           <div className="comparison-choice">
             <strong>{row.choice}</strong>
             <span>{row.total} responses</span>
           </div>
-          <ComparisonMetric group="cohort" stat={row.cohort} />
+          <MirroredComparisonMetric
+            cohort={row.cohort}
+            population={row.population}
+            maxPercent={maxComparisonPercent}
+            cohortLabel={cohortLabel}
+            historicLabel={historicLabel}
+            showScale={index === data.length - 1}
+          />
           <DifferenceMetric
             difference={row.cohort.percent - row.population.percent}
             maxDifference={maxDifference}
             cohortLabel={cohortLabel}
             historicLabel={historicLabel}
           />
-          <ComparisonMetric group="population" stat={row.population} />
         </div>
       ))}
     </div>
   );
 }
 
-function ComparisonMetric({
-  group,
-  stat
+function MirroredComparisonMetric({
+  cohort,
+  population,
+  maxPercent,
+  cohortLabel,
+  historicLabel,
+  showScale
 }: {
-  group: "population" | "cohort";
-  stat: { count: number; percent: number };
+  cohort: { count: number; percent: number };
+  population: { count: number; percent: number };
+  maxPercent: number;
+  cohortLabel: string;
+  historicLabel: string;
+  showScale: boolean;
 }) {
+  const cohortWidth = Math.min((cohort.percent / maxPercent) * 50, 50);
+  const populationWidth = Math.min((population.percent / maxPercent) * 50, 50);
+  const tickStep = 10;
+  const ticks = Array.from(
+    { length: Math.floor(maxPercent / tickStep) },
+    (_, index) => (index + 1) * tickStep
+  );
+
   return (
-    <div className={`comparison-metric ${group}-metric`}>
-      <div className="comparison-value">
-        <strong>{formatComparisonPercent(stat.percent)}</strong>
-        <span>{stat.count}</span>
+    <div className="comparison-mirror">
+      <div className="comparison-values">
+        <div className="comparison-value cohort-value" aria-label={`${cohortLabel}: ${formatComparisonPercent(cohort.percent)}, ${cohort.count} responses`}>
+          <span>{cohort.count}</span>
+          <strong>{formatComparisonPercent(cohort.percent)}</strong>
+        </div>
+        <div className="comparison-value population-value" aria-label={`${historicLabel}: ${formatComparisonPercent(population.percent)}, ${population.count} responses`}>
+          <strong>{formatComparisonPercent(population.percent)}</strong>
+          <span>{population.count}</span>
+        </div>
       </div>
-      <div className="comparison-track" aria-hidden="true">
-        <i style={{ width: `${Math.min(stat.percent, 100)}%` }} />
+      <div className="comparison-track mirrored-track" aria-hidden="true">
+        <i className="cohort" style={{ width: `${cohortWidth}%` }} />
+        <i className="population" style={{ width: `${populationWidth}%` }} />
       </div>
+      {showScale && (
+        <div className="comparison-axis" aria-hidden="true">
+          {ticks.map((tick) => (
+            <span
+              className="cohort-tick"
+              key={`cohort-${tick}`}
+              style={{ left: `${50 - (tick / maxPercent) * 50}%` }}
+            >
+              {tick}%
+            </span>
+          ))}
+          <span className="zero-tick">0%</span>
+          {ticks.map((tick) => (
+            <span
+              className="population-tick"
+              key={`population-${tick}`}
+              style={{ left: `${50 + (tick / maxPercent) * 50}%` }}
+            >
+              {tick}%
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1728,13 +1789,14 @@ function DifferenceMetric({
 }) {
   const absoluteDifference = Math.abs(difference);
   const direction = difference > 0 ? "cohort" : "population";
-  const deltaCohortLabel = cohortLabel.replace(/\s+Conference$/i, "");
+  const deltaCohortLabel = cohortLabel.replace(/WMC2026/i, "WMC 2026").replace(/\s+Conference$/i, "");
   const label = absoluteDifference < 0.5
     ? "Even"
-    : `${absoluteDifference.toFixed(1)} pts ${direction === "cohort" ? deltaCohortLabel : historicLabel}`;
+    : `+${absoluteDifference.toFixed(1)}% ${direction === "cohort" ? deltaCohortLabel : historicLabel}`;
 
   return (
     <div className="comparison-delta">
+      <span>{label}</span>
       <div className="delta-track" aria-hidden="true">
         {absoluteDifference >= 0.5 && (
           <i
@@ -1743,7 +1805,6 @@ function DifferenceMetric({
           />
         )}
       </div>
-      <span>{label}</span>
     </div>
   );
 }

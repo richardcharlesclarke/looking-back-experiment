@@ -1762,8 +1762,8 @@ a {
 .comparison-head,
 .comparison-row {
   display: grid;
-  grid-template-columns: minmax(120px, 170px) minmax(150px, 1fr) minmax(112px, 148px) minmax(150px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(120px, 170px) minmax(260px, 1fr) minmax(112px, 148px);
+  gap: 18px;
 }
 
 .comparison-head {
@@ -1776,8 +1776,23 @@ a {
   text-transform: uppercase;
 }
 
-.comparison-head span:nth-child(3) {
+.comparison-head > span:nth-child(3) {
   text-align: center;
+}
+
+.comparison-scale-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  min-width: 0;
+}
+
+.comparison-scale-head span:first-child {
+  text-align: right;
+}
+
+.comparison-scale-head span:last-child {
+  text-align: left;
 }
 
 .comparison-row {
@@ -1800,20 +1815,35 @@ a {
   font-size: 12px;
 }
 
-.comparison-metric {
+.comparison-mirror {
   display: grid;
-  gap: 7px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.comparison-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
   min-width: 0;
 }
 
 .comparison-value {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 800;
+}
+
+.cohort-value {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.population-value {
+  justify-content: flex-start;
 }
 
 .comparison-value span {
@@ -1823,6 +1853,7 @@ a {
 }
 
 .comparison-track {
+  position: relative;
   height: 18px;
   overflow: hidden;
   border: 1px solid rgba(35, 35, 34, 0.18);
@@ -1835,15 +1866,70 @@ a {
   display: block;
   min-width: 2px;
   height: 100%;
-  border-radius: inherit;
 }
 
-.population-metric .comparison-track i {
+.mirrored-track {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(35, 35, 34, 0.48) calc(50% - 0.5px), rgba(35, 35, 34, 0.48) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    rgba(35, 35, 34, 0.07);
+}
+
+.mirrored-track i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.mirrored-track i.cohort {
+  right: 50%;
+  border-radius: 999px 0 0 999px;
+  background: var(--accent);
+}
+
+.mirrored-track i.population {
+  left: 50%;
+  border-radius: 0 999px 999px 0;
   background: var(--blue);
 }
 
-.cohort-metric .comparison-track i {
-  background: var(--accent);
+.comparison-axis {
+  position: relative;
+  height: 22px;
+  margin-top: -1px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.comparison-axis span {
+  position: absolute;
+  top: 0;
+  display: inline-flex;
+  justify-content: center;
+  min-width: 30px;
+  padding-top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.comparison-axis span::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 5px;
+  background: rgba(35, 35, 34, 0.34);
+}
+
+.comparison-axis .zero-tick {
+  left: 50%;
+  color: var(--ink);
+}
+
+.comparison-axis .zero-tick::before {
+  display: none;
 }
 
 .comparison-delta {
@@ -1886,14 +1972,16 @@ a {
   width: var(--delta-width);
 }
 
-.delta-track i.population {
+.delta-track i.cohort {
   right: 50%;
-  background: var(--blue);
+  border-radius: 999px 0 0 999px;
+  background: var(--accent);
 }
 
-.delta-track i.cohort {
+.delta-track i.population {
   left: 50%;
-  background: var(--accent);
+  border-radius: 0 999px 999px 0;
+  background: var(--blue);
 }
 
 .map-card {
