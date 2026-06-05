@@ -1210,7 +1210,7 @@ function Results({
 
       <div className="chart-section">
         <div>
-          <h2>Values people are living by</h2>
+          <h2>Values people are living by WMC2026</h2>
           <p>Anonymised fragments from the value question on the first page.</p>
         </div>
         <WordCloud words={stats.values} emptyText="Values will appear here as people answer the first-page reflection." />
@@ -1218,7 +1218,7 @@ function Results({
 
       <div className="chart-section">
         <div>
-          <h2>What shapes alignment</h2>
+          <h2>What shapes alignment WMC2026</h2>
           <p>Words and names people gave for what blocks and enables alignment with their Looking Back choice.</p>
         </div>
         <div className="two-col word-cloud-columns">
