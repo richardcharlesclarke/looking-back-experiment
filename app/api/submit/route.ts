@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   AGE_BANDS,
+  ALIGNMENT_OPTIONS,
   CONFIGURED_COHORT_LABEL,
   CONFIGURED_COHORT_SLUG,
   GENDERS,
@@ -23,8 +24,19 @@ export async function POST(request: Request) {
   const cohortSlug = body.cohortSlug?.trim() || CONFIGURED_COHORT_SLUG;
   const cohortLabel = body.cohortLabel?.trim() || CONFIGURED_COHORT_LABEL;
 
-  if (!isString(body.idealWord) || !isString(body.guidingValue) || !isString(body.lifeChoice)) {
+  if (
+    !isString(body.idealWord) ||
+    !isString(body.guidingValue) ||
+    !isString(body.alignment) ||
+    !isString(body.blocker) ||
+    !isString(body.enabler) ||
+    !isString(body.lifeChoice)
+  ) {
     return NextResponse.json({ error: "Missing required reflection fields." }, { status: 400 });
+  }
+
+  if (![...ALIGNMENT_OPTIONS].includes(body.alignment as never)) {
+    return NextResponse.json({ error: "Unknown alignment answer." }, { status: 400 });
   }
 
   if (![...LIFE_CHOICES].includes(body.lifeChoice as never)) {

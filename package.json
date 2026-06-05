@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "cleanup:test-submissions": "node scripts/cleanup-test-submissions.mjs",
     "seed:conference-test-data": "node scripts/seed-conference-test-data.mjs",
+    "seed:conference-demo-data": "node scripts/seed-conference-demo-data.mjs",
     "tag:conference-submissions": "node scripts/tag-recent-untagged-conference-submissions.mjs",
     "tidy:conference-data": "node scripts/tidy-conference-data.mjs",
     "import:legacy-locations": "node scripts/import-legacy-location-points.mjs"

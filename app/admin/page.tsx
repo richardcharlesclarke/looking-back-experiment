@@ -74,6 +74,9 @@ export default function AdminPage() {
                       <th>Choice</th>
                       <th>Word</th>
                       <th>Value</th>
+                      <th>Alignment</th>
+                      <th>Blocker</th>
+                      <th>Enabler</th>
                       <th>Age</th>
                       <th>Gender</th>
                       <th>Cohort</th>
@@ -88,6 +91,9 @@ export default function AdminPage() {
                         <td>{submission.lifeChoice}</td>
                         <td>{submission.idealWord}</td>
                         <td>{submission.guidingValue}</td>
+                        <td>{submission.alignment}</td>
+                        <td>{submission.blocker}</td>
+                        <td>{submission.enabler}</td>
                         <td>{submission.ageBand}</td>
                         <td>{submission.gender}</td>
                         <td>{submission.cohortLabel || submission.cohortSlug || "Population"}</td>

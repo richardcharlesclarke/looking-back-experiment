@@ -5,6 +5,9 @@ create table if not exists submissions (
   created_at timestamptz not null default now(),
   ideal_word text not null,
   guiding_value text not null,
+  alignment text,
+  blocker text,
+  enabler text,
   life_choice text not null,
   other_choice text,
   ratings jsonb not null,
@@ -32,6 +35,9 @@ alter table submissions add column if not exists country_code text;
 alter table submissions add column if not exists location_source text;
 alter table submissions add column if not exists cohort_slug text;
 alter table submissions add column if not exists cohort_label text;
+alter table submissions add column if not exists alignment text;
+alter table submissions add column if not exists blocker text;
+alter table submissions add column if not exists enabler text;
 
 create index if not exists submissions_created_at_idx on submissions (created_at desc);
 create index if not exists submissions_life_choice_idx on submissions (life_choice);

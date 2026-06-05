@@ -17,6 +17,9 @@ export type LocationSnapshot = {
 export type SubmissionInput = {
   idealWord: string;
   guidingValue: string;
+  alignment: string;
+  blocker: string;
+  enabler: string;
   lifeChoice: string;
   otherChoice?: string;
   ratings: Ratings;
@@ -53,6 +56,8 @@ export type Stats = {
   ratings: RatingStat[];
   words: string[];
   values: string[];
+  blockers: string[];
+  enablers: string[];
   locations: Array<{ latitude: number; longitude: number; choice: string }>;
 };
 

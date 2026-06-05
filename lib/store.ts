@@ -13,6 +13,174 @@ const globalForStore = globalThis as typeof globalThis & {
 const memoryStore = globalForStore.lookingBackMemoryStore ?? [];
 globalForStore.lookingBackMemoryStore = memoryStore;
 
+const FAKE_CONFERENCE_COHORT_SLUG = "conference-2026";
+const FAKE_CONFERENCE_COHORT_LABEL = "WMC2026 Conference";
+
+const FAKE_CONFERENCE_CHOICES = [
+  "Meaningful", "Meaningful", "Meaningful",
+  "Authentic", "Authentic",
+  "Without Fear", "Happy", "Useful", "Successful", "Free",
+  "Meaningful", "Meaningful", "Meaningful", "Meaningful", "Meaningful",
+  "Authentic", "Authentic", "Authentic", "Authentic",
+  "Without Fear", "Without Fear", "Without Fear", "Without Fear", "Without Fear",
+  "Happy", "Happy", "Happy", "Happy", "Happy",
+  "Useful", "Useful", "Useful", "Useful",
+  "Wise", "Wise", "Wise",
+  "Successful", "Successful", "Successful",
+  "Adventurous", "Adventurous", "Free", "Free", "Healthy", "Valuable", "Inspired", "Safe"
+];
+
+const FAKE_CONFERENCE_VALUES = [
+  "curiosity", "curiosity", "curiosity",
+  "courage", "courage",
+  "connection", "connection",
+  "integrity", "family", "growth",
+  "curiosity", "curiosity", "curiosity", "curiosity", "curiosity", "curiosity",
+  "courage", "courage", "courage", "courage", "courage",
+  "connection", "connection", "connection", "connection", "connection", "connection",
+  "integrity", "integrity", "integrity", "integrity", "integrity",
+  "family", "family", "family", "family",
+  "growth", "growth", "growth", "growth",
+  "kindness", "kindness", "kindness",
+  "freedom", "freedom", "freedom",
+  "purpose", "purpose", "service", "service", "trust", "trust",
+  "resilience", "presence", "play", "learning", "fairness", "optimism"
+];
+
+const FAKE_CONFERENCE_BLOCKERS = [
+  "fear", "fear", "fear",
+  "time", "time",
+  "pressure", "pressure",
+  "doubt", "work", "expectation",
+  "fear", "fear", "fear", "fear",
+  "time", "time", "time", "time",
+  "pressure", "pressure", "pressure", "pressure",
+  "doubt", "doubt", "doubt", "doubt",
+  "work", "work", "work",
+  "expectation", "expectation", "expectation",
+  "fatigue", "fatigue",
+  "habit", "habit",
+  "noise", "perfection", "responsibility", "distance", "uncertainty", "comparison"
+];
+
+const FAKE_CONFERENCE_ENABLERS = [
+  "community", "community", "community",
+  "family", "family",
+  "curiosity", "curiosity",
+  "discipline", "purpose", "rest",
+  "community", "community", "community",
+  "family", "family", "family",
+  "curiosity", "curiosity", "curiosity",
+  "discipline", "discipline", "discipline",
+  "purpose", "purpose", "purpose",
+  "rest", "rest", "rest",
+  "optimism", "optimism",
+  "attention", "attention",
+  "practice", "practice",
+  "love", "clarity", "mentors", "friends", "nature", "conversation"
+];
+
+const FAKE_CONFERENCE_GENDERS = [
+  "Woman", "Man", "Woman", "Man", "Woman", "Man", "Non-binary", "Prefer not to say"
+];
+
+const FAKE_CONFERENCE_AGE_BANDS = [
+  "25-34", "35-44", "35-44", "45-54", "45-54", "55-64", "55-64", "65+"
+];
+
+const FAKE_CONFERENCE_LOCATIONS = [
+  { city: "London", region: "England", country: "United Kingdom", countryCode: "GB", latitude: 51.5072, longitude: -0.1276 },
+  { city: "Perth", region: "Western Australia", country: "Australia", countryCode: "AU", latitude: -31.9523, longitude: 115.8613 },
+  { city: "Toronto", region: "Ontario", country: "Canada", countryCode: "CA", latitude: 43.6532, longitude: -79.3832 },
+  { city: "Denver", region: "Colorado", country: "United States", countryCode: "US", latitude: 39.7392, longitude: -104.9903 },
+  { city: "Johannesburg", region: "Gauteng", country: "South Africa", countryCode: "ZA", latitude: -26.2041, longitude: 28.0473 },
+  { city: "Santiago", region: "Santiago Metropolitan", country: "Chile", countryCode: "CL", latitude: -33.4489, longitude: -70.6693 },
+  { city: "Stockholm", region: "Stockholm", country: "Sweden", countryCode: "SE", latitude: 59.3293, longitude: 18.0686 },
+  { city: "Vancouver", region: "British Columbia", country: "Canada", countryCode: "CA", latitude: 49.2827, longitude: -123.1207 }
+];
+
+const FAKE_RATING_BASE: Record<string, number> = {
+  Stress: 1,
+  Anxiety: 0,
+  Loneliness: -1,
+  Joy: 1,
+  Fulfilment: 1,
+  Creativity: 1,
+  Achievement: 1,
+  Uncertainty: 1,
+  Loss: -1,
+  Change: 2,
+  Growth: 2
+};
+
+const FAKE_CHOICE_RATING_BIAS: Record<string, Partial<Record<string, number>>> = {
+  "Without Fear": { Stress: 1, Anxiety: 1, Uncertainty: 1, Growth: 1 },
+  Meaningful: { Fulfilment: 1, Growth: 1, Joy: 1 },
+  Authentic: { Creativity: 1, Fulfilment: 1 },
+  Happy: { Joy: 1, Loneliness: 1, Stress: -1 },
+  Useful: { Achievement: 1, Fulfilment: 1 },
+  Successful: { Achievement: 1, Stress: 1 },
+  Healthy: { Stress: -1, Anxiety: -1, Joy: 1 }
+};
+
+function seedFakeConferenceData() {
+  if (process.env.DATABASE_URL) return;
+
+  for (let index = memoryStore.length - 1; index >= 0; index--) {
+    if (memoryStore[index]?.cohortSlug === FAKE_CONFERENCE_COHORT_SLUG) {
+      memoryStore.splice(index, 1);
+    }
+  }
+
+  for (let index = 0; index < 10; index++) {
+    const lifeChoice = FAKE_CONFERENCE_CHOICES[index % FAKE_CONFERENCE_CHOICES.length];
+    const location = FAKE_CONFERENCE_LOCATIONS[index % FAKE_CONFERENCE_LOCATIONS.length];
+    memoryStore.push({
+      id: `fake-conference-${index + 1}`,
+      createdAt: new Date(Date.UTC(2026, 5, 5, 8 + Math.floor(index / 12), (index % 12) * 5)).toISOString(),
+      idealWord: lifeChoice,
+      guidingValue: FAKE_CONFERENCE_VALUES[index % FAKE_CONFERENCE_VALUES.length],
+      alignment: fakeAlignment(index, lifeChoice),
+      blocker: FAKE_CONFERENCE_BLOCKERS[index % FAKE_CONFERENCE_BLOCKERS.length],
+      enabler: FAKE_CONFERENCE_ENABLERS[index % FAKE_CONFERENCE_ENABLERS.length],
+      lifeChoice,
+      ratings: fakeRatings(index, lifeChoice),
+      ageBand: FAKE_CONFERENCE_AGE_BANDS[index % FAKE_CONFERENCE_AGE_BANDS.length],
+      gender: FAKE_CONFERENCE_GENDERS[index % FAKE_CONFERENCE_GENDERS.length],
+      cohortSlug: FAKE_CONFERENCE_COHORT_SLUG,
+      cohortLabel: FAKE_CONFERENCE_COHORT_LABEL,
+      location: {
+        consent: index % 5 !== 0,
+        ...location,
+        accuracy: 50_000,
+        timezone: "Europe/London",
+        locale: "en-GB",
+        source: "fake-conference-seed"
+      }
+    });
+  }
+}
+
+function fakeAlignment(index: number, lifeChoice: string) {
+  if (lifeChoice === "Without Fear") return index % 3 === 0 ? "Slightly" : "Somewhat";
+  if (lifeChoice === "Successful") return index % 4 === 0 ? "Completely" : "Mostly";
+  return ["Somewhat", "Mostly", "Mostly", "Completely"][index % 4];
+}
+
+function fakeRatings(index: number, lifeChoice: string) {
+  return Object.fromEntries(
+    RATING_DIMENSIONS.map((dimension, dimensionIndex) => {
+      const variation = ((index + dimensionIndex * 2) % 5) - 2;
+      const subtleVariation = variation > 0 ? 0 : variation < 0 ? -1 : 0;
+      const base = FAKE_RATING_BASE[dimension] ?? 0;
+      const bias = FAKE_CHOICE_RATING_BIAS[lifeChoice]?.[dimension] ?? 0;
+      return [dimension, Math.min(Math.max(base + bias + subtleVariation, -2), 2)];
+    })
+  );
+}
+
+seedFakeConferenceData();
+
 function getPool() {
   if (!process.env.DATABASE_URL) return null;
   if (!pool) {
@@ -33,6 +201,9 @@ async function ensureSchema(db: Pool) {
       created_at timestamptz not null default now(),
       ideal_word text not null,
       guiding_value text not null,
+      alignment text,
+      blocker text,
+      enabler text,
       life_choice text not null,
       other_choice text,
       ratings jsonb not null,
@@ -60,6 +231,9 @@ async function ensureSchema(db: Pool) {
     alter table submissions add column if not exists location_source text;
     alter table submissions add column if not exists cohort_slug text;
     alter table submissions add column if not exists cohort_label text;
+    alter table submissions add column if not exists alignment text;
+    alter table submissions add column if not exists blocker text;
+    alter table submissions add column if not exists enabler text;
 
     create index if not exists submissions_created_at_idx on submissions (created_at desc);
     create index if not exists submissions_life_choice_idx on submissions (life_choice);
@@ -98,6 +272,9 @@ function rowToSubmission(row: Record<string, unknown>): Submission {
     createdAt: new Date(String(row.created_at)).toISOString(),
     idealWord: String(row.ideal_word ?? ""),
     guidingValue: String(row.guiding_value ?? ""),
+    alignment: String(row.alignment ?? ""),
+    blocker: String(row.blocker ?? ""),
+    enabler: String(row.enabler ?? ""),
     lifeChoice: String(row.life_choice ?? ""),
     otherChoice: row.other_choice ? String(row.other_choice) : undefined,
     ratings: row.ratings as Record<string, number>,
@@ -127,6 +304,9 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
     lifeChoice: normalizeChoice(input),
     idealWord: input.idealWord.trim(),
     guidingValue: input.guidingValue.trim(),
+    alignment: input.alignment.trim(),
+    blocker: input.blocker.trim(),
+    enabler: input.enabler.trim(),
     otherChoice: input.otherChoice?.trim() || undefined,
     cohortSlug: input.cohortSlug?.trim() || undefined,
     cohortLabel: input.cohortLabel?.trim() || undefined
@@ -146,13 +326,16 @@ export async function createSubmission(input: SubmissionInput): Promise<Submissi
   await ensureSchema(db);
   const result = await db.query(
     `insert into submissions
-      (ideal_word, guiding_value, life_choice, other_choice, ratings, age_band, gender, cohort_slug, cohort_label,
+      (ideal_word, guiding_value, alignment, blocker, enabler, life_choice, other_choice, ratings, age_band, gender, cohort_slug, cohort_label,
        location_consent, latitude, longitude, accuracy, city, region, country, country_code, timezone, locale, location_source)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
      returning *`,
     [
       normalized.idealWord,
       normalized.guidingValue,
+      normalized.alignment,
+      normalized.blocker,
+      normalized.enabler,
       normalized.lifeChoice,
       normalized.otherChoice ?? null,
       JSON.stringify(normalized.ratings),
@@ -235,6 +418,8 @@ export function buildStats(items: Submission[]): Stats {
     ratings,
     words: items.map((item) => item.idealWord).filter(Boolean).slice(0, 80),
     values: items.map((item) => item.guidingValue).filter(Boolean).slice(0, 80),
+    blockers: items.map((item) => item.blocker).filter(Boolean).slice(0, 80),
+    enablers: items.map((item) => item.enabler).filter(Boolean).slice(0, 80),
     locations: items
       .filter((item) => item.location.consent)
       .map((item) => {

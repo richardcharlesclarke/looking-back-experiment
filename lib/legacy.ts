@@ -144,6 +144,8 @@ export const LEGACY_STATS: Stats = {
   }),
   words: legacyChoices.map(([choice]) => choice),
   values: [],
+  blockers: [],
+  enablers: [],
   locations: legacyLocations.map(([country, latitude, longitude]) => ({
     latitude,
     longitude,
@@ -189,6 +191,8 @@ export function mergeWithLegacy(current: Stats): Stats {
     }),
     words: [...current.words, ...LEGACY_STATS.words],
     values: current.values,
+    blockers: current.blockers,
+    enablers: current.enablers,
     locations: [...current.locations, ...LEGACY_STATS.locations]
   };
 }

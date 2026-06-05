@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, BarChart3, Compass, Globe2, Sparkles } from "lucide-react";
 import Link from "next/link";
-import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
 import {
   Bar,
   BarChart,
@@ -15,6 +14,7 @@ import {
 } from "recharts";
 import {
   AGE_BANDS,
+  ALIGNMENT_OPTIONS,
   CONFIGURED_COHORT_LABEL,
   CONFIGURED_COHORT_SLUG,
   EVOLVABLE_URL,
@@ -42,6 +42,9 @@ const PREVIEW_SUBMISSION: Submission = {
   createdAt: new Date(0).toISOString(),
   idealWord: "Courage",
   guidingValue: "To keep choosing what matters when the path is unclear.",
+  alignment: "Mostly",
+  blocker: "Fear",
+  enabler: "Curiosity",
   lifeChoice: "Courage",
   ratings: {
     Joy: 1,
@@ -116,6 +119,8 @@ const PREVIEW_STATS: Stats = {
   ],
   words: ["steadfast", "open", "generous", "brave", "present", "honest"],
   values: ["family", "truth", "care", "curiosity", "service", "attention"],
+  blockers: ["fear", "time", "expectation", "work", "doubt", "noise"],
+  enablers: ["curiosity", "family", "discipline", "love", "purpose", "rest"],
   locations: [
     { latitude: 51.5072, longitude: -0.1276, choice: "Courage" },
     { latitude: 40.7128, longitude: -74.006, choice: "Kindness" }
@@ -125,6 +130,9 @@ const PREVIEW_STATS: Stats = {
 export default function Home() {
   const [step, setStep] = useState<Step>("intro");
   const [guidingValue, setGuidingValue] = useState("");
+  const [alignment, setAlignment] = useState("");
+  const [blocker, setBlocker] = useState("");
+  const [enabler, setEnabler] = useState("");
   const [lifeChoice, setLifeChoice] = useState("");
   const [otherChoice, setOtherChoice] = useState("");
   const [ratings, setRatings] = useState<Partial<Record<string, number>>>(
@@ -134,6 +142,7 @@ export default function Home() {
   const [ratingTransitionDirection, setRatingTransitionDirection] = useState<"forward" | "back">("forward");
   const [ageBand, setAgeBand] = useState("");
   const [gender, setGender] = useState("");
+  const [genderSelfDescription, setGenderSelfDescription] = useState("");
   const [locationConsent, setLocationConsent] = useState(false);
   const [location, setLocation] = useState<SubmissionInput["location"]>({ consent: false });
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
@@ -282,8 +291,8 @@ export default function Home() {
 
   function continueToRatings() {
     setError("");
-    if (!selectedWord() || !guidingValue.trim()) {
-      setError("Choose a word and enter the value you live by before continuing.");
+    if (!selectedWord() || !guidingValue.trim() || !alignment || !blocker.trim() || !enabler.trim()) {
+      setError("Complete the five reflection questions before continuing.");
       return;
     }
     setRatingTransitionDirection("forward");
@@ -292,7 +301,7 @@ export default function Home() {
 
   function handleReflectEnter(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return;
-    if (!selectedWord() || !guidingValue.trim()) return;
+    if (!selectedWord() || !guidingValue.trim() || !alignment || !blocker.trim() || !enabler.trim()) return;
     event.preventDefault();
     continueToRatings();
   }
@@ -342,11 +351,16 @@ export default function Home() {
     transitionToStep(nextStep);
   }
 
+  const reflectionWord = selectedWord();
+  const valueUnlocked = Boolean(reflectionWord);
+  const alignmentUnlocked = valueUnlocked && Boolean(guidingValue.trim());
+  const shapingQuestionsUnlocked = alignmentUnlocked && Boolean(alignment);
+
   async function submit() {
     setError("");
-    const word = selectedWord();
-    if (!word || !guidingValue.trim()) {
-      setError("Choose your word and add your value before continuing.");
+    const word = reflectionWord;
+    if (!word || !guidingValue.trim() || !alignment || !blocker.trim() || !enabler.trim()) {
+      setError("Complete the five reflection questions before continuing.");
       transitionToStep("reflect");
       return;
     }
@@ -362,11 +376,15 @@ export default function Home() {
       const payload: SubmissionInput = {
         idealWord: word,
         guidingValue,
+        alignment,
+        blocker,
+        enabler,
         lifeChoice,
         otherChoice,
         ratings: ratings as Record<string, number>,
         ageBand,
         gender,
+        genderSelfDescription,
         cohortSlug: cohortConfig.slug || undefined,
         cohortLabel: cohortConfig.slug ? cohortConfig.label : undefined,
         location: locationSnapshot
@@ -457,8 +475,8 @@ export default function Home() {
         <section className={stepSurfaceClass("stage reflect-stage")}>
           <StepHeader
             index="01"
-            title="Choose the word"
-            text="Choose the single word that best describes how you would like your life to have been."
+            title="What do you want your life to mean?"
+            text="Begin with the word you would want to recognise in your life, then name how aligned you feel and what shapes that alignment."
           />
           <div className="choice-question">
             <h3>
@@ -486,14 +504,14 @@ export default function Home() {
               />
             </label>
           )}
-          <div className={lifeChoice ? "selected-choice-shell is-open" : "selected-choice-shell"}>
-            <div className="selected-choice" aria-live="polite" aria-hidden={!lifeChoice}>
+          <div className={reflectionWord ? "selected-choice-shell is-open" : "selected-choice-shell"}>
+            <div className="selected-choice" aria-live="polite" aria-hidden={!reflectionWord}>
               <span>Your answer</span>
-              <strong>{selectedWord() || "Other"}</strong>
+              <strong>{reflectionWord || "Other"}</strong>
             </div>
           </div>
-          <div className="form-grid">
-            <label className={lifeChoice ? "field wide reflect-value-field is-active" : "field wide reflect-value-field is-disabled"}>
+          <div className="form-grid reflect-form-grid">
+            <label className={valueUnlocked ? "field wide reflect-value-field is-active" : "field wide reflect-value-field is-disabled"}>
               <span>
                 <span className="question-number">02</span>
                 What is the most important value you live your life by?
@@ -504,7 +522,49 @@ export default function Home() {
                 onKeyDown={handleReflectEnter}
                 placeholder="A word or sentence"
                 rows={3}
-                disabled={!lifeChoice}
+                disabled={!valueUnlocked}
+              />
+            </label>
+            <div className={alignmentUnlocked ? "field wide alignment-field is-active" : "field wide alignment-field is-disabled"}>
+              <span>
+                <span className="question-number">03</span>
+                {reflectionWord
+                  ? `Are you living your life in alignment with your choice ("${reflectionWord}")?`
+                  : "Are you living your life in alignment with your choice?"}
+              </span>
+              <AlignmentOrbControl
+                value={alignmentToValue(alignment)}
+                disabled={!alignmentUnlocked}
+                selectedWord={reflectionWord}
+                onChange={(value) => setAlignment(ALIGNMENT_OPTIONS[value + 2])}
+              />
+            </div>
+            <label className={shapingQuestionsUnlocked ? "field reflection-field is-active" : "field reflection-field is-disabled"}>
+              <span>
+                <span className="question-number">04</span>
+                What blocks you?
+              </span>
+              <input
+                value={blocker}
+                onChange={(event) => setBlocker(event.target.value)}
+                onKeyDown={handleReflectEnter}
+                placeholder="A word or name"
+                maxLength={80}
+                disabled={!shapingQuestionsUnlocked}
+              />
+            </label>
+            <label className={shapingQuestionsUnlocked ? "field reflection-field is-active" : "field reflection-field is-disabled"}>
+              <span>
+                <span className="question-number">05</span>
+                What enables you?
+              </span>
+              <input
+                value={enabler}
+                onChange={(event) => setEnabler(event.target.value)}
+                onKeyDown={handleReflectEnter}
+                placeholder="A word or name"
+                maxLength={80}
+                disabled={!shapingQuestionsUnlocked}
               />
             </label>
           </div>
@@ -580,6 +640,17 @@ export default function Home() {
                 ))}
               </select>
             </label>
+            {gender === "Prefer to self-describe" && (
+              <label className="field wide">
+                <span>Self-description</span>
+                <input
+                  value={genderSelfDescription}
+                  onChange={(event) => setGenderSelfDescription(event.target.value)}
+                  placeholder="How would you describe your gender?"
+                  maxLength={80}
+                />
+              </label>
+            )}
             <div className="consent wide">
               <Globe2 />
               <div>
@@ -702,6 +773,139 @@ function NavActions({
       <button className="primary" onClick={next} disabled={disabled}>
         {nextLabel} <ArrowRight size={18} />
       </button>
+    </div>
+  );
+}
+
+function alignmentToValue(alignment: string) {
+  const index = ALIGNMENT_OPTIONS.indexOf(alignment as (typeof ALIGNMENT_OPTIONS)[number]);
+  return index === -1 ? undefined : index - 2;
+}
+
+function AlignmentOrbControl({
+  value,
+  disabled,
+  selectedWord,
+  onChange
+}: {
+  value?: number;
+  disabled: boolean;
+  selectedWord: string;
+  onChange: (value: number) => void;
+}) {
+  const laneRef = useRef<HTMLDivElement | null>(null);
+  const [visualValue, setVisualValue] = useState(value ?? 0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    setVisualValue(value ?? 0);
+    setIsDragging(false);
+  }, [value]);
+
+  const visibleValue = isDragging ? snapValue(visualValue) : value;
+  const selectedOption = typeof visibleValue === "number" ? ALIGNMENT_OPTIONS[visibleValue + 2] : undefined;
+  const thumbSize = 26 + ((visualValue + 2) / 4) * 54;
+  const orbPosition = ((visualValue + 2) / 4) * 100;
+
+  function valueFromPointer(clientX: number) {
+    const lane = laneRef.current;
+    if (!lane) return visualValue;
+    const rect = lane.getBoundingClientRect();
+    const progress = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    return progress * 4 - 2;
+  }
+
+  function snapValue(rawValue: number) {
+    return Math.min(Math.max(Math.round(rawValue), -2), 2);
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || disabled) return;
+    setVisualValue(valueFromPointer(event.clientX));
+  }
+
+  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || disabled) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const snapped = snapValue(valueFromPointer(event.clientX));
+    setIsDragging(false);
+    setVisualValue(snapped);
+    onChange(snapped);
+  }
+
+  return (
+    <div className="alignment-orb-control">
+      <div
+        className="rating-orb-field"
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        <div className="rating-orb-hit-grid" aria-hidden="true">
+          {ALIGNMENT_OPTIONS.map((option, index) => (
+            <button
+              key={option}
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return;
+                const nextValue = index - 2;
+                setIsDragging(false);
+                setVisualValue(nextValue);
+                onChange(nextValue);
+              }}
+            />
+          ))}
+        </div>
+        <div ref={laneRef} className="rating-orb-lane">
+          <button
+            className={isDragging ? "rating-orb-thumb dragging" : "rating-orb-thumb"}
+            type="button"
+            disabled={disabled}
+            aria-label={`Alignment with ${selectedWord || "your choice"}: ${selectedOption ?? "Choose a response"}`}
+            style={{
+              "--rating-thumb-size": `${thumbSize}px`,
+              "--rating-orb-position": `${orbPosition}%`
+            } as React.CSSProperties}
+            onPointerDown={(event) => {
+              if (disabled) return;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              setIsDragging(true);
+              setVisualValue(valueFromPointer(event.clientX));
+            }}
+            onKeyDown={(event) => {
+              if (disabled || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+              event.preventDefault();
+              const direction = event.key === "ArrowRight" ? 1 : -1;
+              const nextValue = Math.min(Math.max((value ?? 0) + direction, -2), 2);
+              setVisualValue(nextValue);
+              onChange(nextValue);
+            }}
+          />
+        </div>
+      </div>
+      <div className="rating-scale" role="group" aria-label="Alignment response options">
+        {ALIGNMENT_OPTIONS.map((option, index) => {
+          const optionValue = index - 2;
+          return (
+            <button
+              key={option}
+              type="button"
+              disabled={disabled}
+              className={visibleValue === optionValue ? "rating-scale-option active" : "rating-scale-option"}
+              onClick={() => {
+                if (disabled) return;
+                setIsDragging(false);
+                setVisualValue(optionValue);
+                onChange(optionValue);
+              }}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1006,14 +1210,27 @@ function Results({
 
       <div className="chart-section">
         <div>
-          <h2>Geographic pattern</h2>
-          <p>
-            {stats.locations.length
-              ? "Approximate locations from participants."
-              : "The map will begin collecting points when people consent to approximate location."}
-          </p>
+          <h2>Values people are living by</h2>
+          <p>Anonymised fragments from the value question on the first page.</p>
         </div>
-        <ResponseGlobe locations={stats.locations} submission={submission} />
+        <WordCloud words={stats.values} emptyText="Values will appear here as people answer the first-page reflection." />
+      </div>
+
+      <div className="chart-section">
+        <div>
+          <h2>What shapes alignment</h2>
+          <p>Words and names people gave for what blocks and enables alignment with their Looking Back choice.</p>
+        </div>
+        <div className="two-col word-cloud-columns">
+          <div>
+            <h3>What gets in the way</h3>
+            <WordCloud words={stats.blockers} emptyText="Blockers will appear here once participants add them." compact />
+          </div>
+          <div>
+            <h3>What helps</h3>
+            <WordCloud words={stats.enablers} emptyText="Enablers will appear here once participants add them." compact />
+          </div>
+        </div>
       </div>
 
       <div className="closing">
@@ -1034,6 +1251,86 @@ function Results({
     </section>
   );
 }
+
+function WordCloud({ words, emptyText, compact = false }: { words: string[]; emptyText: string; compact?: boolean }) {
+  const cloudWords = useMemo(() => buildWordCloud(words), [words]);
+  if (!cloudWords.length) {
+    return <p className="word-cloud empty-word-cloud">{emptyText}</p>;
+  }
+
+  return (
+    <div className={compact ? "word-cloud compact" : "word-cloud"} aria-label="Anonymised response fragments">
+      {cloudWords.map((word, index) => (
+        <span
+          key={`${word.text}-${index}`}
+          tabIndex={0}
+          aria-label={`${word.text}: ${word.count} ${word.count === 1 ? "response" : "responses"}`}
+          data-count-label={`${word.count} ${word.count === 1 ? "response" : "responses"}`}
+          className={`word-cloud-item size-${word.size}`}
+          style={{ "--word-cloud-color": COLORS[index % COLORS.length] } as React.CSSProperties}
+        >
+          {word.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function buildWordCloud(values: string[]) {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    for (const fragment of valueFragments(value)) {
+      counts.set(fragment, (counts.get(fragment) ?? 0) + 1);
+    }
+  }
+
+  const sorted = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 34);
+  const max = Math.max(...sorted.map(([, count]) => count), 1);
+
+  return sorted.map(([text, count]) => ({
+    text,
+    count,
+    size: Math.max(1, Math.min(5, Math.ceil((count / max) * 5)))
+  }));
+}
+
+function valueFragments(value: string) {
+  const cleaned = value
+    .toLowerCase()
+    .replace(/[^a-z0-9'\s-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim().replace(/^[-']+|[-']+$/g, ""))
+    .filter((word) => word.length > 2 && !COMMON_WORDS.has(word));
+  return Array.from(new Set(cleaned)).slice(0, 8);
+}
+
+const COMMON_WORDS = new Set([
+  "and",
+  "are",
+  "but",
+  "for",
+  "from",
+  "have",
+  "how",
+  "into",
+  "life",
+  "live",
+  "living",
+  "most",
+  "not",
+  "that",
+  "the",
+  "their",
+  "this",
+  "through",
+  "what",
+  "when",
+  "with",
+  "you",
+  "your"
+]);
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
@@ -1453,437 +1750,4 @@ function DifferenceMetric({
 
 function formatComparisonPercent(value: number) {
   return `${value >= 10 ? Math.round(value) : value.toFixed(1)}%`;
-}
-
-function ResponseGlobe({ locations, submission }: { locations: Stats["locations"]; submission: Submission }) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
-  const mapLoadedRef = useRef(false);
-  const mapHasEnteredViewportRef = useRef(false);
-  const hasFlownRef = useRef(false);
-  const [mapError, setMapError] = useState("");
-  const visibleLocations = useMemo(() => sanitiseLocations(locations), [locations]);
-  const submittedCoordinates = useMemo(() => submissionCoordinates(submission), [submission]);
-  const locationsKey = visibleLocations.map((point) => `${point.latitude.toFixed(3)},${point.longitude.toFixed(3)},${point.choice}`).join("|");
-  const submissionLocationKey = [
-    submission.lifeChoice,
-    submittedCoordinates ? "1" : "0",
-    submittedCoordinates?.latitude.toFixed(3) ?? "",
-    submittedCoordinates?.longitude.toFixed(3) ?? ""
-  ].join("|");
-  const locationGeoJson = useMemo(
-    () => buildLocationGeoJson(visibleLocations, submission),
-    // The map should not refresh just because polling returned new array/object identities.
-    // These keys change only when the actual plotted coordinates or submitted location change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locationsKey, submissionLocationKey]
-  );
-  const locationGeoJsonRef = useRef(locationGeoJson);
-
-  const submittedCenter = useCallback((): [number, number] => {
-    return submittedCoordinates
-      ? [submittedCoordinates.longitude, submittedCoordinates.latitude]
-      : [-0.1276, 51.5072];
-  }, [submittedCoordinates]);
-
-  const flyToSubmittedLocation = useCallback(() => {
-    const map = mapRef.current;
-    if (
-      !map ||
-      !mapLoadedRef.current ||
-      !mapHasEnteredViewportRef.current ||
-      hasFlownRef.current ||
-      !submittedCoordinates
-    ) {
-      return;
-    }
-
-    hasFlownRef.current = true;
-    map.easeTo({
-      center: submittedCenter(),
-      zoom: 4.4,
-      duration: 2800,
-      easing: (value) => 1 - Math.pow(1 - value, 3)
-    });
-  }, [submittedCenter, submittedCoordinates]);
-
-  useEffect(() => {
-    hasFlownRef.current = false;
-    flyToSubmittedLocation();
-  }, [flyToSubmittedLocation, submissionLocationKey]);
-
-  useEffect(() => {
-    locationGeoJsonRef.current = locationGeoJson;
-  }, [locationGeoJson]);
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
-
-    if (!("IntersectionObserver" in window)) {
-      mapHasEnteredViewportRef.current = true;
-      flyToSubmittedLocation();
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        mapHasEnteredViewportRef.current = true;
-        flyToSubmittedLocation();
-        observer.disconnect();
-      },
-      { threshold: 0 }
-    );
-
-    observer.observe(wrapper);
-    return () => observer.disconnect();
-  }, [flyToSubmittedLocation, submissionLocationKey]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const initialCenter = hasFlownRef.current ? submittedCenter() : randomGlobeStart(submittedCenter());
-
-    let map: MapLibreMap;
-    try {
-      map = new maplibregl.Map({
-        container,
-        style: {
-          version: 8,
-          glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
-          sources: {
-            imagery: {
-              type: "raster",
-              tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-              tileSize: 256,
-              attribution: "Tiles © Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-              maxzoom: 19
-            },
-            openmaptiles: {
-              type: "vector",
-              url: "https://tiles.openfreemap.org/planet",
-              attribution: "Labels © OpenStreetMap contributors, OpenFreeMap"
-            }
-          },
-          layers: [
-          {
-            id: "imagery",
-            type: "raster",
-            source: "imagery",
-            paint: {
-              "raster-brightness-min": 0.06,
-              "raster-brightness-max": 1,
-              "raster-contrast": -0.04,
-              "raster-saturation": -0.08
-            }
-          },
-          {
-            id: "country-boundaries",
-            type: "line",
-            source: "openmaptiles",
-            "source-layer": "boundary",
-            filter: [
-              "all",
-              ["==", ["get", "admin_level"], 2],
-              ["!=", ["get", "maritime"], 1],
-              ["!=", ["get", "disputed"], 1]
-            ],
-            paint: {
-              "line-color": "rgba(255,255,255,0.62)",
-              "line-opacity": ["interpolate", ["linear"], ["zoom"], 1, 0.28, 4, 0.68, 8, 0.9],
-              "line-width": ["interpolate", ["linear"], ["zoom"], 2, 0.5, 6, 1.1, 12, 2]
-            }
-          },
-          {
-            id: "country-labels",
-            type: "symbol",
-            source: "openmaptiles",
-            "source-layer": "place",
-            minzoom: 1,
-            maxzoom: 8,
-            filter: ["==", ["get", "class"], "country"],
-            layout: {
-              "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
-              "text-font": ["Noto Sans Bold"],
-              "text-size": ["interpolate", ["linear"], ["zoom"], 1, 10, 4, 15, 7, 19],
-              "text-max-width": 8,
-              "text-allow-overlap": false,
-              "text-ignore-placement": false
-            },
-            paint: {
-              "text-color": "#f7f7f3",
-              "text-halo-color": "rgba(0,0,0,0.74)",
-              "text-halo-width": 1.7,
-              "text-halo-blur": 0.5
-            }
-          },
-          {
-            id: "city-labels",
-            type: "symbol",
-            source: "openmaptiles",
-            "source-layer": "place",
-            minzoom: 3.2,
-            filter: ["==", ["get", "class"], "city"],
-            layout: {
-              "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
-              "text-font": ["Noto Sans Bold"],
-              "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 7, 14, 11, 18],
-              "text-max-width": 8,
-              "text-allow-overlap": false,
-              "text-ignore-placement": false
-            },
-            paint: {
-              "text-color": "#f7f7f3",
-              "text-halo-color": "rgba(0,0,0,0.74)",
-              "text-halo-width": 1.55,
-              "text-halo-blur": 0.45
-            }
-          }
-          ]
-        },
-        center: initialCenter,
-        zoom: hasFlownRef.current ? 4.4 : 1.15,
-        minZoom: 1,
-        maxZoom: 18,
-        pitch: 0,
-        bearing: 0,
-        attributionControl: false,
-        canvasContextAttributes: { antialias: true }
-      });
-    } catch (error) {
-      console.error("Map initialisation failed", error);
-      setMapError("The interactive map is not available in this browser.");
-      return;
-    }
-
-    mapRef.current = map;
-    mapLoadedRef.current = false;
-    setMapError("");
-    map.scrollZoom.disable();
-    map.touchZoomRotate.disable();
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
-    let glowAnimationFrame = 0;
-
-    map.on("style.load", () => {
-      try {
-        map.setProjection({ type: "globe" });
-        map.setSky({
-          "sky-color": "#020711",
-          "horizon-color": "#8fc5ff",
-          "fog-color": "#d8ecff",
-          "fog-ground-blend": 0.12,
-          "horizon-fog-blend": 0.55,
-          "sky-horizon-blend": 0.72,
-          "atmosphere-blend": 0.86
-        });
-      } catch (error) {
-        console.error("Map globe styling failed", error);
-      }
-    });
-
-    map.on("load", () => {
-      try {
-        map.addSource("responses", {
-          type: "geojson",
-          data: locationGeoJsonRef.current
-        });
-
-        map.addLayer({
-          id: "response-glow",
-          type: "circle",
-          source: "responses",
-          filter: ["!=", ["get", "kind"], "user"],
-          paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 18, 6, 24, 12, 34],
-            "circle-color": "#45e7ff",
-            "circle-blur": 0.82,
-            "circle-opacity": 0.55
-          }
-        });
-
-      map.addLayer({
-        id: "response-halo",
-        type: "circle",
-        source: "responses",
-        filter: ["!=", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 7, 6, 9, 12, 12],
-          "circle-color": "rgba(69,231,255,0)",
-          "circle-stroke-color": "rgba(210,250,255,0.95)",
-          "circle-stroke-width": 1.8,
-          "circle-opacity": 0.9
-        }
-      });
-
-      map.addLayer({
-        id: "response-core",
-        type: "circle",
-        source: "responses",
-        filter: ["!=", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 3.5, 6, 4.5, 12, 6],
-          "circle-color": "#8ff5ff",
-          "circle-stroke-color": "#07111b",
-          "circle-stroke-width": 1.2,
-          "circle-opacity": 1
-        }
-      });
-
-      map.addLayer({
-        id: "user-glow",
-        type: "circle",
-        source: "responses",
-        filter: ["==", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 30, 6, 38, 12, 52],
-          "circle-color": "#ff2f92",
-          "circle-blur": 0.78,
-          "circle-opacity": 0.78
-        }
-      });
-
-      map.addLayer({
-        id: "user-halo",
-        type: "circle",
-        source: "responses",
-        filter: ["==", ["get", "kind"], "user"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 11, 6, 13, 12, 17],
-          "circle-color": "rgba(255,47,146,0)",
-          "circle-stroke-color": "#ffffff",
-          "circle-stroke-width": 3,
-          "circle-opacity": 1
-        }
-      });
-
-        map.addLayer({
-          id: "user-core",
-          type: "circle",
-          source: "responses",
-          filter: ["==", ["get", "kind"], "user"],
-          paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 5.5, 6, 6.5, 12, 8.5],
-            "circle-color": "#ff5fb0",
-            "circle-stroke-color": "#ffffff",
-            "circle-stroke-width": 1.8,
-            "circle-opacity": 1
-          }
-        });
-      } catch (error) {
-        console.error("Map response markers failed", error);
-        setMapError("The interactive map is not available in this browser.");
-        return;
-      }
-
-      const animateMarkerGlow = () => {
-        const phase = (Math.sin(performance.now() / 1250) + 1) / 2;
-        const eased = phase * phase * (3 - 2 * phase);
-
-        if (map.getLayer("response-glow")) {
-          map.setPaintProperty("response-glow", "circle-opacity", 0.3 + eased * 0.28);
-        }
-        if (map.getLayer("user-glow")) {
-          map.setPaintProperty("user-glow", "circle-opacity", 0.42 + eased * 0.34);
-        }
-
-        glowAnimationFrame = window.requestAnimationFrame(animateMarkerGlow);
-      };
-      glowAnimationFrame = window.requestAnimationFrame(animateMarkerGlow);
-      mapLoadedRef.current = true;
-      flyToSubmittedLocation();
-    });
-
-    return () => {
-      if (glowAnimationFrame) window.cancelAnimationFrame(glowAnimationFrame);
-      map.remove();
-      mapRef.current = null;
-      mapLoadedRef.current = false;
-    };
-  }, [flyToSubmittedLocation, submittedCenter]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map?.getSource("responses")) return;
-    const source = map.getSource("responses") as maplibregl.GeoJSONSource;
-    source.setData(locationGeoJson);
-  }, [locationGeoJson]);
-
-  return (
-    <div ref={wrapperRef} className="map-card globe-card tiled-map-card" aria-label="Interactive satellite response globe">
-      <div ref={containerRef} className="response-globe" />
-      {mapError && <div className="map-fallback">{mapError}</div>}
-      <div className="globe-caption">
-        {submittedCoordinates
-          ? "Your captured location"
-          : visibleLocations.length
-            ? "Showing consenting responses"
-            : "Awaiting consenting responses"}
-      </div>
-      <div className="globe-legend" aria-label="Globe legend">
-        <span><i className="legend-dot user-dot" />Your location</span>
-        <span><i className="legend-dot response-dot" />Other responses</span>
-      </div>
-    </div>
-  );
-}
-
-function buildLocationGeoJson(locations: Stats["locations"], submission: Submission): GeoJSON.FeatureCollection<GeoJSON.Point> {
-  const userCoordinates = submissionCoordinates(submission);
-  const features: GeoJSON.Feature<GeoJSON.Point>[] = locations.map((point) => ({
-    type: "Feature",
-    geometry: {
-      type: "Point",
-      coordinates: [point.longitude, point.latitude]
-    },
-    properties: {
-      choice: point.choice,
-      kind: "response"
-    }
-  }));
-
-  if (userCoordinates) {
-    features.push({
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [userCoordinates.longitude, userCoordinates.latitude]
-      },
-      properties: {
-        choice: submission.lifeChoice,
-        kind: "user"
-      }
-    });
-  }
-
-  return {
-    type: "FeatureCollection",
-    features
-  };
-}
-
-function finiteNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function submissionCoordinates(submission: Submission) {
-  if (!submission.location.consent) return null;
-  const latitude = finiteNumber(submission.location.latitude);
-  const longitude = finiteNumber(submission.location.longitude);
-  if (latitude == null || longitude == null) return null;
-  return { latitude, longitude };
-}
-
-function sanitiseLocations(locations: Stats["locations"]) {
-  return locations.filter((point) => finiteNumber(point.latitude) != null && finiteNumber(point.longitude) != null);
-}
-
-function randomGlobeStart(target: [number, number]): [number, number] {
-  const longitudeOffset = 95 + Math.random() * 170;
-  const latitude = -45 + Math.random() * 90;
-  const longitude = ((((target[0] + longitudeOffset) % 360) + 540) % 360) - 180;
-
-  return [longitude, latitude];
 }

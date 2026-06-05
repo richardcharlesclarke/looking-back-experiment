@@ -43,12 +43,21 @@ export const RATING_OPTIONS = [
   { label: "Very much more", value: 2 }
 ] as const;
 
+export const ALIGNMENT_OPTIONS = [
+  "Not at all",
+  "Slightly",
+  "Somewhat",
+  "Mostly",
+  "Completely"
+] as const;
+
 export const AGE_BANDS = ["Under 18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"] as const;
 
 export const GENDERS = [
   "Woman",
   "Man",
-  "Non-binary"
+  "Non-binary",
+  "Prefer to self-describe"
 ] as const;
 
 export const EVOLVABLE_URL = "https://evolvable.me";
