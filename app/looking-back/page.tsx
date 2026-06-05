@@ -1668,13 +1668,20 @@ function CohortComparisonView({
   return (
     <div className="cohort-comparison">
       <div className="cohort-summary">
-        <span><strong>{cohortLabel}</strong> {comparison.cohortTotal}</span>
-        <span><strong>{historicLabel}</strong> {comparison.populationTotal}</span>
+        <span aria-hidden="true" />
+        <span className="comparison-scale-head">
+          <span><strong>{cohortLabel}</strong> {comparison.cohortTotal} responses</span>
+          <span><strong>{historicLabel}</strong> {comparison.populationTotal} responses</span>
+        </span>
+        <span aria-hidden="true" />
       </div>
       <div className="cohort-topline">
         <strong>Most chosen</strong>
-        <span>{cohortLabel}: {cohortTopChoice ?? "Awaiting data"}</span>
-        <span>{historicLabel}: {populationTopChoice ?? "Awaiting data"}</span>
+        <span className="comparison-scale-head">
+          <span>{cohortLabel}: {cohortTopChoice ?? "Awaiting data"}</span>
+          <span>{historicLabel}: {populationTopChoice ?? "Awaiting data"}</span>
+        </span>
+        <span aria-hidden="true" />
       </div>
       <div className="comparison-head">
         <span>Choice</span>
