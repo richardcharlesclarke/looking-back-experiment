@@ -1811,6 +1811,10 @@ a {
   border-top: 1px solid var(--line-soft);
 }
 
+.comparison-row:last-child {
+  margin-bottom: 24px;
+}
+
 .comparison-choice {
   display: grid;
   gap: 3px;
@@ -1826,6 +1830,7 @@ a {
 }
 
 .comparison-mirror {
+  position: relative;
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -1835,16 +1840,19 @@ a {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 26px;
+  align-items: center;
   min-width: 0;
+  min-height: 16px;
 }
 
 .comparison-value {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 800;
+  line-height: 1;
 }
 
 .cohort-value {
@@ -1903,9 +1911,11 @@ a {
 }
 
 .comparison-axis {
-  position: relative;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
   height: 22px;
-  margin-top: -1px;
   color: var(--muted);
   font-size: 10px;
   font-weight: 750;
@@ -1944,7 +1954,7 @@ a {
 
 .comparison-delta {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -1955,10 +1965,15 @@ a {
 }
 
 .comparison-delta span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .delta-track {
@@ -2581,8 +2596,53 @@ th {
     width: 100%;
   }
 
+  .feeling-chart-frame {
+    width: calc(100% + 42px);
+    margin-left: -42px;
+  }
+
   .comparison-head {
     display: none;
+  }
+
+  .cohort-summary,
+  .cohort-topline {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .cohort-summary > span[aria-hidden="true"],
+  .cohort-topline > span[aria-hidden="true"] {
+    display: none;
+  }
+
+  .cohort-summary .comparison-scale-head,
+  .cohort-topline .comparison-scale-head {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .cohort-summary .comparison-scale-head > span {
+    width: 100%;
+    min-height: 42px;
+    padding: 7px 14px;
+    line-height: 1.05;
+  }
+
+  .cohort-summary .comparison-scale-head span:first-child,
+  .cohort-summary .comparison-scale-head span:last-child,
+  .cohort-topline .comparison-scale-head span:first-child,
+  .cohort-topline .comparison-scale-head span:last-child {
+    text-align: center;
+  }
+
+  .cohort-topline {
+    align-items: stretch;
+  }
+
+  .cohort-topline strong,
+  .cohort-topline span {
+    overflow-wrap: anywhere;
   }
 
   .comparison-row {

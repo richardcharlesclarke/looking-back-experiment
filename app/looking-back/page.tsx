@@ -1179,15 +1179,17 @@ function Results({
             )}
           </div>
           {ratingData.length ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={ratingData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ded7cc" />
-                <XAxis dataKey="name" tick={{ fill: "#302f2b", fontSize: 11 }} interval={0} angle={-35} textAnchor="end" height={70} />
-                <YAxis domain={[-2, 2]} tick={{ fill: "#302f2b", fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="average" fill={ratingChartView === "cohort" ? "#e75117" : "#3b6b8f"} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={620} animationEasing="ease-in-out" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="feeling-chart-frame">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={ratingData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ded7cc" />
+                  <XAxis dataKey="name" tick={{ fill: "#302f2b", fontSize: 11 }} interval={0} angle={-35} textAnchor="end" height={70} />
+                  <YAxis domain={[-2, 2]} tick={{ fill: "#302f2b", fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="average" fill={ratingChartView === "cohort" ? "#e75117" : "#3b6b8f"} radius={[6, 6, 0, 0]} isAnimationActive animationDuration={620} animationEasing="ease-in-out" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <p className="muted empty-chart-message">No feeling data yet for {ratingChartLabel}.</p>
           )}

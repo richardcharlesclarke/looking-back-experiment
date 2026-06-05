@@ -147,7 +147,7 @@ try {
 
   const deleted = await pool.query("delete from submissions where cohort_slug = $1", [cohortSlug]);
 
-  for (const [index, row] of demoRows.entries()) {
+  for (const row of demoRows) {
     const [city, region, country, countryCode, latitude, longitude] = row.location;
     const ratings = Object.fromEntries(dimensions.map((dimension, ratingIndex) => [dimension, row.ratings[ratingIndex]]));
 
