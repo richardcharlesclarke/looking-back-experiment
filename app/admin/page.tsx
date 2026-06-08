@@ -5,6 +5,13 @@ import { useState } from "react";
 import { RATING_DIMENSIONS } from "@/lib/constants";
 import type { Submission } from "@/lib/types";
 
+function formatRating(value?: number) {
+  if (typeof value !== "number") {
+    return "-";
+  }
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -42,7 +49,7 @@ export default function AdminPage() {
         <div className="mark">Looking Back Admin</div>
         <Link href="/">Experiment</Link>
       </header>
-      <section className="stage">
+      <section className="stage admin-stage">
         <div className="step-header">
           <span>Admin</span>
           <h2>Responses</h2>
@@ -68,6 +75,20 @@ export default function AdminPage() {
             {submissions.length ? (
               <div className="admin-table">
                 <table>
+                  <colgroup>
+                    <col className="admin-col-time" />
+                    <col className="admin-col-choice" />
+                    <col className="admin-col-short" />
+                    <col className="admin-col-short" />
+                    <col className="admin-col-alignment" />
+                    <col className="admin-col-text" />
+                    <col className="admin-col-text" />
+                    <col className="admin-col-age" />
+                    <col className="admin-col-gender" />
+                    <col className="admin-col-cohort" />
+                    <col className="admin-col-ratings" />
+                    <col className="admin-col-location" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>Time</th>
@@ -87,20 +108,25 @@ export default function AdminPage() {
                   <tbody>
                     {submissions.map((submission) => (
                       <tr key={submission.id}>
-                        <td>{new Date(submission.createdAt).toLocaleString()}</td>
-                        <td>{submission.lifeChoice}</td>
+                        <td className="admin-time">{new Date(submission.createdAt).toLocaleString()}</td>
+                        <td className="admin-choice">{submission.lifeChoice}</td>
                         <td>{submission.idealWord}</td>
                         <td>{submission.guidingValue}</td>
                         <td>{submission.alignment}</td>
-                        <td>{submission.blocker}</td>
-                        <td>{submission.enabler}</td>
-                        <td>{submission.ageBand}</td>
-                        <td>{submission.gender}</td>
-                        <td>{submission.cohortLabel || submission.cohortSlug || "Population"}</td>
-                        <td>
-                          {RATING_DIMENSIONS.map((dimension) => `${dimension}: ${submission.ratings[dimension] ?? ""}`).join(" | ")}
+                        <td className="admin-long-text">{submission.blocker}</td>
+                        <td className="admin-long-text">{submission.enabler}</td>
+                        <td className="admin-meta">{submission.ageBand || "-"}</td>
+                        <td className="admin-meta">{submission.gender || "-"}</td>
+                        <td className="admin-meta">{submission.cohortLabel || submission.cohortSlug || "Population"}</td>
+                        <td className="admin-ratings">
+                          {RATING_DIMENSIONS.map((dimension) => (
+                            <span className="admin-rating" key={dimension}>
+                              <span>{dimension}</span>
+                              <strong>{formatRating(submission.ratings[dimension])}</strong>
+                            </span>
+                          ))}
                         </td>
-                        <td>
+                        <td className="admin-meta">
                           {[submission.location.city, submission.location.country].filter(Boolean).join(", ") || "None"}
                         </td>
                       </tr>
