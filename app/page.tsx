@@ -7,7 +7,7 @@ const experiments = [
     title: "Looking Back",
     status: "Live",
     href: "/looking-back",
-    summary: "A public reflective experiment about the qualities we hope our lives express.",
+    summary: "A public reflective initiative about the qualities we hope our lives express.",
     meta: "Reflection / aggregate pattern",
     image: "/images/looking-back-card.png"
   },
@@ -35,19 +35,19 @@ export default function ExperimentsHub() {
   return (
     <main>
       <header className="topbar">
-        <Link className="mark" href="/">Experiments at evolvable.me</Link>
+        <Link className="mark" href="/">Initiatives at evolvable.me</Link>
         <a href="https://evolvable.me">Explore evolvable.me</a>
       </header>
 
       <section className="experiments-hero">
         <div className="experiments-copy">
-          <p className="eyebrow">Experiments</p>
+          <p className="eyebrow">Initiatives</p>
           <h1>Public reflections on how people change.</h1>
           <p>Short participatory studies from evolvable.me.</p>
         </div>
       </section>
 
-      <section className="experiment-grid" aria-label="evolvable.me experiments">
+      <section className="experiment-grid" aria-label="evolvable.me initiatives">
         {experiments.map((experiment, index) => (
           <article className={experiment.image ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
             <div className="experiment-visual" aria-hidden="true">

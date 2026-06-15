@@ -420,7 +420,7 @@ export default function Home() {
   return (
     <main>
       <header className="topbar">
-        <Link className="mark" href="/">Experiments at evolvable.me</Link>
+        <Link className="mark" href="/">Initiatives at evolvable.me</Link>
         <a href={EVOLVABLE_URL}>Explore evolvable.me</a>
       </header>
 
@@ -455,7 +455,7 @@ export default function Home() {
             <p className="eyebrow">Looking Back</p>
             <h1>What would you want your life to have been?</h1>
             <p>
-              A short public experiment about the qualities we hope our lives express. Take a few minutes, answer honestly,
+              A short public initiative about the qualities we hope our lives express. Take a few minutes, answer honestly,
               then see how your reflection sits within the wider pattern.
             </p>
             <button className="primary" onClick={() => transitionToStep("reflect")}>

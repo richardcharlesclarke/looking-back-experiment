@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "evolvable.me Experiments",
-  description: "Public reflective experiments from evolvable.me."
+  title: "evolvable.me Initiatives",
+  description: "Public reflective initiatives from evolvable.me."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
