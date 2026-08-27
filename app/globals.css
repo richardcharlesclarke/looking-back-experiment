@@ -960,32 +960,32 @@ a {
   letter-spacing: 0.12em;
 }
 
-.closeness-you {
+.closeness-other {
   left: 38%;
-  background: rgba(168, 192, 91, 0.24);
+  background: rgba(50, 162, 185, 0.22);
   transform: translate(-50%, -50%);
 }
 
-.closeness-other {
+.closeness-you {
   appearance: none;
   color: var(--ink);
   cursor: grab;
-  background: rgba(50, 162, 185, 0.22);
+  background: rgba(168, 192, 91, 0.24);
   transform: translate(-50%, -50%);
   transition: box-shadow 180ms ease, background 180ms ease;
   touch-action: none;
 }
 
-.closeness-other:hover,
-.closeness-other:focus-visible,
-.closeness-other.is-dragging {
-  background: rgba(50, 162, 185, 0.32);
+.closeness-you:hover,
+.closeness-you:focus-visible,
+.closeness-you.is-dragging {
+  background: rgba(168, 192, 91, 0.36);
   box-shadow: 0 18px 44px rgba(35, 35, 34, 0.14);
   outline: 2px solid var(--teal);
   outline-offset: 4px;
 }
 
-.closeness-other.is-dragging {
+.closeness-you.is-dragging {
   cursor: grabbing;
   transition: none;
 }

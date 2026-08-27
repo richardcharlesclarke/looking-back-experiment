@@ -224,7 +224,7 @@ export default function ConflictBenchQuestionnaire() {
 
           {step === 6 && (
             <>
-              <SectionHeader index="06" title="How close do they feel?" text="Move the circles from completely separate to increasingly overlapping." />
+              <SectionHeader index="06" title="How close do they feel?" text="Move your circle from completely separate to increasingly overlapping." />
               <ClosenessControl
                 value={responses.selfOtherCloseness}
                 position={responses.selfOtherClosenessPosition}
@@ -408,7 +408,7 @@ function ClosenessControl({
       x: clamp(((clientX - rect.left) / rect.width) * 100, 18, 82),
       y: clamp(((clientY - rect.top) / rect.height) * 100, 28, 72)
     };
-    const circle = arena.querySelector<HTMLElement>(".closeness-other");
+    const circle = arena.querySelector<HTMLElement>(".closeness-you");
     const circleDiameter = circle?.getBoundingClientRect().width || 190;
     const deltaX = ((nextPosition.x - 38) / 100) * rect.width;
     const deltaY = ((nextPosition.y - 50) / 100) * rect.height;
@@ -426,7 +426,7 @@ function ClosenessControl({
     const arena = arenaRef.current;
     if (!arena) return;
     const rect = arena.getBoundingClientRect();
-    const circle = arena.querySelector<HTMLElement>(".closeness-other");
+    const circle = arena.querySelector<HTMLElement>(".closeness-you");
     const circleDiameter = circle?.getBoundingClientRect().width || 190;
     const deltaX = ((nextPosition.x - 38) / 100) * rect.width;
     const deltaY = ((nextPosition.y - 50) / 100) * rect.height;
@@ -442,12 +442,12 @@ function ClosenessControl({
         <strong>{value}</strong>
       </div>
       <div ref={arenaRef} className="closeness-circles">
-        <i className="closeness-you">YOU</i>
+        <i className="closeness-other">OPPOSING VIEW</i>
         <button
-          className={isDragging ? "closeness-other is-dragging" : "closeness-other"}
+          className={isDragging ? "closeness-you is-dragging" : "closeness-you"}
           type="button"
           role="slider"
-          aria-label="Position of people who hold the opposing view"
+          aria-label="Your position relative to people who hold the opposing view"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={value}
@@ -478,10 +478,10 @@ function ClosenessControl({
             moveFromKeyboard(event.key);
           }}
         >
-          OPPOSING VIEW
+          YOU
         </button>
       </div>
-      <p className="closeness-instruction">Drag the opposing-view circle in any direction. More overlap means greater psychological closeness.</p>
+      <p className="closeness-instruction">Drag your circle in any direction. More overlap with the opposing view means greater psychological closeness.</p>
     </div>
   );
 }
