@@ -123,3 +123,30 @@ export async function listConflictBenchSubmissions(): Promise<StoredConflictBenc
   `);
   return result.rows.map(rowToConflictBenchSubmission);
 }
+
+export async function deleteConflictBenchSubmissions(ids: string[]): Promise<string[]> {
+  const uniqueIds = Array.from(new Set(ids));
+  if (!uniqueIds.length) return [];
+
+  const db = getPool();
+  if (!db) {
+    const idsToDelete = new Set(uniqueIds);
+    const deletedIds: string[] = [];
+    for (let index = memoryStore.length - 1; index >= 0; index -= 1) {
+      const submission = memoryStore[index];
+      if (!idsToDelete.has(submission.id)) continue;
+      deletedIds.push(submission.id);
+      memoryStore.splice(index, 1);
+    }
+    return deletedIds;
+  }
+
+  await ensureSchema(db);
+  const result = await db.query(
+    `delete from conflictbench_submissions
+     where id = any($1::uuid[])
+     returning id`,
+    [uniqueIds]
+  );
+  return result.rows.map((row) => String(row.id));
+}

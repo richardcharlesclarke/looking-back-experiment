@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { COOKIE_NAME, verifyAdminCookie } from "@/lib/admin";
-import { listConflictBenchSubmissions } from "@/lib/conflictbench-store";
+import {
+  deleteConflictBenchSubmissions,
+  listConflictBenchSubmissions
+} from "@/lib/conflictbench-store";
 
 type CsvValue = string | number | boolean | null | undefined;
 
@@ -37,9 +40,15 @@ function submissionsToCsv(submissions: Awaited<ReturnType<typeof listConflictBen
   ].join("\n");
 }
 
+function hasAdminSession(value?: string) {
+  return verifyAdminCookie(value);
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function GET(request: Request) {
   const cookieStore = await cookies();
-  if (!verifyAdminCookie(cookieStore.get(COOKIE_NAME)?.value)) {
+  if (!hasAdminSession(cookieStore.get(COOKIE_NAME)?.value)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -56,4 +65,30 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ submissions });
+}
+
+export async function DELETE(request: Request) {
+  const cookieStore = await cookies();
+  if (!hasAdminSession(cookieStore.get(COOKIE_NAME)?.value)) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  let body: { ids?: unknown };
+  try {
+    body = (await request.json()) as { ids?: unknown };
+  } catch {
+    return NextResponse.json({ error: "The selected responses could not be read." }, { status: 400 });
+  }
+
+  if (!Array.isArray(body.ids) || !body.ids.length) {
+    return NextResponse.json({ error: "Select at least one response to delete." }, { status: 400 });
+  }
+
+  if (body.ids.length > 5000 || !body.ids.every((id) => typeof id === "string" && UUID_PATTERN.test(id))) {
+    return NextResponse.json({ error: "One or more selected responses were invalid." }, { status: 400 });
+  }
+
+  const deletedIds = await deleteConflictBenchSubmissions(body.ids);
+  const submissions = await listConflictBenchSubmissions();
+  return NextResponse.json({ deletedIds, submissions });
 }

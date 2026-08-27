@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BRUFEST_TOPICS, PROFILE_DIMENSIONS, type ConflictBenchResponses } from "@/lib/conflictbench";
@@ -49,6 +49,9 @@ export default function ConflictBenchAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async (quiet = false) => {
@@ -63,6 +66,8 @@ export default function ConflictBenchAdminPage() {
       if (!response.ok) throw new Error("The ConflictBench responses could not be loaded.");
       const data = (await response.json()) as { submissions: StoredConflictBenchSubmission[] };
       setSubmissions(data.submissions);
+      const availableIds = new Set(data.submissions.map((submission) => submission.id));
+      setSelectedIds((current) => new Set(Array.from(current).filter((id) => availableIds.has(id))));
       setIsAuthenticated(true);
       return true;
     } catch (loadError) {
@@ -77,6 +82,15 @@ export default function ConflictBenchAdminPage() {
   useEffect(() => {
     void load(true);
   }, [load]);
+
+  useEffect(() => {
+    if (!showDeleteConfirmation) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !deleting) setShowDeleteConfirmation(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [deleting, showDeleteConfirmation]);
 
   async function login() {
     setError("");
@@ -108,6 +122,58 @@ export default function ConflictBenchAdminPage() {
     const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
     return { key, label, value: average };
   }), [submissions]);
+
+  const allSelected = submissions.length > 0 && selectedIds.size === submissions.length;
+
+  function toggleResponseSelection(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllResponses() {
+    setSelectedIds(allSelected ? new Set() : new Set(submissions.map((submission) => submission.id)));
+  }
+
+  async function deleteSelectedResponses() {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/admin/conflictbench-submissions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids })
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        deletedIds?: string[];
+        submissions?: StoredConflictBenchSubmission[];
+      };
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        setSelectedIds(new Set());
+        setShowDeleteConfirmation(false);
+        throw new Error("Your admin session has expired. Sign in again before deleting responses.");
+      }
+      if (!response.ok || !payload.submissions) {
+        throw new Error(payload.error || "The selected responses could not be deleted.");
+      }
+
+      setSubmissions(payload.submissions);
+      setSelectedIds(new Set());
+      setShowDeleteConfirmation(false);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "The selected responses could not be deleted.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <main>
@@ -149,6 +215,18 @@ export default function ConflictBenchAdminPage() {
         {isAuthenticated && (
           <>
             <div className="conflictbench-admin-actions">
+              <label className="conflictbench-admin-select-all">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAllResponses}
+                  aria-label={allSelected ? "Clear response selection" : "Select all responses"}
+                />
+                <span>{allSelected ? "Clear selection" : "Select all"}</span>
+              </label>
+              <span className="conflictbench-admin-selected-count" aria-live="polite">
+                {selectedIds.size} selected
+              </span>
               <button className="secondary" disabled={loading} onClick={() => void load()}>
                 <RefreshCw size={16} /> {loading ? "Refreshing…" : "Refresh"}
               </button>
@@ -161,6 +239,13 @@ export default function ConflictBenchAdminPage() {
               >
                 <Download size={16} /> Download CSV
               </a>
+              <button
+                className="secondary conflictbench-admin-delete-button"
+                disabled={!selectedIds.size || deleting}
+                onClick={() => setShowDeleteConfirmation(true)}
+              >
+                <Trash2 size={16} /> Delete selected
+              </button>
             </div>
 
             <div className="conflictbench-admin-summary">
@@ -183,22 +268,34 @@ export default function ConflictBenchAdminPage() {
 
                 <div className="conflictbench-admin-list">
                   {submissions.map((submission) => (
-                    <details className="conflictbench-admin-response" key={submission.id}>
-                      <summary>
-                        <span className="conflictbench-admin-time">
-                          {new Date(submission.createdAt).toLocaleString()}
-                        </span>
-                        <strong>{topicLabel(submission.responses.topic)}</strong>
-                        <span>Position {formatScore(submission.responses.position)}</span>
-                        <span>Confidence {formatScore(submission.responses.confidence)}</span>
-                        <span>Agency {formatScore(submission.derivedMeasures.conflictAgency)}</span>
-                        <b>
-                          <span className="conflictbench-admin-open-label">Open response</span>
-                          <span className="conflictbench-admin-close-label">Close response</span>
-                        </b>
-                      </summary>
+                    <div
+                      className={`conflictbench-admin-response-row${selectedIds.has(submission.id) ? " selected" : ""}`}
+                      key={submission.id}
+                    >
+                      <label className="conflictbench-admin-response-select">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(submission.id)}
+                          onChange={() => toggleResponseSelection(submission.id)}
+                          aria-label={`Select response from ${new Date(submission.createdAt).toLocaleString()}`}
+                        />
+                      </label>
+                      <details className="conflictbench-admin-response">
+                        <summary>
+                          <span className="conflictbench-admin-time">
+                            {new Date(submission.createdAt).toLocaleString()}
+                          </span>
+                          <strong>{topicLabel(submission.responses.topic)}</strong>
+                          <span>Position {formatScore(submission.responses.position)}</span>
+                          <span>Confidence {formatScore(submission.responses.confidence)}</span>
+                          <span>Agency {formatScore(submission.derivedMeasures.conflictAgency)}</span>
+                          <b>
+                            <span className="conflictbench-admin-open-label">Open response</span>
+                            <span className="conflictbench-admin-close-label">Close response</span>
+                          </b>
+                        </summary>
 
-                      <div className="conflictbench-admin-response-body">
+                        <div className="conflictbench-admin-response-body">
                         <section className="conflictbench-admin-writing">
                           <div><span>Current view</span><p>{submission.responses.currentView}</p></div>
                           <div><span>Strongest opposing argument</span><p>{submission.responses.opposingArgument}</p></div>
@@ -243,12 +340,13 @@ export default function ConflictBenchAdminPage() {
                           </div>
                         </section>
 
-                        <footer>
-                          <span>Version {submission.questionnaireVersion}</span>
-                          <span>Record {submission.id}</span>
-                        </footer>
-                      </div>
-                    </details>
+                          <footer>
+                            <span>Version {submission.questionnaireVersion}</span>
+                            <span>Record {submission.id}</span>
+                          </footer>
+                        </div>
+                      </details>
+                    </div>
                   ))}
                 </div>
               </>
@@ -258,6 +356,60 @@ export default function ConflictBenchAdminPage() {
           </>
         )}
       </section>
+
+      {showDeleteConfirmation && (
+        <div
+          className="conflictbench-admin-confirmation-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deleting) setShowDeleteConfirmation(false);
+          }}
+        >
+          <section
+            className="conflictbench-admin-confirmation"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="conflictbench-delete-title"
+            aria-describedby="conflictbench-delete-description"
+          >
+            <button
+              className="conflictbench-admin-confirmation-close"
+              type="button"
+              aria-label="Close delete confirmation"
+              disabled={deleting}
+              onClick={() => setShowDeleteConfirmation(false)}
+            >
+              <X size={18} />
+            </button>
+            <p className="eyebrow">Permanent action</p>
+            <h2 id="conflictbench-delete-title">
+              Delete {selectedIds.size} selected {selectedIds.size === 1 ? "response" : "responses"}?
+            </h2>
+            <p id="conflictbench-delete-description">
+              This cannot be undone. The dashboard totals, topic count, and every average will immediately
+              recalculate from the responses that remain.
+            </p>
+            <div className="conflictbench-admin-confirmation-actions">
+              <button
+                className="secondary"
+                type="button"
+                autoFocus
+                disabled={deleting}
+                onClick={() => setShowDeleteConfirmation(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="primary conflictbench-admin-confirm-delete"
+                type="button"
+                disabled={deleting}
+                onClick={() => void deleteSelectedResponses()}
+              >
+                <Trash2 size={17} /> {deleting ? "Deleting…" : "Delete permanently"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
