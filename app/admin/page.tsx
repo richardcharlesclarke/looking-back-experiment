@@ -46,8 +46,12 @@ export default function AdminPage() {
   return (
     <main>
       <header className="topbar">
-        <div className="mark">Looking Back Admin</div>
-        <Link href="/">Experiment</Link>
+        <div className="mark">Evolvable data</div>
+        <nav className="admin-nav" aria-label="Admin views">
+          <Link className="active" href="/admin">Looking Back</Link>
+          <Link href="/admin/conflictbench">ConflictBench</Link>
+          <Link href="/">Experiment</Link>
+        </nav>
       </header>
       <section className="stage admin-stage">
         <div className="step-header">

@@ -8,7 +8,7 @@ import {
 let pool: Pool | null = null;
 let schemaReady: Promise<void> | null = null;
 
-type StoredConflictBenchSubmission = {
+export type StoredConflictBenchSubmission = {
   id: string;
   createdAt: string;
   questionnaireVersion: string;
@@ -98,4 +98,28 @@ export async function createConflictBenchSubmission(
     responses: normalized,
     derivedMeasures
   };
+}
+
+function rowToConflictBenchSubmission(row: Record<string, unknown>): StoredConflictBenchSubmission {
+  return {
+    id: String(row.id),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    questionnaireVersion: String(row.questionnaire_version),
+    responses: row.responses as ConflictBenchResponses,
+    derivedMeasures: row.derived_measures as ReturnType<typeof deriveConflictBenchMeasures>
+  };
+}
+
+export async function listConflictBenchSubmissions(): Promise<StoredConflictBenchSubmission[]> {
+  const db = getPool();
+  if (!db) return memoryStore;
+
+  await ensureSchema(db);
+  const result = await db.query(`
+    select id, created_at, questionnaire_version, responses, derived_measures
+    from conflictbench_submissions
+    order by created_at desc
+    limit 5000
+  `);
+  return result.rows.map(rowToConflictBenchSubmission);
 }
