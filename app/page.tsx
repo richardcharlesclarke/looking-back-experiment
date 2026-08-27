@@ -12,10 +12,12 @@ const experiments = [
     image: "/images/looking-back-card.png"
   },
   {
-    title: "Coming soon",
-    status: "Coming soon",
-    summary: "",
-    meta: ""
+    title: "ConflictBench",
+    status: "Live",
+    href: "/conflictbench",
+    summary: "A Brewfest baseline for understanding how people approach disagreement.",
+    meta: "Conflict / pre-festival questionnaire",
+    visual: "conflictbench"
   },
   {
     title: "Coming soon",
@@ -49,14 +51,20 @@ export default function ExperimentsHub() {
 
       <section className="experiment-grid" aria-label="evolvable.me initiatives">
         {experiments.map((experiment, index) => (
-          <article className={experiment.image ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
-            <div className="experiment-visual" aria-hidden="true">
+          <article className={experiment.image || experiment.visual ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
+            <div className={`experiment-visual${experiment.visual ? ` ${experiment.visual}` : ""}`} aria-hidden="true">
               {experiment.image && <Image src={experiment.image} alt="" fill sizes="(max-width: 860px) 100vw, 33vw" />}
+              {experiment.visual === "conflictbench" && (
+                <div className="conflictbench-card-mark">
+                  <i />
+                  <i />
+                </div>
+              )}
               <span>{String(index + 1).padStart(2, "0")}</span>
             </div>
             <div className="experiment-card-copy">
-              <div className={experiment.status === "Live" ? "experiment-card-topline" : "experiment-card-topline placeholder-topline"}>
-                {experiment.status === "Live" ? (
+              <div className={experiment.href ? "experiment-card-topline" : "experiment-card-topline placeholder-topline"}>
+                {experiment.href ? (
                   <>
                   <span>{experiment.status}</span>
                   <Eye size={16} />

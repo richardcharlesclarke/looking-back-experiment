@@ -2,6 +2,14 @@
 
 A standalone Evolvable-style public reflective experiment.
 
+The initiatives hub currently includes:
+
+- `/looking-back`: the public Looking Back reflection.
+- `/conflictbench`: the Brewfest pre-festival ConflictBench questionnaire.
+
+ConflictBench stores responses separately in `conflictbench_submissions`. Its
+placeholder Brewfest topics and position labels live in `lib/conflictbench.ts`.
+
 For project context and product decisions, read `HANDOFF.md`.
 
 ## Local Preview

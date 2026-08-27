@@ -60,3 +60,17 @@ create table if not exists legacy_location_points (
 
 create index if not exists legacy_location_points_source_idx on legacy_location_points (source);
 create index if not exists legacy_location_points_country_idx on legacy_location_points (country);
+
+create table if not exists conflictbench_submissions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  questionnaire_version text not null,
+  topic text not null,
+  responses jsonb not null,
+  derived_measures jsonb not null
+);
+
+create index if not exists conflictbench_submissions_created_at_idx
+  on conflictbench_submissions (created_at desc);
+create index if not exists conflictbench_submissions_topic_idx
+  on conflictbench_submissions (topic);
