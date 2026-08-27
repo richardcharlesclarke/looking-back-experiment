@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
-  BREWFEST_TOPICS,
+  BRUFEST_TOPICS,
   PROFILE_DIMENSIONS,
   type ConflictBenchResponses,
   type ProfileKey,
@@ -52,7 +52,7 @@ export default function ConflictBenchQuestionnaire() {
   const [responses, setResponses] = useState<ConflictBenchResponses>(INITIAL_RESPONSES);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const selectedTopic = BREWFEST_TOPICS.find(({ slug }) => slug === responses.topic);
+  const selectedTopic = BRUFEST_TOPICS.find(({ slug }) => slug === responses.topic);
 
   function update<K extends keyof ConflictBenchResponses>(key: K, value: ConflictBenchResponses[K]) {
     setResponses((current) => ({ ...current, [key]: value }));
@@ -114,7 +114,7 @@ export default function ConflictBenchQuestionnaire() {
             <VectorDecoration className="v2" src="/vector-decoration/profile-vector-new-2-open.svg" delay="0s" stroke="#F4F3F4" variant="profile-2-hero" />
           </div>
           <div className="conflictbench-hero-copy">
-            <p className="eyebrow">Brewfest / Pre-festival</p>
+            <p className="eyebrow">Brufest / Pre-festival</p>
             <h1>How do you meet disagreement?</h1>
             <p>
               A short baseline questionnaire about how you see an issue, the people who disagree with you,
@@ -132,7 +132,7 @@ export default function ConflictBenchQuestionnaire() {
           <div className="conflictbench-intro-note">
             <FlaskConical size={18} />
             <p>
-              This is the before picture. After Brewfest, we can compare your answers to see whether anything
+              This is the before picture. After Brufest, we can compare your answers to see whether anything
               changed in how you approach disagreement.
             </p>
           </div>
@@ -149,16 +149,16 @@ export default function ConflictBenchQuestionnaire() {
 
           {step === 1 && (
             <>
-              <SectionHeader index="01" title="Choose the issue" text="Start with the Brewfest topic you are responding to, then place your current view." />
+              <SectionHeader index="01" title="Choose the issue" text="Start with the Brufest topic you are responding to, then place your current view." />
               <div className="conflictbench-question-card conflictbench-topic-card">
                 <label className="field wide">
                   <span><b className="question-number">Q1</b> Which issue are you responding to?</span>
                   <select value={responses.topic} onChange={(event) => update("topic", event.target.value)}>
-                    <option value="">Select a Brewfest topic</option>
-                    {BREWFEST_TOPICS.map((topic) => <option key={topic.slug} value={topic.slug}>{topic.label}</option>)}
+                    <option value="">Select a Brufest topic</option>
+                    {BRUFEST_TOPICS.map((topic) => <option key={topic.slug} value={topic.slug}>{topic.label}</option>)}
                   </select>
                 </label>
-                <p className="placeholder-note">Placeholder: replace this topic list and the position endpoints when Brewfest confirms them.</p>
+                <p className="placeholder-note">Placeholder: replace this topic list and the position endpoints when Brufest confirms them.</p>
               </div>
               <OrbScale
                 number="Q2"

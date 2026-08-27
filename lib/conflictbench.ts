@@ -1,24 +1,24 @@
-export const CONFLICTBENCH_VERSION = "brewfest-pre-v0.1";
+export const CONFLICTBENCH_VERSION = "brufest-pre-v0.1";
 
-// Replace these placeholders once Brewfest confirms its issue list and
+// Replace these placeholders once Brufest confirms its issue list and
 // topic-specific bipolar endpoints. Keeping the content in one configuration
 // block prevents placeholder research wording from leaking into the form logic.
-export const BREWFEST_TOPICS = [
+export const BRUFEST_TOPICS = [
   {
     slug: "placeholder-topic-1",
-    label: "[Placeholder] Brewfest topic 1",
+    label: "[Placeholder] Brufest topic 1",
     positionLow: "Strongly favour position A",
     positionHigh: "Strongly favour position B"
   },
   {
     slug: "placeholder-topic-2",
-    label: "[Placeholder] Brewfest topic 2",
+    label: "[Placeholder] Brufest topic 2",
     positionLow: "Strongly favour position A",
     positionHigh: "Strongly favour position B"
   },
   {
     slug: "placeholder-topic-3",
-    label: "[Placeholder] Brewfest topic 3",
+    label: "[Placeholder] Brufest topic 3",
     positionLow: "Strongly favour position A",
     positionHigh: "Strongly favour position B"
   }

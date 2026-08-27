@@ -54,7 +54,7 @@ export async function createConflictBenchTranscriptionClientSecret({
             transcription: {
               model: CONFLICTBENCH_TRANSCRIPTION_MODEL,
               prompt: "A concise first-person response to a pre-festival questionnaire about disagreement, perspective-taking, and changing one's mind.",
-              keywords: ["Evolvable", "ConflictBench", "Brewfest"],
+              keywords: ["Evolvable", "ConflictBench", "Brufest"],
               delay: "low"
             },
             turn_detection: null

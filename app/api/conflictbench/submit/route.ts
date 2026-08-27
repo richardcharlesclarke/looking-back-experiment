@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  BREWFEST_TOPICS,
+  BRUFEST_TOPICS,
   PROFILE_DIMENSIONS,
   type ConflictBenchResponses
 } from "@/lib/conflictbench";
@@ -53,8 +53,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The questionnaire response could not be read." }, { status: 400 });
   }
 
-  if (!BREWFEST_TOPICS.some(({ slug }) => slug === body.topic)) {
-    return NextResponse.json({ error: "Please select a Brewfest topic." }, { status: 400 });
+  if (!BRUFEST_TOPICS.some(({ slug }) => slug === body.topic)) {
+    return NextResponse.json({ error: "Please select a Brufest topic." }, { status: 400 });
   }
 
   if (!isRequiredText(body.currentView, 3000) || !isRequiredText(body.opposingArgument, 3000)) {

@@ -15,7 +15,7 @@ const experiments = [
     title: "ConflictBench",
     status: "Live",
     href: "/conflictbench",
-    summary: "A Brewfest baseline for understanding how people approach disagreement.",
+    summary: "A Brufest baseline for understanding how people approach disagreement.",
     meta: "Conflict / pre-festival questionnaire",
     visual: "conflictbench"
   },
