@@ -11,6 +11,7 @@ import {
   type ProfileRatings
 } from "@/lib/conflictbench";
 import { VectorDecoration } from "../looking-back/VectorDecoration";
+import { ConflictBenchVoiceTextarea } from "./ConflictBenchVoiceTextarea";
 
 const LAST_QUESTION_STEP = 9;
 const SCALE_ANCHORS = [0, 25, 50, 75, 100];
@@ -167,10 +168,16 @@ export default function ConflictBenchQuestionnaire() {
                 high={selectedTopic?.positionHigh ?? "Strongly favour position B"}
                 onChange={(value) => update("position", value)}
               />
-              <label className="field wide conflictbench-text-question">
-                <span><b className="question-number">Q3</b> In your own words, what is your current view?</span>
-                <textarea value={responses.currentView} onChange={(event) => update("currentView", event.target.value)} rows={4} maxLength={3000} placeholder="Ideally 1–3 sentences" />
-              </label>
+              <ConflictBenchVoiceTextarea
+                id="conflictbench-current-view"
+                number="Q3"
+                question="In your own words, what is your current view?"
+                value={responses.currentView}
+                onChange={(value) => update("currentView", value)}
+                rows={4}
+                maxLength={3000}
+                placeholder="Ideally 1–3 sentences"
+              />
               <OrbScale number="Q4" question="How confident are you that your current view is broadly correct?" value={responses.confidence} low="Not at all confident" high="Completely confident" onChange={(value) => update("confidence", value)} />
             </>
           )}
@@ -188,10 +195,16 @@ export default function ConflictBenchQuestionnaire() {
             <>
               <SectionHeader index="03" title="See the opposing view" text="Think about the strongest version of the view that differs from yours." />
               <OrbScale number="Q8" question="How well do you think you understand why an intelligent person might hold the opposing view?" value={responses.opposingUnderstanding} low="I don't understand it at all" high="I understand it extremely well" onChange={(value) => update("opposingUnderstanding", value)} />
-              <label className="field wide conflictbench-text-question">
-                <span><b className="question-number">Q9</b> Briefly describe what you think is the strongest argument for the opposing position.</span>
-                <textarea value={responses.opposingArgument} onChange={(event) => update("opposingArgument", event.target.value)} rows={5} maxLength={3000} placeholder="Describe their strongest argument in your own words" />
-              </label>
+              <ConflictBenchVoiceTextarea
+                id="conflictbench-opposing-argument"
+                number="Q9"
+                question="Briefly describe what you think is the strongest argument for the opposing position."
+                value={responses.opposingArgument}
+                onChange={(value) => update("opposingArgument", value)}
+                rows={5}
+                maxLength={3000}
+                placeholder="Describe their strongest argument in your own words"
+              />
             </>
           )}
 
@@ -242,10 +255,17 @@ export default function ConflictBenchQuestionnaire() {
               <OrbScale number="Q17" question="How good are you at changing your mind when you encounter better evidence or arguments?" value={responses.changingMindSkill} low="Very bad at it" high="Very good at it" onChange={(value) => update("changingMindSkill", value)} />
               <OrbScale number="Q18" question="How much is being able to change your mind part of how you see yourself?" value={responses.changingMindIdentity} low="Not part of my identity" high="Very much part of my identity" onChange={(value) => update("changingMindIdentity", value)} />
               <OrbScale number="Q19" question="How easily can you bring to mind the last time you genuinely changed your mind about something important?" value={responses.recallChangedMind} low="I can't think of one" high="One comes immediately to mind" onChange={(value) => update("recallChangedMind", value)} />
-              <label className="field wide conflictbench-text-question">
-                <span><b className="question-number">Q20</b> What did you change your mind about? <em>Optional</em></span>
-                <textarea value={responses.changedMindAbout} onChange={(event) => update("changedMindAbout", event.target.value)} rows={3} maxLength={1000} placeholder="A short reflection" />
-              </label>
+              <ConflictBenchVoiceTextarea
+                id="conflictbench-changed-mind"
+                number="Q20"
+                question="What did you change your mind about?"
+                optional
+                value={responses.changedMindAbout ?? ""}
+                onChange={(value) => update("changedMindAbout", value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="A short reflection"
+              />
             </>
           )}
 
