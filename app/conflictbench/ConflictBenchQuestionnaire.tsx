@@ -32,6 +32,7 @@ const INITIAL_RESPONSES: ConflictBenchResponses = {
   opponentProfile: freshProfile(),
   selfProfile: freshProfile(),
   selfOtherCloseness: 50,
+  selfOtherClosenessPosition: { x: 55, y: 50 },
   willingnessConversation: 50,
   interestInDisagreement: 50,
   opennessToInfluence: 50,
@@ -130,8 +131,8 @@ export default function ConflictBenchQuestionnaire() {
           <div className="conflictbench-intro-note">
             <FlaskConical size={18} />
             <p>
-              There is no single ConflictBench score. Each response is kept separately so change can be
-              understood without flattening it.
+              This is the before picture. After Brewfest, we can compare your answers to see whether anything
+              changed in how you approach disagreement.
             </p>
           </div>
         </section>
@@ -211,7 +212,17 @@ export default function ConflictBenchQuestionnaire() {
           {step === 6 && (
             <>
               <SectionHeader index="06" title="How close do they feel?" text="Move the circles from completely separate to increasingly overlapping." />
-              <ClosenessControl value={responses.selfOtherCloseness} onChange={(value) => update("selfOtherCloseness", value)} />
+              <ClosenessControl
+                value={responses.selfOtherCloseness}
+                position={responses.selfOtherClosenessPosition}
+                onChange={(value, position) => {
+                  setResponses((current) => ({
+                    ...current,
+                    selfOtherCloseness: value,
+                    selfOtherClosenessPosition: position
+                  }));
+                }}
+              />
             </>
           )}
 
@@ -353,8 +364,56 @@ function ProfileScales({ number, profile, onChange }: { number: string; profile:
   );
 }
 
-function ClosenessControl({ value, onChange }: { value: number; onChange: (value: number) => void }) {
-  const separation = (100 - value) * 1.7;
+function ClosenessControl({
+  value,
+  position,
+  onChange
+}: {
+  value: number;
+  position: { x: number; y: number };
+  onChange: (value: number, position: { x: number; y: number }) => void;
+}) {
+  const arenaRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function clamp(valueToClamp: number, minimum: number, maximum: number) {
+    return Math.min(Math.max(valueToClamp, minimum), maximum);
+  }
+
+  function positionFromPointer(clientX: number, clientY: number) {
+    const arena = arenaRef.current;
+    if (!arena) return { value, position };
+    const rect = arena.getBoundingClientRect();
+    const nextPosition = {
+      x: clamp(((clientX - rect.left) / rect.width) * 100, 18, 82),
+      y: clamp(((clientY - rect.top) / rect.height) * 100, 28, 72)
+    };
+    const circle = arena.querySelector<HTMLElement>(".closeness-other");
+    const circleDiameter = circle?.getBoundingClientRect().width || 190;
+    const deltaX = ((nextPosition.x - 38) / 100) * rect.width;
+    const deltaY = ((nextPosition.y - 50) / 100) * rect.height;
+    const centreDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const nextValue = Math.round(clamp(100 * (1 - centreDistance / circleDiameter), 0, 100));
+    return { value: nextValue, position: nextPosition };
+  }
+
+  function moveFromKeyboard(key: string) {
+    const movement = 1.5;
+    const nextPosition = {
+      x: clamp(position.x + (key === "ArrowRight" ? movement : key === "ArrowLeft" ? -movement : 0), 18, 82),
+      y: clamp(position.y + (key === "ArrowDown" ? movement : key === "ArrowUp" ? -movement : 0), 28, 72)
+    };
+    const arena = arenaRef.current;
+    if (!arena) return;
+    const rect = arena.getBoundingClientRect();
+    const circle = arena.querySelector<HTMLElement>(".closeness-other");
+    const circleDiameter = circle?.getBoundingClientRect().width || 190;
+    const deltaX = ((nextPosition.x - 38) / 100) * rect.width;
+    const deltaY = ((nextPosition.y - 50) / 100) * rect.height;
+    const centreDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    onChange(Math.round(clamp(100 * (1 - centreDistance / circleDiameter), 0, 100)), nextPosition);
+  }
+
   return (
     <div className="closeness-card">
       <div className="conflictbench-orb-copy">
@@ -362,15 +421,47 @@ function ClosenessControl({ value, onChange }: { value: number; onChange: (value
         <h3>How psychologically close or distant do people who hold the opposing view feel to you?</h3>
         <strong>{value}</strong>
       </div>
-      <div className="closeness-circles" aria-hidden="true">
+      <div ref={arenaRef} className="closeness-circles">
         <i className="closeness-you">YOU</i>
-        <i className="closeness-other" style={{ "--circle-separation": `${separation}px` } as React.CSSProperties}>OPPOSING VIEW</i>
+        <button
+          className={isDragging ? "closeness-other is-dragging" : "closeness-other"}
+          type="button"
+          role="slider"
+          aria-label="Position of people who hold the opposing view"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={value}
+          aria-valuetext={`${value} out of 100 psychologically close`}
+          style={{ left: `${position.x}%`, top: `${position.y}%` }}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setIsDragging(true);
+            const next = positionFromPointer(event.clientX, event.clientY);
+            onChange(next.value, next.position);
+          }}
+          onPointerMove={(event) => {
+            if (!isDragging) return;
+            const next = positionFromPointer(event.clientX, event.clientY);
+            onChange(next.value, next.position);
+          }}
+          onPointerUp={(event) => {
+            if (!isDragging) return;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+            setIsDragging(false);
+            const next = positionFromPointer(event.clientX, event.clientY);
+            onChange(next.value, next.position);
+          }}
+          onPointerCancel={() => setIsDragging(false)}
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+            event.preventDefault();
+            moveFromKeyboard(event.key);
+          }}
+        >
+          OPPOSING VIEW
+        </button>
       </div>
-      <label className="closeness-range">
-        <span>Completely separate</span>
-        <input type="range" min="0" max="100" value={value} onChange={(event) => onChange(Number(event.target.value))} aria-label="Psychological closeness" />
-        <span>Completely overlapping</span>
-      </label>
+      <p className="closeness-instruction">Drag the opposing-view circle in any direction. More overlap means greater psychological closeness.</p>
     </div>
   );
 }

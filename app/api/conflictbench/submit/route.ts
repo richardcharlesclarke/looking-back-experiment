@@ -39,6 +39,12 @@ function isProfile(value: unknown) {
   return PROFILE_DIMENSIONS.every(({ key }) => isScore((value as Record<string, unknown>)[key]));
 }
 
+function isClosenessPosition(value: unknown) {
+  if (!value || typeof value !== "object") return false;
+  const position = value as Record<string, unknown>;
+  return isScore(position.x) && isScore(position.y);
+}
+
 export async function POST(request: Request) {
   let body: ConflictBenchResponses;
   try {
@@ -71,6 +77,10 @@ export async function POST(request: Request) {
 
   if (!isProfile(body.opponentProfile) || !isProfile(body.selfProfile)) {
     return NextResponse.json({ error: "Please complete every profile scale." }, { status: 400 });
+  }
+
+  if (!isClosenessPosition(body.selfOtherClosenessPosition)) {
+    return NextResponse.json({ error: "Please position the opposing-view circle." }, { status: 400 });
   }
 
   const submission = await createConflictBenchSubmission(body);

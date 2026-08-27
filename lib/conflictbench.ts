@@ -51,6 +51,7 @@ export type ConflictBenchResponses = {
   opponentProfile: ProfileRatings;
   selfProfile: ProfileRatings;
   selfOtherCloseness: number;
+  selfOtherClosenessPosition: { x: number; y: number };
   willingnessConversation: number;
   interestInDisagreement: number;
   opennessToInfluence: number;
