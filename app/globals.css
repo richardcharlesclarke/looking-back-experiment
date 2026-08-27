@@ -877,6 +877,8 @@ a {
 }
 
 .conflictbench-actions {
+  width: 100%;
+  max-width: none;
   margin-top: 34px;
 }
 
