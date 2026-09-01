@@ -16,7 +16,7 @@ import { ConflictBenchVoiceTextarea } from "./ConflictBenchVoiceTextarea";
 const LAST_QUESTION_STEP = 9;
 const SCALE_ANCHORS = [0, 25, 50, 75, 100];
 
-function snapToScaleAnchor(raw: number) {
+function nearestScaleAnchor(raw: number) {
   const clamped = Math.min(Math.max(raw, SCALE_ANCHORS[0]), SCALE_ANCHORS[SCALE_ANCHORS.length - 1]);
   return SCALE_ANCHORS.reduce((nearest, anchor) => (
     Math.abs(anchor - clamped) < Math.abs(nearest - clamped) ? anchor : nearest
@@ -330,26 +330,21 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
 
   useEffect(() => { if (!isDragging) setVisualValue(value); }, [value, isDragging]);
 
-  const selectedValue = snapToScaleAnchor(isDragging ? visualValue : value);
+  const visibleValue = isDragging ? Math.round(visualValue) : value;
+  const selectedAnchor = nearestScaleAnchor(visibleValue);
   const thumbSize = 26 + (visualValue / 100) * 54;
 
   function valueFromPointer(clientX: number) {
     const lane = laneRef.current;
     if (!lane) return visualValue;
     const rect = lane.getBoundingClientRect();
-    return snapToScaleAnchor(((clientX - rect.left) / rect.width) * 100);
+    return Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 0), 100);
   }
 
   function commit(raw: number) {
-    const next = snapToScaleAnchor(raw);
+    const next = Math.min(Math.max(Math.round(raw), 0), 100);
     setVisualValue(next);
     onChange(next);
-  }
-
-  function moveWithKeyboard(direction: -1 | 1) {
-    const currentIndex = SCALE_ANCHORS.indexOf(snapToScaleAnchor(value));
-    const nextIndex = Math.min(Math.max(currentIndex + direction, 0), SCALE_ANCHORS.length - 1);
-    commit(SCALE_ANCHORS[nextIndex]);
   }
 
   return (
@@ -357,7 +352,7 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
       <div className="conflictbench-orb-copy">
         <span className="question-number">{number}</span>
         <h3>{question}</h3>
-        <strong>{selectedValue}</strong>
+        <strong>{visibleValue}</strong>
       </div>
       <div className="alignment-orb-control">
         <div className="rating-orb-field" onPointerMove={(event) => { if (isDragging) setVisualValue(valueFromPointer(event.clientX)); }} onPointerUp={(event) => { if (!isDragging) return; event.currentTarget.releasePointerCapture(event.pointerId); setIsDragging(false); commit(valueFromPointer(event.clientX)); }} onPointerCancel={(event) => { if (!isDragging) return; event.currentTarget.releasePointerCapture(event.pointerId); setIsDragging(false); commit(visualValue); }}>
@@ -369,25 +364,25 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
               className={isDragging ? "rating-orb-thumb dragging" : "rating-orb-thumb"}
               type="button"
               role="slider"
-              aria-label={`${question}: ${selectedValue} out of 100`}
+              aria-label={`${question}: ${visibleValue} out of 100`}
               aria-orientation="horizontal"
               aria-valuemin={SCALE_ANCHORS[0]}
               aria-valuemax={SCALE_ANCHORS[SCALE_ANCHORS.length - 1]}
-              aria-valuenow={selectedValue}
-              aria-valuetext={`${selectedValue} out of 100`}
+              aria-valuenow={visibleValue}
+              aria-valuetext={`${visibleValue} out of 100`}
               style={{ "--rating-thumb-size": `${thumbSize}px`, "--rating-orb-position": `${visualValue}%` } as React.CSSProperties}
               onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setIsDragging(true); setVisualValue(valueFromPointer(event.clientX)); }}
               onKeyDown={(event) => {
                 if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
                 event.preventDefault();
-                moveWithKeyboard(event.key === "ArrowRight" ? 1 : -1);
+                commit(value + (event.key === "ArrowRight" ? 1 : -1));
               }}
             />
           </div>
         </div>
         <div className="rating-scale conflictbench-scale" role="group" aria-label={`${question} response anchors`}>
           {SCALE_ANCHORS.map((anchor, index) => (
-            <button key={anchor} type="button" className={selectedValue === anchor ? "rating-scale-option active" : "rating-scale-option"} onClick={() => commit(anchor)}>
+            <button key={anchor} type="button" className={selectedAnchor === anchor ? "rating-scale-option active" : "rating-scale-option"} onClick={() => commit(anchor)}>
               {index === 0 ? low : index === SCALE_ANCHORS.length - 1 ? high : anchor}
             </button>
           ))}
