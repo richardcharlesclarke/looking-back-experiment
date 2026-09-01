@@ -16,6 +16,13 @@ import { ConflictBenchVoiceTextarea } from "./ConflictBenchVoiceTextarea";
 const LAST_QUESTION_STEP = 9;
 const SCALE_ANCHORS = [0, 25, 50, 75, 100];
 
+function snapToScaleAnchor(raw: number) {
+  const clamped = Math.min(Math.max(raw, SCALE_ANCHORS[0]), SCALE_ANCHORS[SCALE_ANCHORS.length - 1]);
+  return SCALE_ANCHORS.reduce((nearest, anchor) => (
+    Math.abs(anchor - clamped) < Math.abs(nearest - clamped) ? anchor : nearest
+  ));
+}
+
 function freshProfile(): ProfileRatings {
   return Object.fromEntries(PROFILE_DIMENSIONS.map(({ key }) => [key, 50])) as ProfileRatings;
 }
@@ -323,20 +330,26 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
 
   useEffect(() => { if (!isDragging) setVisualValue(value); }, [value, isDragging]);
 
-  const visibleValue = isDragging ? Math.round(visualValue) : value;
+  const selectedValue = snapToScaleAnchor(isDragging ? visualValue : value);
   const thumbSize = 26 + (visualValue / 100) * 54;
 
   function valueFromPointer(clientX: number) {
     const lane = laneRef.current;
     if (!lane) return visualValue;
     const rect = lane.getBoundingClientRect();
-    return Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 0), 100);
+    return snapToScaleAnchor(((clientX - rect.left) / rect.width) * 100);
   }
 
   function commit(raw: number) {
-    const next = Math.min(Math.max(Math.round(raw), 0), 100);
+    const next = snapToScaleAnchor(raw);
     setVisualValue(next);
     onChange(next);
+  }
+
+  function moveWithKeyboard(direction: -1 | 1) {
+    const currentIndex = SCALE_ANCHORS.indexOf(snapToScaleAnchor(value));
+    const nextIndex = Math.min(Math.max(currentIndex + direction, 0), SCALE_ANCHORS.length - 1);
+    commit(SCALE_ANCHORS[nextIndex]);
   }
 
   return (
@@ -344,7 +357,7 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
       <div className="conflictbench-orb-copy">
         <span className="question-number">{number}</span>
         <h3>{question}</h3>
-        <strong>{visibleValue}</strong>
+        <strong>{selectedValue}</strong>
       </div>
       <div className="alignment-orb-control">
         <div className="rating-orb-field" onPointerMove={(event) => { if (isDragging) setVisualValue(valueFromPointer(event.clientX)); }} onPointerUp={(event) => { if (!isDragging) return; event.currentTarget.releasePointerCapture(event.pointerId); setIsDragging(false); commit(valueFromPointer(event.clientX)); }} onPointerCancel={(event) => { if (!isDragging) return; event.currentTarget.releasePointerCapture(event.pointerId); setIsDragging(false); commit(visualValue); }}>
@@ -355,16 +368,26 @@ function OrbScale({ number, question, value, low, high, onChange }: { number: st
             <button
               className={isDragging ? "rating-orb-thumb dragging" : "rating-orb-thumb"}
               type="button"
-              aria-label={`${question}: ${visibleValue} out of 100`}
+              role="slider"
+              aria-label={`${question}: ${selectedValue} out of 100`}
+              aria-orientation="horizontal"
+              aria-valuemin={SCALE_ANCHORS[0]}
+              aria-valuemax={SCALE_ANCHORS[SCALE_ANCHORS.length - 1]}
+              aria-valuenow={selectedValue}
+              aria-valuetext={`${selectedValue} out of 100`}
               style={{ "--rating-thumb-size": `${thumbSize}px`, "--rating-orb-position": `${visualValue}%` } as React.CSSProperties}
               onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setIsDragging(true); setVisualValue(valueFromPointer(event.clientX)); }}
-              onKeyDown={(event) => { if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); commit(value + (event.key === "ArrowRight" ? 1 : -1)); }}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                event.preventDefault();
+                moveWithKeyboard(event.key === "ArrowRight" ? 1 : -1);
+              }}
             />
           </div>
         </div>
         <div className="rating-scale conflictbench-scale" role="group" aria-label={`${question} response anchors`}>
           {SCALE_ANCHORS.map((anchor, index) => (
-            <button key={anchor} type="button" className={value === anchor ? "rating-scale-option active" : "rating-scale-option"} onClick={() => commit(anchor)}>
+            <button key={anchor} type="button" className={selectedValue === anchor ? "rating-scale-option active" : "rating-scale-option"} onClick={() => commit(anchor)}>
               {index === 0 ? low : index === SCALE_ANCHORS.length - 1 ? high : anchor}
             </button>
           ))}
