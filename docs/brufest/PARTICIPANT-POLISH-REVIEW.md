@@ -38,3 +38,14 @@ Approved information, consent, follow-up permission, question prompts/order/valu
 The initial worktree contained only the public proxy. Commit `9ed127e` snapshots the existing Brufest source from the separate worktree as a review baseline. Review the participant change against that commit. The separate original worktree remains untouched. Deploy only the output of `scripts/package-study-one-review.py`, not this complete repository: the existing service runs the allowlisted standalone application. The package contains no data, environment files, Looking Back or other study routes.
 
 Production target verified: project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environment `d86f82f2-579c-4de2-8085-f00903b86816` (`study-one-review`), service `9586c104-8863-467f-adab-bef9a2fa5432`. Existing `/study-one-data` volume and storage configuration are retained. Public proxy and asset prefix remain `/study-one`.
+
+## Confirmed production release
+
+- Final deployment: `cc0ee2f7-73a1-4b16-91a2-c61bc943b097`, Railway `SUCCESS`, 8 September 2026. Deployed code: `08b7d63`.
+- Public URL: https://experiments.evolvable.me/study-one
+- Final public participant stylesheet: `/study-one/_next/static/css/8d9e31c139628d49.css`; SHA-256 `e81b68f48f16998aa30fbd781fac63c950ad70a67f787d1eb884e8ebea5f22d0`. Final darker borders verified in the served asset.
+- Actual public page, JS and CSS assets return 200. Admin API rejects anonymous access with 401.
+- Full live-rendered desktop/mobile journeys pass with intercepted synthetic API responses, including the future after-festival experience. Real production date gating was not bypassed.
+- A separate real public API smoke test enrolled one temporary synthetic participant, saved the first questionnaire, declined follow-up, reloaded the saved state, deleted that record and confirmed its private link was revoked. Completed at `2026-09-08T15:58:38Z`; no smoke-test record remains. No emails sent.
+- Draft reload restores page and answers; keyboard focus is a visible 3px outline. Final package source manifest matches every allowlisted source file.
+- Visual comparison: `output/VISUAL-REVIEW.md`. Detailed public receipts: `output/public-smoke-final.json`, `output/playwright/live-after-desktop-qa.txt`, `output/playwright/live-after-mobile-qa.txt`.
