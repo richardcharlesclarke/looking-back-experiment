@@ -20,7 +20,7 @@ export default function ContinuousOrb({ item, value, onChange }: {item:Question;
     return item.type==='continuous'?raw:Math.round(raw*10)/10;
   }
   return <div className="alignment-orb-control s1-continuous">
-    <p className="s1-orb-instruction" id={`scale-help-${item.id}`}>Drag the circle to the position that fits. The labels describe five response bands.</p>
+    <p className="s1-orb-instruction" id={`scale-help-${item.id}`}>Choose a label or drag the circle to the position that fits.</p>
     <div className="s1-response-readout"><p aria-live="polite">{label}</p><span aria-hidden="true">{value===null?'No response selected':`${Number(value.toFixed(1))} / ${max}`}</span></div>
     <div className="rating-orb-field"
       onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);thumb.current?.focus({preventScroll:true});setDragging(true);onChange(fromPointer(e.clientX));}}
@@ -31,7 +31,7 @@ export default function ContinuousOrb({ item, value, onChange }: {item:Question;
       <div className="rating-orb-lane" ref={lane}>
         <button ref={thumb} type="button" role="slider" aria-label={item.prompt} aria-describedby={`scale-help-${item.id}`} aria-orientation="horizontal" aria-valuemin={0} aria-valuemax={max} aria-valuenow={n} aria-valuetext={value===null?'No response selected':`${value} out of ${max}; ${label}`}
           className={`rating-orb-thumb${dragging?' dragging':''}${value===null?' unselected':''}`}
-          style={{'--rating-thumb-size':`${44+percent*.36}px`,'--rating-orb-position':`${percent}%`} as CSSProperties}
+          style={{'--rating-thumb-size':`${44+percent*.12}px`,'--rating-orb-position':`${percent}%`} as CSSProperties}
           onKeyDown={e=>{
             const direction=['ArrowRight','ArrowUp'].includes(e.key)?1:['ArrowLeft','ArrowDown'].includes(e.key)?-1:0;
             if(direction||['Home','End','PageUp','PageDown'].includes(e.key)){
@@ -43,6 +43,6 @@ export default function ContinuousOrb({ item, value, onChange }: {item:Question;
           }}/>
       </div>
     </div>
-    <div className="rating-scale" aria-label="Response bands">{bands.map((band,i)=><span key={band} className={`rating-scale-option${selected===i?' active':''}`} aria-current={selected===i?'true':undefined}>{band}</span>)}</div>
+    <div className="rating-scale" role="group" aria-label="Response bands">{bands.map((band,i)=><button type="button" key={band} className={`rating-scale-option${selected===i?' active':''}`} aria-label={band} aria-pressed={selected===i} onClick={()=>onChange((i+.5)/bands.length*max)}><span className="s1-band-label-long">{band}</span><span className="s1-band-label-short" aria-hidden="true">{band.replace(' true of me now','')}</span></button>)}</div>
   </div>;
 }

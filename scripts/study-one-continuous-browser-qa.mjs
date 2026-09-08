@@ -3,7 +3,7 @@
 export default async function continuousQA(page) {
   const origin=await page.evaluate(()=>location.origin), width=page.viewportSize().width;
   const before=false;
-  const prefix=`continuous-${origin.includes('localhost')?'local':'live'}-${width}`;
+  const prefix=`refined-${origin.includes('localhost')?'local':'live'}-${width}`;
   const reports=[], submissions=[], exactValues={};
   let step='pre', failure=false, invalidLink=false;
   const view=()=>({id:'synthetic-qa',mode:'study',step,message:step==='complete'?'Both questionnaires are saved and matched. Thank you for taking part.':step==='waiting'?'The questionnaire after the festival opens on 21 September 2026.':step==='stopped'?'Follow-up contact has stopped. Your email address has been removed from the contact list. Previously submitted research answers have not been deleted.':'',contactChoiceSaved:!['pre','contact'].includes(step),permission:['waiting','post','complete'].includes(step),email:['waiting','post','complete'].includes(step)?'qa@example.invalid':null,completed:step==='pre'?[]:step==='complete'?['pre','post']:['pre']});
@@ -23,6 +23,9 @@ export default async function continuousQA(page) {
   async function shot(name){
     if(await page.locator('.bf-question').count()>1)throw new Error('More than one question on a step');
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+    const controls=await page.locator('.bf-nav button').all();
+    if(controls.length===2){const a=await controls[0].boundingBox(),b=await controls[1].boundingBox();if(Math.abs(a.width-b.width)>.1||Math.abs(a.height-b.height)>.1)throw new Error('Navigation dimensions differ '+JSON.stringify({name,a,b}));}
+    if(name.includes('-section-')&&width>=1280&&await page.getByRole('slider').count()&&await page.locator('.bf-nav').evaluate(e=>e.getBoundingClientRect().bottom>innerHeight))throw new Error('Core question does not fit desktop viewport');
     if(overflow&&!before)throw new Error(`Overflow ${name} ${width}`);
     await page.screenshot({path:`output/playwright/${prefix}-${name}.png`,fullPage:true});reports.push({name,overflow});
   }
@@ -47,13 +50,21 @@ export default async function continuousQA(page) {
           await slider.press('End');if(Number(await slider.getAttribute('aria-valuenow'))!==max)throw new Error('Endpoint unreachable');
           await slider.press('ArrowLeft');
           if(max===100){
+            const options=q.locator('.rating-scale-option');
+            for(let i=0;i<5;i++){
+              await options.nth(i).click();
+              if(Number(await slider.getAttribute('aria-valuenow'))!==(i+.5)*20)throw new Error('Label did not select band centre');
+              const button=await options.nth(i).boundingBox(),orb=await slider.boundingBox();
+              if(Math.abs(button.x+button.width/2-orb.x-orb.width/2)>1)throw new Error('Label and slider misaligned');
+            }
             const lane=await q.locator('.rating-orb-lane').boundingBox();
             await page.mouse.move(lane.x+lane.width*.2,lane.y+lane.height/2);await page.mouse.down();
             await page.mouse.move(lane.x+lane.width*.71234567,lane.y+lane.height/2,{steps:8});
+            await page.waitForFunction(()=>Math.abs(Number(document.querySelector('[role=slider]')?.getAttribute('aria-valuenow'))-71.234567)<.7);
             const during=Number(await slider.getAttribute('aria-valuenow'));await page.mouse.up();
-            const after=Number(await slider.getAttribute('aria-valuenow'));if(during!==after||Math.abs(after-71.234567)>.7)throw new Error('Slider snapped or lost precision');
+            const after=Number(await slider.getAttribute('aria-valuenow'));if(during!==after||Math.abs(after-71.234567)>.7)throw new Error('Slider snapped or lost precision '+JSON.stringify({id,during,after,lane}));
             if(Number.isInteger(after))throw new Error('Pointer value was quantised');
-            if((await q.locator('.rating-scale .active').innerText()).toLowerCase()!=='mostly true of me now')throw new Error('Wrong active response band');
+            if((await q.locator('.rating-scale .active').getAttribute('aria-label')).toLowerCase()!=='mostly true of me now')throw new Error('Wrong active response band');
           }
           exactValues[id.replace('question-','')]=Number(await slider.getAttribute('aria-valuenow'));
         }

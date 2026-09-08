@@ -1,0 +1,26 @@
+# Study One layout and interaction refinement — 8 September 2026
+
+This release corrects the desktop layout and controls from the previous continuous-response release. The questionnaire and navigation share a centered 860px column. Smaller headings and tighter spacing let the core response screens fit a 1366×768 desktop viewport. Back and Continue (including Save my answers) have equal width and height. Longer programme lists and text screens remain scrollable.
+
+All five response labels are centered buttons. Each selects the center of its existing band (10, 30, 50, 70 or 90), and the orb center aligns exactly above the clicked label. Dragging remains continuous without snapping; keyboard still reaches 0 and 100. Mobile uses the same horizontal alignment with shorter visible labels and full accessible names. The full selected label remains in the readout.
+
+The header now reads `Initiatives at evolvable.me`, matching the original page, and links to https://experiments.evolvable.me. The legacy-draft notice has been removed. Old drafts remain untouched and are never converted to the new scale.
+
+## Original artwork, copied exactly
+
+The invented `public/study-one/perspectives.svg` is removed. The questionnaire uses the exact `ratings-stage-deco` markup and VectorDecoration props from `app/looking-back/page.tsx`, the unchanged `app/looking-back/VectorDecoration.tsx`, the unchanged `ratings-v1` / `ratings-v2` placement rules in `app/globals.css`, and the original assets:
+
+- `public/vector-decoration/profile-vector-new-1.svg`
+- `public/vector-decoration/profile-vector-new-2-open.svg`
+
+The original 22-second first profile, 24-second second profile and staggered paths, rotation, side placement, opacity and reduced-motion behavior are retained. No new illustration or custom animation engine is introduced. Looking Back itself has no source changes.
+
+## Validation
+
+- Repository lint, all 36 existing tests, repository production build and the 43-file standalone package lint/build pass.
+- Full browser journeys pass at desktop 1366×768 and mobile 390px/320px. They test each label's numerical value and alignment, drag precision, equal navigation dimensions, validation, Back, save/retry, optional email, waiting, completion and deletion. Core desktop questionnaire controls remain within the viewport; every captured state has no horizontal overflow.
+- Native touch checks all five buttons and unsnapped dragging. Reload and header navigation preserve the exact draft. A legacy draft produces neither the removed notice nor converted responses.
+- Both original vector assets load and run their original animation timings; reduced motion is static.
+- No measurement, consent, identity, retention, date gate, storage or export code changed. Deployment uses the existing Study One service and volume only.
+
+Local receipts: `output/playwright/refined-production-desktop.txt`, `third-full-mobile.txt`, `third-full-320.txt`, `refined-specific-qa.txt`, and `output/refined-*-build.txt`. Live checks are recorded below after deployment.
