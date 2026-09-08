@@ -10,7 +10,8 @@ export type Answers = Record<string, Answer>;
 export type Question = {
   id: string;
   prompt: string;
-  type: "likert" | "scale" | "single" | "multi" | "text";
+  type: "likert" | "continuous" | "scale" | "single" | "multi" | "text";
+  bands?: string[];
   options?: string[];
   min?: number;
   max?: number;
@@ -48,6 +49,7 @@ export type PublicSession = Pick<
 >;
 export type Context = {
   festivalVersion?: string;
+  responseInstrument?: string;
   screeningBank?: string;
   study: Study;
   role: Role;

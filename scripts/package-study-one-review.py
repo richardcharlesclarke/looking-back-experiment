@@ -6,7 +6,7 @@ out=Path(sys.argv[1]).resolve()
 if out.exists():
     raise SystemExit('Use a new empty output directory; refusing to overwrite an existing tree.')
 out.mkdir(parents=True)
-files=['tsconfig.json','next-env.d.ts','app/globals.css','app/brufest/layout.tsx','app/brufest/brufest.css','app/brufest/festival-journey.css','app/brufest/study-one-participant.css','app/brufest/FestivalParticipant.tsx','app/brufest/Question.tsx','app/study-one/page.tsx','app/conflictbench/ConflictBenchVoiceTextarea.tsx','app/conflictbench/useConflictBenchLiveTranscription.ts','lib/conflictbench-transcription.ts','app/api/admin/login/route.ts','app/admin/brufest/festival/page.tsx','lib/admin.ts','lib/brufest/server.ts']
+files=['tsconfig.json','next-env.d.ts','app/globals.css','app/brufest/layout.tsx','app/brufest/brufest.css','app/brufest/festival-journey.css','app/brufest/study-one-participant.css','app/brufest/FestivalParticipant.tsx','app/brufest/Question.tsx','app/brufest/ContinuousOrb.tsx','app/looking-back/VectorDecoration.tsx','public/study-one/perspectives.svg','app/study-one/page.tsx','app/conflictbench/ConflictBenchVoiceTextarea.tsx','app/conflictbench/useConflictBenchLiveTranscription.ts','lib/conflictbench-transcription.ts','app/api/admin/login/route.ts','app/admin/brufest/festival/page.tsx','lib/admin.ts','lib/brufest/server.ts']
 files += [str(p.relative_to(root)) for folder in ['lib/brufest/festival','app/api/brufest/festival'] for p in (root/folder).rglob('*') if p.is_file()]
 for name in files:
     dest=out/name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/name,dest)

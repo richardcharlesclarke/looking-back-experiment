@@ -1,3 +1,4 @@
+import { CONTINUOUS_INSTRUMENT_VERSION, CONTINUOUS_LABELS } from "./festival/scales";
 import bank from "./question-bank.json";
 import { FESTIVAL_VERSION, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
@@ -518,6 +519,7 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
 function resolve(item: Question, ctx: Context): Question {
   return {
     ...item,
+    ...(ctx.study === 'festival' && ctx.responseInstrument === CONTINUOUS_INSTRUMENT_VERSION && item.type === 'likert' ? {type: 'continuous' as const, min: 0, max: 100, bands: [...CONTINUOUS_LABELS]} : {}),
     prompt: item.prompt
       .replaceAll(
         "[proposition]",
@@ -550,7 +552,7 @@ export function answerError(q: Question, a: unknown): string | null {
     return q.required
       ? "Choose an answer or select “Prefer not to answer”."
       : null;
-  if (q.type === "scale" || q.type === "likert")
+  if (q.type === "scale" || q.type === "likert" || q.type === "continuous")
     return typeof a === "number" &&
       Number.isFinite(a) &&
       a >= (q.min ?? 0) &&

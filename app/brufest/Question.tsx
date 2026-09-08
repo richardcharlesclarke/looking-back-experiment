@@ -1,4 +1,5 @@
 "use client";
+import ContinuousOrb from './ContinuousOrb';
 import { useRef } from "react";
 import { ConflictBenchVoiceTextarea } from "../conflictbench/ConflictBenchVoiceTextarea";
 import type { Answer, Question as Item } from "@/lib/brufest/types";
@@ -10,6 +11,7 @@ export default function Question({
   index,
   allowVoice = true,
   invalid = false,
+  motionDirection = 'forward',
 }: {
   item: Item;
   value: Answer | undefined;
@@ -17,6 +19,7 @@ export default function Question({
   index: number;
   allowVoice?: boolean;
   invalid?: boolean;
+  motionDirection?: 'forward' | 'back';
 }) {
   const lane = useRef<HTMLDivElement>(null);
   const n = typeof value === "number" ? value : null;
@@ -50,7 +53,7 @@ export default function Question({
   }
   if (item.type === "text")
     return (
-      <div className="bf-question bf-written" id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}>
+      <div className={`bf-question bf-written ${!allowVoice?`rating-widget rating-widget-${motionDirection}`:''}`} id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}>
         {allowVoice ? <ConflictBenchVoiceTextarea
           id={item.id}
           number={String(index + 1).padStart(2, "0")}
@@ -79,7 +82,7 @@ export default function Question({
     );
   return (
     <fieldset
-      className={`bf-question ${value === undefined ? "bf-unanswered" : ""}`}
+      className={`bf-question ${!allowVoice?`rating-widget rating-widget-${motionDirection}`:''} ${value === undefined ? "bf-unanswered" : ""}`}
       id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}
     >
       <legend>
@@ -88,6 +91,7 @@ export default function Question({
         </span>
         <span>{item.prompt}</span>
       </legend>
+      {(item.type === "continuous" || (item.type === "scale" && !allowVoice)) && <ContinuousOrb item={item} value={n} onChange={onChange}/> }
       {item.type === "likert" && (
         <>
           <p className="bf-scale-hint">
@@ -109,7 +113,7 @@ export default function Question({
           </div>
         </>
       )}
-      {item.type === "scale" && (
+      {item.type === "scale" && allowVoice && (
         <>
           <div className="bf-orb-value" aria-live="polite">
             {n === null ? "Choose a position" : `${n} / 10`}
@@ -236,7 +240,7 @@ export default function Question({
         >
           Prefer not to answer
         </button>
-        {(item.type === "scale" || item.type === "likert") && (
+        {(item.type === "scale" || item.type === "likert" || item.type === "continuous") && (
           <button
             type="button"
             aria-pressed={isMissing(value) && value.missing === "cannot_assess"}

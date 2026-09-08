@@ -1,11 +1,19 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { CONTINUOUS_INSTRUMENT_VERSION } from './scales';
 import { validateAnswers } from '../instruments';
 import { FESTIVAL_VERSION, FIRST_INSTRUMENT_VERSION, INFORMATION, INFORMATION_VERSION, CONSENT_TEXT, FOLLOWUP_TEXT, PERMISSION_VERSION, PROGRAMME_VERSION, FIRST_CLOSES_AT, SECOND_OPENS_AT, STUDY_ONE_APPROVED } from './content';
 import type { Contact, Data, Person, View, Wave } from './types';
 const now = () => new Date().toISOString();
 export const digest = (s:string) => createHash('sha256').update(s).digest('hex');
 const keyValid = (key:unknown):key is string => typeof key==='string' && /^[a-f0-9]{64}$/.test(key);
-export function context(wave:Wave) { return {study:'festival' as const,role:'attendee' as const,wave,festivalVersion:FESTIVAL_VERSION}; }
+export function context(wave:Wave, responseInstrument?:string) { return {study:'festival' as const,role:'attendee' as const,wave,festivalVersion:FESTIVAL_VERSION,responseInstrument}; }
+export function submissionInstrument(wave:Wave, requested:unknown) {
+  const legacy=wave==='pre'?FIRST_INSTRUMENT_VERSION:FESTIVAL_VERSION;
+  // Requests from already-open legacy pages have no version field. Keep their original scale.
+  if(requested===undefined || requested===legacy) return legacy;
+  if(requested===CONTINUOUS_INSTRUMENT_VERSION) return CONTINUOUS_INSTRUMENT_VERSION;
+  throw new Error('This questionnaire version is not supported. Reopen your personal link.');
+}
 export function enrol(data:Data,b:Record<string,unknown>):{p:Person;c:Contact} {
   if (!keyValid(b.access)) throw new Error('Please reopen the first questionnaire.');
   const old=data.contacts.contacts.find(c=>c.firstHash===digest(b.access as string));
@@ -45,9 +53,10 @@ export function submit(p:Person,c:Contact,kind:string,b:Record<string,unknown>) 
   if(p.responses.some(r=>r.wave===wave))return {duplicate:true};
   const v=view(p,c,kind);if(v.step!==wave)throw new Error('This questionnaire is not open.');
   if(wave==='pre'&&!p.isTest&&Date.now()>=Date.parse(FIRST_CLOSES_AT))throw new Error('The first questionnaire is now closed.');
-  const checked=validateAnswers(context(wave),b.answers);
+  const instrumentVersion=submissionInstrument(wave,b.instrumentVersion);
+  const checked=validateAnswers(context(wave,instrumentVersion),b.answers);
   if(typeof b.startedAt!=='string'||!Number.isFinite(Date.parse(b.startedAt))||Date.parse(b.startedAt)>Date.now()+60000)throw new Error('Questionnaire start time is invalid.');
-  p.responses.push({id:randomUUID(),wave,answers:checked.answers,questions:checked.questions,instrumentVersion:wave==='pre'?FIRST_INSTRUMENT_VERSION:FESTIVAL_VERSION,programmeVersion:PROGRAMME_VERSION,startedAt:b.startedAt,completedAt:now()});
+  p.responses.push({id:randomUUID(),wave,answers:checked.answers,questions:checked.questions,instrumentVersion,programmeVersion:PROGRAMME_VERSION,startedAt:b.startedAt,completedAt:now()});
   return {duplicate:false};
 }
 export function saveContact(data:Data,p:Person,c:Contact,b:Record<string,unknown>) {
@@ -93,11 +102,22 @@ export function assistantAction(data:Data,b:Record<string,unknown>) {
   throw new Error('Unknown assistant action.');
 }
 export function assistantRows(data:Data) {
-  return data.research.people.map(p=>{const c=data.contacts.contacts.find(c=>c.personId===p.id);const pre=p.responses.find(r=>r.wave==='pre'),post=p.responses.find(r=>r.wave==='post');return {id:p.id,isTest:p.isTest,firstSaved:pre?.completedAt??null,secondSaved:post?.completedAt??null,permission:c?.permission??false,email:c?.email??null,delivery:c?.delivery??'stopped' as const,sentAt:c?.sentAt??null,deliveryNote:c?.deliveryNote??'',events:c?.events??[],afterKey:c?.permission&&pre?c.afterKey:null,afterOpen:p.isTest?!!c?.demoAfterOpen:Date.now()>=Date.parse(SECOND_OPENS_AT),contactChoiceSaved:!!c?.contactChoiceSaved,contactRetained:!!c};});
+  return data.research.people.map(p=>{const c=data.contacts.contacts.find(c=>c.personId===p.id);const pre=p.responses.find(r=>r.wave==='pre'),post=p.responses.find(r=>r.wave==='post');return {id:p.id,isTest:p.isTest,firstInstrumentVersion:pre?.instrumentVersion??null,secondInstrumentVersion:post?.instrumentVersion??null,firstSaved:pre?.completedAt??null,secondSaved:post?.completedAt??null,permission:c?.permission??false,email:c?.email??null,delivery:c?.delivery??'stopped' as const,sentAt:c?.sentAt??null,deliveryNote:c?.deliveryNote??'',events:c?.events??[],afterKey:c?.permission&&pre?c.afterKey:null,afterOpen:p.isTest?!!c?.demoAfterOpen:Date.now()>=Date.parse(SECOND_OPENS_AT),contactChoiceSaved:!!c?.contactChoiceSaved,contactRetained:!!c};});
 }
 export function researchRows(data:Data) {
-  return data.research.people.flatMap(p=>p.responses.flatMap(r=>r.questions.map(q=>({participantId:p.id,isTest:p.isTest,wave:r.wave,instrumentVersion:r.instrumentVersion,programmeVersion:r.programmeVersion,consentVersion:p.consent.version,consentAt:p.consent.at,itemId:q.id,prompt:q.prompt,value:r.answers[q.id],startedAt:r.startedAt,completedAt:r.completedAt,reverseScored:q.reverse??false}))));
+  return data.research.people.flatMap(p=>p.responses.flatMap(r=>r.questions.map(q=>({participantId:p.id,isTest:p.isTest,wave:r.wave,instrumentVersion:r.instrumentVersion,programmeVersion:r.programmeVersion,consentVersion:p.consent.version,consentAt:p.consent.at,itemId:q.id,prompt:q.prompt,responseType:q.type,scaleMin:['likert','scale','continuous'].includes(q.type)?q.min:null,scaleMax:['likert','scale','continuous'].includes(q.type)?q.max:null,responseBands:q.bands??null,value:r.answers[q.id],startedAt:r.startedAt,completedAt:r.completedAt,reverseScored:q.reverse??false}))));
 }
 export function comparisons(data:Data) {
-  return data.research.people.flatMap(p=>{const pre=p.responses.find(r=>r.wave==='pre'),post=p.responses.find(r=>r.wave==='post');return (pre?.questions??[]).filter(q=>q.id.startsWith('E1_')&&!q.id.startsWith('E1_PRE_')).map(q=>({participantId:p.id,isTest:p.isTest,itemId:q.id,prompt:q.prompt,before:pre?.answers[q.id]??null,after:post?.answers[q.id]??null,matched:!!post,reverseScored:q.reverse??false,beforeAt:pre?.completedAt??null,afterAt:post?.completedAt??null}));});
+  return data.research.people.flatMap(p=>{
+    const pre=p.responses.find(r=>r.wave==='pre'),post=p.responses.find(r=>r.wave==='post');
+    return (pre?.questions??[]).filter(q=>q.id.startsWith('E1_')&&!q.id.startsWith('E1_PRE_')).map(q=>{
+      const afterQuestion=post?.questions.find(item=>item.id===q.id);
+      const comparable=!!afterQuestion&&q.type===afterQuestion.type&&q.min===afterQuestion.min&&q.max===afterQuestion.max&&JSON.stringify(q.bands)===JSON.stringify(afterQuestion.bands);
+      return {participantId:p.id,isTest:p.isTest,itemId:q.id,prompt:q.prompt,before:pre?.answers[q.id]??null,after:post?.answers[q.id]??null,matched:!!post,comparable,
+        comparisonNote:!post?'No after response':comparable?'Same response scale':'Different response scales; do not directly compare raw values',
+        beforeInstrumentVersion:pre?.instrumentVersion??null,afterInstrumentVersion:post?.instrumentVersion??null,
+        beforeResponseType:q.type,afterResponseType:afterQuestion?.type??null,beforeMin:q.min??null,beforeMax:q.max??null,afterMin:afterQuestion?.min??null,afterMax:afterQuestion?.max??null,
+        reverseScored:q.reverse??false,beforeAt:pre?.completedAt??null,afterAt:post?.completedAt??null};
+    });
+  });
 }
