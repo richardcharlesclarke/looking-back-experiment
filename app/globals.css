@@ -542,20 +542,20 @@ a {
   object-fit: cover;
 }
 
-.experiment-visual.conflictbench {
+.experiment-visual.study-one {
   background:
     radial-gradient(circle at 22% 20%, rgba(244, 239, 229, 0.9), transparent 42%),
     linear-gradient(135deg, rgba(167, 194, 95, 0.74), rgba(55, 156, 183, 0.72));
 }
 
-.conflictbench-card-mark {
+.study-one-card-mark {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
 }
 
-.conflictbench-card-mark i {
+.study-one-card-mark i {
   position: absolute;
   width: 84px;
   height: 84px;
@@ -564,11 +564,11 @@ a {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.conflictbench-card-mark i:first-child {
+.study-one-card-mark i:first-child {
   transform: translateX(-28px);
 }
 
-.conflictbench-card-mark i:last-child {
+.study-one-card-mark i:last-child {
   transform: translateX(28px);
 }
 

@@ -12,12 +12,12 @@ const experiments = [
     image: "/images/looking-back-card.png"
   },
   {
-    title: "ConflictBench",
+    title: "Study One",
     status: "Live",
-    href: "/conflictbench",
-    summary: "A Brufest baseline for understanding how people approach disagreement.",
-    meta: "Conflict / pre-festival questionnaire",
-    visual: "conflictbench"
+    href: "/study-one",
+    summary: "A Big Brue before-and-after study of how people approach disagreement.",
+    meta: "Disagreement / before and after the festival",
+    visual: "study-one"
   },
   {
     title: "Coming soon",
@@ -54,8 +54,8 @@ export default function ExperimentsHub() {
           <article className={experiment.image || experiment.visual ? "experiment-card" : "experiment-card placeholder"} key={`${experiment.title}-${index}`}>
             <div className={`experiment-visual${experiment.visual ? ` ${experiment.visual}` : ""}`} aria-hidden="true">
               {experiment.image && <Image src={experiment.image} alt="" fill sizes="(max-width: 860px) 100vw, 33vw" />}
-              {experiment.visual === "conflictbench" && (
-                <div className="conflictbench-card-mark">
+              {experiment.visual === "study-one" && (
+                <div className="study-one-card-mark">
                   <i />
                   <i />
                 </div>
