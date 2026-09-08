@@ -32,3 +32,13 @@ Existing Railway target: project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environ
 Public URL: https://experiments.evolvable.me/study-one
 
 Detailed local evidence lives in `output/continuous-*.txt`, `output/continuous-http-qa.json`, and `output/playwright/continuous-*`. Reproducible browser and HTTP harnesses are in `scripts/study-one-continuous-*-qa.*`.
+
+## Confirmed live release
+
+- Railway deployment `d311a247-f9ab-4b04-879f-f5afb9eb1510` is `SUCCESS`; code commit `3613719`. The existing health endpoint and `/study-one-data` volume are retained.
+- Public page and all 11 checked JS/CSS/font/vector assets return 200. The header has the requested text and homepage destination.
+- Both live-rendered desktop and mobile journeys pass all 55 captured states. Native mobile touch confirms exact drag/release/reload values, all bands, header navigation and restored draft. Desktop keyboard focus, header/back and 200% zoom also pass. The live background and noise texture equal Looking Back's computed production styles exactly.
+- A separate real public API check saved `71.23456789`, 0, 100 and both missing-response choices under the continuous instrument version; authenticated storage and CSV export preserved the exact value and scale metadata. The synthetic record was deleted and its link revoked. Anonymous admin access returns 401.
+- Post-deployment hashes confirm all 15 pre-existing participant records and all 17 pre-existing responses are unchanged. No production date gate was bypassed and no email was sent.
+- Real public check completed at `2026-09-08T16:39:04Z`. Receipts: `output/continuous-live-smoke.json`, `output/continuous-deployment.json`, and `output/playwright/continuous-live-*-qa.txt`.
+- Representative live images: `output/playwright/continuous-live-1440-pre-section-2.png`, `output/playwright/continuous-live-390-pre-section-2.png`, and `output/playwright/continuous-desktop-complete-vector.png`.
