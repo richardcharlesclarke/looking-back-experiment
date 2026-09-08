@@ -24,3 +24,13 @@ The original 22-second first profile, 24-second second profile and staggered pat
 - No measurement, consent, identity, retention, date gate, storage or export code changed. Deployment uses the existing Study One service and volume only.
 
 Local receipts: `output/playwright/refined-production-desktop.txt`, `third-full-mobile.txt`, `third-full-320.txt`, `refined-specific-qa.txt`, and `output/refined-*-build.txt`. Live checks are recorded below after deployment.
+
+## Confirmed public release
+
+Deployment `4330db26-5080-4bc0-ae1d-f7f362042901` is Railway `SUCCESS`, code `c3d59ad`. Public URL: https://experiments.evolvable.me/study-one.
+
+The live desktop journey passes all 55 states, including label selection/alignment, core viewport fit and equal navigation dimensions. Native mobile testing passes all five label taps, continuous dragging, draft restoration, corrected header and removed notice. Both original SVG files are byte-for-byte identical to the repo on the public domain and the standalone service. Their original animations and reduced-motion behavior are verified.
+
+The real public save/export/delete smoke check passed at `2026-09-08T16:57:12Z`, preserving an exact decimal and endpoint values. Its temporary record was removed and link revoked. All 15 existing participants and 17 existing responses remain unchanged. The existing volume remains `/study-one-data`.
+
+Receipts: `output/refined-live-smoke.json`, `output/refined-live-artwork.json`, `output/refined-deployment.json`, `output/playwright/refined-live-desktop.txt`, and `output/playwright/refined-live-specific-qa.txt`. Representative live screenshots: `output/playwright/refined-live-1366-pre-section-2.png` and `output/playwright/refined-live-native-mobile.png`.
