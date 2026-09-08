@@ -29,7 +29,7 @@ Approved information, consent, follow-up permission, question prompts/order/valu
 - Standalone allowlisted Study One package lint and Next 15.5.25 production build pass.
 - Real local HTTP check covers consent, validation, saved first response, optional contact, actual date gating, matched second response with a local-only demo fixture, and deletion revoking both keys.
 - Full rendered browser flow passes at 1440px, 390px and 320px. It covers every first section and all nine after-festival sections in the chosen branching scenario, explicit missing answers, exact 9.9 slider values, Back, save retry, email validation/edit/decline, waiting, completion, deletion and invalid links.
-- Additional mobile-emulated touch test passes; response buttons at 390px are at least 44px. Loading, blocked storage and 200% zoom were tested. Overflow checks pass.
+- Additional mobile-emulated touch test passes; response buttons at 390px are at least 44px. Loading, blocked storage and 200% zoom were tested. Overflow checks pass. Normal muted text is 6.10:1 against question cards; primary text exceeds 11:1. Control borders were darkened in the final pass to exceed 3:1.
 - Before screenshots include actual live entry/first sections and all nine post sections plus contact/waiting/completion at desktop/mobile widths. Live browser fixtures intercept participant API calls and do not write research data.
 - Screenshot inspection corrected cramped mobile slider anchors. Final representative images and machine-readable run outputs are under `output/playwright/`.
 
