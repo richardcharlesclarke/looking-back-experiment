@@ -12,10 +12,10 @@ const experiments = [
     image: "/images/looking-back-card.png"
   },
   {
-    title: "Study One",
+    title: "How We Disagree",
     status: "Live",
     href: "/study-one",
-    summary: "A Big Brue before-and-after study of how people approach disagreement.",
+    summary: "A Big Brue study of how audience members approach disagreement before and after the festival.",
     meta: "Disagreement / before and after the festival",
     visual: "study-one"
   },
