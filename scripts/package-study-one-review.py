@@ -6,7 +6,7 @@ out=Path(sys.argv[1]).resolve()
 if out.exists():
     raise SystemExit('Use a new empty output directory; refusing to overwrite an existing tree.')
 out.mkdir(parents=True)
-files=['tsconfig.json','next-env.d.ts','app/globals.css','app/brufest/layout.tsx','app/brufest/brufest.css','app/brufest/festival-journey.css','app/brufest/FestivalParticipant.tsx','app/brufest/Question.tsx','app/study-one/page.tsx','app/conflictbench/ConflictBenchVoiceTextarea.tsx','app/conflictbench/useConflictBenchLiveTranscription.ts','lib/conflictbench-transcription.ts','app/api/admin/login/route.ts','app/admin/brufest/festival/page.tsx','lib/admin.ts','lib/brufest/server.ts']
+files=['tsconfig.json','next-env.d.ts','app/globals.css','app/brufest/layout.tsx','app/brufest/brufest.css','app/brufest/festival-journey.css','app/brufest/study-one-participant.css','app/brufest/FestivalParticipant.tsx','app/brufest/Question.tsx','app/study-one/page.tsx','app/conflictbench/ConflictBenchVoiceTextarea.tsx','app/conflictbench/useConflictBenchLiveTranscription.ts','lib/conflictbench-transcription.ts','app/api/admin/login/route.ts','app/admin/brufest/festival/page.tsx','lib/admin.ts','lib/brufest/server.ts']
 files += [str(p.relative_to(root)) for folder in ['lib/brufest/festival','app/api/brufest/festival'] for p in (root/folder).rglob('*') if p.is_file()]
 for name in files:
     dest=out/name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/name,dest)
@@ -36,7 +36,7 @@ types=(root/'lib/brufest/types.ts').read_text();types=types[:types.index('export
 exports=(root/'lib/brufest/export.ts').read_text();(out/'lib/brufest/export.ts').write_text(exports[exports.index('export function csv('):])
 (out/'app/layout.tsx').write_text('''import type { Metadata } from 'next';
 import './globals.css';
-export const metadata:Metadata={title:'Study One — Big Brue',robots:{index:false,follow:false},referrer:'no-referrer'};
+export const metadata:Metadata={title:'How We Disagree · Big Brue',robots:{index:false,follow:false},referrer:'no-referrer'};
 export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
 ''')
 (out/'app/brufest/festival').mkdir(parents=True)
@@ -45,7 +45,7 @@ export default function Layout({children}:{children:React.ReactNode}){return <ht
 (out/'app/api/health').mkdir(parents=True)
 (out/'app/api/health/route.ts').write_text("export async function GET(){return Response.json({ok:true,study:'one',mode:'live',realCollection:true});}\n")
 (out/'next.config.ts').write_text("import type {NextConfig} from 'next';\nconst config:NextConfig={assetPrefix:'/study-one',poweredByHeader:false,async rewrites(){return [{source:'/study-one/api/:path*',destination:'/api/:path*'}]},async headers(){return [{source:'/:path*',headers:[{key:'Referrer-Policy',value:'no-referrer'},{key:'X-Robots-Tag',value:'noindex, nofollow'}]}]}};export default config;\n")
-(out/'eslint.config.mjs').write_text("import {FlatCompat} from '@eslint/eslintrc';const compat=new FlatCompat({baseDirectory:process.cwd()});export default [...compat.extends('next/core-web-vitals','next/typescript'),{ignores:['.next/**']}];\n")
+(out/'eslint.config.mjs').write_text("import {FlatCompat} from '@eslint/eslintrc';const compat=new FlatCompat({baseDirectory:process.cwd()});const config=[...compat.extends('next/core-web-vitals','next/typescript'),{ignores:['.next/**','next-env.d.ts']}];export default config;\n")
 (out/'.gitignore').write_text('node_modules\n.next\n.local\n.env*\n*.log\n')
 # Font assets only, no original experiment images or output files.
 shutil.copytree(root/'public/fonts',out/'public/fonts')

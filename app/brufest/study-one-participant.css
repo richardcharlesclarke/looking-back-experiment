@@ -1,0 +1,129 @@
+/* Participant controls must work from both /study-one and /brufest/festival.
+   Do not rely on the sibling /brufest layout loading brufest.css. */
+.s1-participant.study-one {
+  --ink: #23352d;
+  --muted: #53645a;
+  --line-soft: #bbc8bf;
+  --teal: #256552;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(120deg, #edf1e7, #e8f1f0);
+}
+.s1-participant::after { display: none; }
+.s1-participant .topbar {
+  position: static;
+  padding: 20px 32px;
+  gap: 16px;
+  min-height: 76px;
+  border-color: var(--line-soft);
+  background: #fafcf9;
+  backdrop-filter: none;
+}
+.s1-participant .topbar a { color: var(--ink); font-size: 12px; letter-spacing: .1em; }
+.s1-participant .topbar span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.s1-participant .s1-card { width: 100%; max-width: 848px; margin: 0 auto; padding: 52px 32px 64px; flex: 1; }
+.s1-participant h1 { font-size: clamp(30px, 4vw, 42px); font-weight: 500; line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 20px; }
+.s1-participant h2 { font-size: 23px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; margin: 0 0 12px; }
+.s1-participant p { font-size: 16px; line-height: 1.65; }
+.s1-participant .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.s1-participant .s1-lead { font-size: 19px; line-height: 1.6; margin-bottom: 32px; }
+.s1-participant .s1-information { padding: 24px 0; border-top: 1px solid var(--line-soft); }
+.s1-participant .s1-information p { margin: 0; }
+.s1-participant .s1-information h2 { font-size: 20px; }
+.s1-participant button { font-family: inherit; cursor: pointer; color: var(--ink); }
+.s1-participant :is(.primary,.secondary) { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 14px 22px; border: 1px solid var(--ink); border-radius: 4px; font-size: 15px; line-height: 1.5; font-weight: 600; text-transform: none; letter-spacing: 0; text-align: center; }
+.s1-participant .primary { background: var(--ink); color: #fff; }
+.s1-participant .primary:hover:not(:disabled) { background: #354e40; }
+.s1-participant .secondary { background: #fafcf9; }
+.s1-participant .secondary:hover:not(:disabled) { background: #dce7df; }
+.s1-participant button:disabled { opacity: 1; background: #e0e5df; color: #647068; border-color: #bac5bc; cursor: not-allowed; }
+.s1-participant :is(button,input,textarea,a,summary,[tabindex]):focus-visible { outline: 3px solid #256552; outline-offset: 4px; }
+.s1-participant h1:focus { outline: none; }
+.s1-participant .s1-check { padding: 18px; border: 1px solid var(--line-soft); border-radius: 4px; background: #fafcf9; margin: 24px 0; cursor: pointer; }
+.s1-participant .s1-check input { width: 22px; height: 22px; accent-color: var(--ink); }
+.s1-participant .s1-progress { display: block; appearance: none; width: 100%; height: 4px; border: 0; border-radius: 2px; overflow: hidden; background: #ccd8ce; margin: 28px 0 32px; color: var(--ink); }
+.s1-participant .s1-progress::-webkit-progress-bar { background: #ccd8ce; }
+.s1-participant .s1-progress::-webkit-progress-value { background: var(--ink); }
+.s1-participant .s1-progress::-moz-progress-bar { background: var(--ink); }
+.s1-participant .s1-section-heading { margin-bottom: 28px; }
+.s1-participant .s1-section-heading p { font-size: 14px; color: var(--muted); margin: 0; }
+.s1-participant .bf-question { min-width: 0; margin: 0 0 24px; padding: 26px; border: 1px solid var(--line-soft); border-radius: 6px; background: #fafcf9; scroll-margin-top: 24px; }
+.s1-participant .bf-question[aria-invalid=true] { border: 2px solid #9d432d; }
+.s1-participant .bf-question legend { display: contents; }
+.s1-participant .bf-q-number { display: block; font-size: 11px; letter-spacing: .12em; color: var(--muted); margin-bottom: 12px; }
+.s1-participant .bf-question legend>span:last-child { display: block; font-family: inherit; font-size: 21px; font-weight: 400; line-height: 1.45; text-transform: none; margin: 0 0 22px; }
+.s1-participant .bf-scale-hint { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; line-height: 1.5; margin: 0 0 12px; color: var(--muted); }
+.s1-participant .bf-likert { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 8px; }
+.s1-participant .bf-likert button { min-height: 48px; border: 1px solid #879b8b; border-radius: 4px; background: #fff; font-size: 18px; }
+.s1-participant .bf-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.s1-participant .bf-options button { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 14px; text-align: left; background: #fff; border: 1px solid #879b8b; border-radius: 4px; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
+.s1-participant .bf-options i { font-style: normal; flex-shrink: 0; }
+.s1-participant .bf-input-hint { font-size: 13px; color: var(--muted); }
+.s1-participant :is(.bf-likert,.bf-options,.bf-anchors) button:hover { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.s1-participant :is(.bf-likert,.bf-options,.bf-anchors) .selected { background: var(--ink); color: white; border-color: var(--ink); }
+.s1-participant .bf-skip { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; }
+.s1-participant .bf-skip button { min-height: 44px; padding: 8px 4px; border: 1px solid transparent; border-radius: 3px; font-size: 13px; background: transparent; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.s1-participant .bf-skip [aria-pressed=true] { background: #e3ebe3; border-color: #879b8b; color: var(--ink); font-weight: 600; outline: none; }
+.s1-participant .bf-skip [aria-pressed=true]:focus-visible { outline: 3px solid #256552; }
+.s1-participant .bf-nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid var(--line-soft); padding-top: 24px; margin-top: 32px; }
+.s1-participant .bf-nav>span { display: block; font-size: 13px; color: var(--muted); }
+.s1-participant .s1-field { font-size: 16px; font-weight: 500; }
+.s1-participant .s1-field :is(input,textarea) { border: 1px solid #879b8b; border-radius: 4px; background: #fff; font-size: 16px; padding: 14px; min-width: 0; }
+.s1-participant textarea { width: 100%; resize: vertical; line-height: 1.6; }
+.s1-participant .bf-written .s1-field { margin: 0; font-size: 20px; line-height: 1.5; }
+.s1-participant .bf-orb-value { font-size: 14px; text-align: right; color: var(--muted); }
+.s1-participant .bf-orb-lane { position: relative; height: 88px; margin: 8px 34px 16px; touch-action: pan-y; }
+.s1-participant .bf-orb-lane::before { content: ''; position: absolute; width: 100%; height: 2px; top: 50%; background: #879b8b; }
+.s1-participant .bf-orb { position: absolute; top: 50%; transform: translate(-50%,-50%); border-radius: 50%; border: 2px solid var(--ink); background: var(--ink); min-width: 44px; min-height: 44px; cursor: grab; touch-action: none; }
+.s1-participant .bf-orb.unselected { background: #fafcf9; border-style: dashed; }
+.s1-participant .bf-anchors { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+.s1-participant .bf-anchors button { min-height: 48px; border: 1px solid #879b8b; border-radius: 4px; background: #fff; font-size: 13px; line-height: 1.4; padding: 8px 4px; }
+.s1-participant .s1-error { width: 100%; max-width: 784px; color: #722e20; background: #fff3ec; border: 1px solid #9d432d; border-radius: 4px; padding: 18px; overflow-wrap: anywhere; }
+.s1-participant details { margin-top: 24px; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.s1-participant summary { min-height: 48px; padding: 12px 0; font-size: 15px; }
+.s1-participant .s1-contact-edit { padding: 16px 0; }
+.s1-participant .s1-contact-edit h2 { font-size: 23px; }
+.s1-participant .s1-optional-next { border-radius: 4px; background: #fafcf9; padding: 24px; }
+.s1-participant .s1-optional-next h2 { font-size: 20px; }
+.s1-participant .s1-optional-next a { min-height: 44px; display: inline-flex; align-items: center; }
+.s1-participant .s1-actions { gap: 12px; }
+.s1-participant .bf-footer { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 20px 32px; border-top: 1px solid var(--line-soft); font-size: 12px; line-height: 1.5; color: var(--muted); }
+.s1-participant .bf-footer a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 3px; }
+@media(max-width:650px) {
+  .s1-participant .topbar { padding: 18px; align-items: flex-start; flex-direction: column; gap: 6px; }
+  .s1-participant .topbar a { font-size: 11px; }
+  .s1-participant .topbar span { font-size: 12px; }
+  .s1-participant .s1-card { padding: 32px 16px 40px; }
+  .s1-participant .s1-lead { font-size: 18px; }
+  .s1-participant .bf-question { padding: 20px 14px; }
+  .s1-participant .bf-question legend>span:last-child { font-size: 19px; }
+  .s1-participant .bf-options { grid-template-columns: 1fr; }
+  .s1-participant .bf-likert { gap: 4px; }
+  .s1-participant .bf-likert button { min-height: 48px; }
+  .s1-participant .bf-nav { display: grid; grid-template-columns: 1fr; }
+  .s1-participant .bf-nav>span { order: -1; }
+  .s1-participant .bf-nav :is(.primary,.secondary) { width: 100%; }
+  .s1-participant .s1-actions>.primary { width: 100%; }
+  .s1-participant .bf-footer { padding: 16px; gap: 4px; flex-direction: column; align-items: flex-start; }
+}
+@media(max-width:360px) {
+  .s1-participant .bf-likert { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+  .s1-participant .bf-anchors { grid-template-columns: 1fr 1fr; }
+  .s1-participant .bf-anchors button:last-child { grid-column: 1/-1; }
+}
+@media(prefers-reduced-motion:reduce) { .s1-participant * { scroll-behavior: auto !important; transition: none !important; } }
+.s1-participant h1[tabindex]:focus-visible { outline: none; }
+@media(max-width:650px) {
+  .s1-participant .s1-card { padding-left: 12px; padding-right: 12px; }
+  .s1-participant .bf-question { padding-left: 10px; padding-right: 10px; }
+  .s1-participant .bf-likert { gap: 3px; }
+}
+@media(max-width:389px) { .s1-participant .bf-likert { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; } }
+
+@media(max-width:650px) {
+  .s1-participant .bf-anchors { grid-template-columns: 1fr 1fr; }
+  .s1-participant .bf-anchors button:last-child { grid-column: 1/-1; }
+}

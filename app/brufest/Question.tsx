@@ -9,12 +9,14 @@ export default function Question({
   onChange,
   index,
   allowVoice = true,
+  invalid = false,
 }: {
   item: Item;
   value: Answer | undefined;
   onChange: (value: Answer) => void;
   index: number;
   allowVoice?: boolean;
+  invalid?: boolean;
 }) {
   const lane = useRef<HTMLDivElement>(null);
   const n = typeof value === "number" ? value : null;
@@ -48,7 +50,7 @@ export default function Question({
   }
   if (item.type === "text")
     return (
-      <div className="bf-question bf-written" id={`question-${item.id}`}>
+      <div className="bf-question bf-written" id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}>
         {allowVoice ? <ConflictBenchVoiceTextarea
           id={item.id}
           number={String(index + 1).padStart(2, "0")}
@@ -78,7 +80,7 @@ export default function Question({
   return (
     <fieldset
       className={`bf-question ${value === undefined ? "bf-unanswered" : ""}`}
-      id={`question-${item.id}`}
+      id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}
     >
       <legend>
         <span className="bf-q-number">
@@ -138,7 +140,7 @@ export default function Question({
               aria-label={item.prompt}
               aria-valuemin={0}
               aria-valuemax={10}
-              aria-valuenow={n ?? undefined}
+              aria-valuenow={n ?? 5}
               aria-valuetext={
                 n === null ? "No response selected" : `${n} out of 10`
               }
