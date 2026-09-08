@@ -1,0 +1,17 @@
+.pair-journey{min-height:100vh;background:linear-gradient(120deg,#e4ecd2,#d9edef 72%,#cee4e8);color:#202a25}
+.pair-preview{font-size:12px;padding:10px 24px;text-align:center;background:#f4f4e9;border-bottom:1px solid #cad3c7}
+.pair-form,.pair-wait{max-width:900px;margin:0 auto;padding:56px 24px 36px}
+.pair-form h1,.pair-wait h1{font-family:Arial,sans-serif;font-size:clamp(30px,4vw,46px);line-height:1.15;text-transform:none;letter-spacing:-1px;max-width:850px;margin:16px 0}
+.pair-form h2,.pair-receipt h2{font-family:Arial,sans-serif;font-size:24px;text-transform:none;margin:28px 0 18px}
+.pair-purpose{font-size:18px;line-height:1.55;max-width:710px;margin:16px 0 30px}
+.pair-journey .bf-question legend > span:last-child,.pair-journey .bf-written .conflictbench-text-question-label{font-family:Arial,sans-serif;font-size:22px;line-height:1.4;text-transform:none;letter-spacing:0}
+.pair-journey .bf-question{margin-top:22px;background:#ffffff38}
+.pair-journey .bf-written{padding:24px}
+.pair-receipt{max-width:852px;margin:20px auto;padding:24px;background:#ffffff7a;border:1px solid #bdccc3}
+.pair-receipt p{line-height:1.6}.pair-receipt summary{cursor:pointer;margin:16px 0}.pair-url{overflow-wrap:anywhere;font-size:13px}
+.pair-actions{display:flex;gap:12px;flex-wrap:wrap}.pair-error{background:#fff3e7;border:1px solid #b55b38;padding:16px;max-width:850px;margin:16px auto;line-height:1.5}
+.pair-helper{max-width:1200px;margin:auto;padding:40px 24px}.pair-helper h1{font-size:38px;font-family:Arial,sans-serif;text-transform:none}.pair-helper h2{font-size:25px;font-family:Arial,sans-serif;text-transform:none}
+.pair-helper section{background:#ffffff70;border:1px solid #bdccc3;padding:24px;margin:24px 0}.pair-helper label{display:block;margin:14px 0}.pair-helper select,.pair-helper input,.pair-helper textarea{display:block;width:100%;padding:12px;background:#fff9;border:1px solid #99aca2;margin:7px 0;font:inherit;color:inherit}
+.pair-helper table{width:100%;border-collapse:collapse;font-size:14px}.pair-helper th,.pair-helper td{text-align:left;padding:10px;border-bottom:1px solid #b5c7bc;vertical-align:top}.pair-helper .table-scroll{overflow-x:auto}.pair-helper small{display:block;line-height:1.5}.pair-script{white-space:pre-wrap;line-height:1.6}.pair-timer{font-size:32px;font-variant-numeric:tabular-nums;margin:16px 0}
+.pair-helper button{margin:5px 0}.pair-helper .pair-actions button{margin:0}.pair-helper .bf-label{text-transform:none;letter-spacing:0}.pair-helper a{text-decoration:underline}.pair-helper details{margin:18px 0}.pair-helper summary{cursor:pointer}.pair-helper .pair-topic-note{padding:12px;background:#fff9}
+@media(max-width:640px){.pair-form,.pair-wait{padding:30px 18px}.pair-receipt{margin:16px}.pair-journey .topbar{padding:16px;gap:16px;font-size:10px}.pair-journey .bf-question legend > span:last-child,.pair-journey .bf-written .conflictbench-text-question-label{font-size:19px}.pair-form .bf-nav{flex-wrap:wrap;gap:14px}.pair-helper{padding:24px 12px}.pair-helper section{padding:16px}.pair-journey .bf-anchors{gap:4px}.pair-journey .bf-anchors button{font-size:10px;padding:10px 4px}}

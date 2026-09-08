@@ -1,0 +1,629 @@
+.bf-main {
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+.bf-main .topbar a:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bf-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(310px, 0.8fr);
+  gap: 7vw;
+  max-width: 1280px;
+  margin: auto;
+  padding: 80px 60px 70px;
+}
+.bf-intro h1,
+.bf-complete h1 {
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(48px, 5.6vw, 86px);
+  line-height: 1.03;
+  text-transform: uppercase;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  margin: 24px 0;
+}
+.bf-lead {
+  font-size: 20px;
+  line-height: 1.55;
+  max-width: 590px;
+  color: var(--muted);
+}
+.bf-start {
+  border: 1px solid var(--line-soft);
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.3);
+  align-self: start;
+}
+.bf-start h2 {
+  font-family: "ABC Camera", sans-serif;
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 400;
+  text-transform: uppercase;
+  margin: 18px 0 30px;
+}
+.bf-label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0;
+}
+.bf-label input,
+.bf-label select,
+.bf-return input {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--line-soft);
+  border-radius: 0;
+  padding: 14px 10px;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.bf-start > .primary {
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.bf-small,
+.bf-note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.bf-note {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 20px;
+}
+.bf-art {
+  height: 220px;
+  position: relative;
+  margin: 26px 0;
+  overflow: hidden;
+}
+.bf-art i {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  top: 12px;
+  left: 10%;
+  background: rgba(255, 255, 255, 0.05);
+}
+.bf-art i:nth-child(2) {
+  left: 35%;
+}
+.bf-art i:nth-child(3) {
+  display: none;
+}
+.bf-art span {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+.bf-art.festival i {
+  border-radius: 45% 55% 60% 40%;
+  transform: rotate(-30deg);
+}
+.bf-art.festival i:nth-child(2) {
+  left: 30%;
+  transform: rotate(30deg);
+}
+.bf-art.festival i:nth-child(3) {
+  display: block;
+  left: 50%;
+  transform: rotate(60deg);
+}
+.bf-art.panels i:nth-child(3) {
+  display: block;
+  left: 60%;
+  height: 120px;
+  width: 120px;
+  top: 36px;
+}
+.bf-art.pairs i:nth-child(2) {
+  border-radius: 40% 60% 50% 50%;
+  transform: rotate(25deg);
+}
+.bf-return {
+  font-size: 12px;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  padding: 16px 0;
+  margin-top: 22px;
+}
+.bf-return summary {
+  cursor: pointer;
+  line-height: 1.8;
+}
+.bf-return strong {
+  display: block;
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+.bf-return button,
+.bf-demo-buttons button {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+  background: transparent;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.bf-demo-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bf-demo-buttons button[aria-pressed="true"] {
+  background: var(--ink);
+  color: white;
+}
+.bf-extension {
+  font-size: 12px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+.bf-extension summary {
+  cursor: pointer;
+}
+.bf-extension label {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+.bf-topic {
+  border-left: 2px solid var(--ink);
+  padding: 0 0 0 12px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.bf-form {
+  max-width: 1000px;
+  padding: 40px 50px 70px;
+  margin: 0 auto;
+}
+.bf-form-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.bf-form-top a {
+  text-decoration: none;
+  color: inherit;
+}
+.bf-progress {
+  height: 2px;
+  background: var(--line-soft);
+  margin: 16px 0 40px;
+}
+.bf-progress i {
+  display: block;
+  height: 2px;
+  background: var(--ink);
+  transition: width 0.25s;
+}
+.bf-section-heading h1 {
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(32px, 4.5vw, 54px);
+  text-transform: uppercase;
+  font-weight: 400;
+  margin: 16px 0;
+}
+.bf-section-heading p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-bottom: 36px;
+}
+.bf-question {
+  min-width: 0;
+  border: 1px solid var(--line-soft);
+  padding: 26px;
+  margin: 0 0 28px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.bf-question legend {
+  display: contents;
+}
+.bf-question legend > span:last-child {
+  display: block;
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(23px, 2.5vw, 32px);
+  line-height: 1.2;
+  font-weight: 400;
+  text-transform: uppercase;
+  margin: 8px 0 24px;
+}
+.bf-q-number {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+}
+.bf-likert {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.bf-likert button {
+  min-height: 52px;
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  cursor: pointer;
+  font-size: 21px;
+}
+.bf-likert .selected,
+.bf-anchors .selected,
+.bf-options .selected {
+  background: var(--ink);
+  color: white;
+}
+.bf-scale-hint {
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  line-height: 1.4;
+}
+.bf-scale-hint span {
+  padding: 0 8px;
+}
+.bf-orb-value {
+  text-align: right;
+  font-family: "ABC Camera", sans-serif;
+  font-size: 22px;
+  color: var(--muted);
+}
+.bf-orb-lane {
+  height: 88px;
+  position: relative;
+  margin: 6px 34px 14px;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.bf-orb-lane:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  background: var(--ink);
+  width: 100%;
+}
+.bf-orb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  cursor: grab;
+  touch-action: none;
+}
+.bf-orb.unselected {
+  background: rgba(255, 255, 255, 0.6);
+  border-style: dashed;
+}
+.bf-anchors {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.bf-anchors button {
+  background: transparent;
+  min-height: 48px;
+  border: 1px solid var(--line-soft);
+  font-size: 12px;
+  padding: 8px;
+  cursor: pointer;
+}
+.bf-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.bf-options button {
+  background: transparent;
+  min-height: 52px;
+  border: 1px solid var(--line-soft);
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.bf-options i {
+  font-style: normal;
+  flex-shrink: 0;
+}
+.bf-input-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.bf-question textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--line-soft);
+  font-size: 17px;
+  line-height: 1.5;
+  border-radius: 0;
+}
+.bf-skip {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.bf-skip button {
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  min-height: 30px;
+}
+.bf-skip [aria-pressed="true"] {
+  font-weight: bold;
+  color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+}
+.bf-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bf-nav > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.bf-main button:focus-visible,
+.bf-main input:focus-visible,
+.bf-main select:focus-visible,
+.bf-main textarea:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 4px;
+}
+.bf-main button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.bf-complete {
+  max-width: 800px;
+  margin: auto;
+  padding: 90px 40px;
+  min-height: 75vh;
+}
+.bf-complete h1 {
+  font-size: clamp(44px, 6vw, 76px);
+}
+.bf-code {
+  border: 1px solid var(--line-soft);
+  padding: 22px;
+  margin: 30px 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.bf-code span {
+  font-size: 12px;
+}
+.bf-code strong {
+  font-family: monospace;
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+.bf-code button {
+  background: none;
+  display: flex;
+  gap: 8px;
+  cursor: pointer;
+}
+.bf-complete-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bf-partner {
+  border-left: 2px solid var(--ink);
+  padding: 22px;
+  margin: 0 0 30px;
+  font-size: 24px;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.3);
+  overflow-wrap: anywhere;
+}
+.bf-error {
+  position: sticky;
+  bottom: 12px;
+  max-width: 900px;
+  margin: 0 auto 18px;
+  padding: 16px 22px;
+  border: 1px solid #923d2e;
+  background: #fff5ee;
+  color: #6c251b;
+  box-shadow: 0 4px 20px #0001;
+  font-size: 14px;
+  z-index: 10;
+}
+.bf-storage {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+}
+.bf-footer {
+  border-top: 1px solid var(--line-soft);
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.bf-footer a {
+  color: inherit;
+}
+.experiment-visual.brufest-festival,
+.experiment-visual.brufest-panels,
+.experiment-visual.brufest-pairs {
+  background: linear-gradient(135deg, #cad99d, #a7c9cc);
+}
+.experiment-visual.brufest-panels {
+  background: linear-gradient(135deg, #b6c6ce, #d3c6dd);
+}
+.experiment-visual.brufest-pairs {
+  background: linear-gradient(135deg, #e1c4a5, #becba9);
+}
+@media (max-width: 800px) {
+  .bf-intro {
+    grid-template-columns: 1fr;
+    padding: 42px 24px;
+    gap: 32px;
+  }
+  .bf-art {
+    height: 180px;
+  }
+  .bf-art i {
+    width: 135px;
+    height: 135px;
+  }
+  .bf-intro h1 {
+    max-width: 640px;
+  }
+  .bf-start {
+    padding: 24px;
+  }
+  .bf-form {
+    padding: 30px 24px 48px;
+  }
+  .bf-nav > span {
+    display: none;
+  }
+  .bf-footer {
+    padding: 20px 24px;
+  }
+}
+@media (max-width: 480px) {
+  .bf-form {
+    padding: 26px 14px 40px;
+  }
+  .bf-question {
+    padding: 18px 14px;
+  }
+  .bf-question legend > span:last-child {
+    font-size: 24px;
+  }
+  .bf-likert {
+    gap: 3px;
+  }
+  .bf-likert button {
+    min-height: 46px;
+    font-size: 18px;
+  }
+  .bf-anchors {
+    grid-template-columns: 1fr 1fr;
+  }
+  .bf-anchors button:last-child {
+    grid-column: 1/-1;
+  }
+  .bf-options {
+    grid-template-columns: 1fr;
+  }
+  .bf-intro {
+    padding: 32px 18px;
+  }
+  .bf-start {
+    padding: 22px 18px;
+  }
+  .bf-complete {
+    padding: 50px 20px;
+  }
+  .bf-complete-actions {
+    flex-direction: column;
+  }
+  .bf-scale-hint {
+    font-size: 10px;
+  }
+  .bf-footer {
+    font-size: 10px;
+  }
+  .bf-nav .primary,
+  .bf-nav .secondary {
+    padding: 16px;
+  }
+  .bf-form-top {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .bf-error {
+    margin: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-main * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+
+.bf-written .conflictbench-text-question {
+  padding: 0;
+  background: none;
+  border: 0;
+  margin: 0;
+}
+.bf-written .conflictbench-text-question-label {
+  font-family: "ABC Camera", sans-serif;
+  font-size: clamp(23px, 2.5vw, 32px);
+  font-weight: 400;
+  line-height: 1.2;
+  display: block;
+}
+.bf-written .question-number {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  margin-bottom: 10px;
+}
+.bf-written .conflictbench-text-question-label em {
+  font-family: Arial, sans-serif;
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  margin: 10px 0;
+}
+.bf-written .conflictbench-textarea-shell textarea {
+  font-family: Arial, sans-serif;
+  padding: 16px 52px 16px 16px;
+}
+.bf-written .conflictbench-voice-privacy p {
+  font-size: 13px;
+  line-height: 1.5;
+}

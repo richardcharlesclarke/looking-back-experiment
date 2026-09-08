@@ -1,0 +1,185 @@
+.bf-admin {
+  max-width: 1350px;
+  margin: auto;
+  padding: 50px 40px;
+}
+.bf-admin h1 {
+  font:
+    400 clamp(36px, 4vw, 60px) / 1.1 "ABC Camera",
+    sans-serif;
+  text-transform: uppercase;
+  max-width: 850px;
+}
+.bf-admin h2 {
+  font:
+    400 28px/1.2 "ABC Camera",
+    sans-serif;
+  text-transform: uppercase;
+}
+.bf-admin h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 30px;
+}
+.bf-admin-stats {
+  border-block: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+  padding: 25px 0;
+  margin: 30px 0;
+  font-size: 13px;
+}
+.bf-admin-stats strong {
+  font-size: 30px;
+  font-weight: 400;
+  display: block;
+}
+.bf-admin-stats a {
+  display: flex;
+  gap: 8px;
+  color: inherit;
+}
+.bf-admin-grid {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 45px;
+}
+.bf-session-button {
+  display: grid;
+  width: 100%;
+  text-align: left;
+  gap: 10px;
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  padding: 18px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.bf-session-button.selected {
+  background: var(--ink);
+  color: white;
+}
+.bf-session-button span,
+.bf-session-button small {
+  font-size: 11px;
+}
+.bf-session-button strong {
+  font-size: 16px;
+  font-weight: 400;
+}
+.bf-create {
+  border: 1px dashed var(--line-soft);
+  padding: 18px;
+  margin-top: 20px;
+}
+.bf-create summary {
+  display: flex;
+  gap: 8px;
+  cursor: pointer;
+}
+.bf-create textarea,
+.bf-script textarea {
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  background: #fff5;
+  max-width: 100%;
+  width: 100%;
+  border-radius: 0;
+  font: inherit;
+}
+.bf-condition {
+  font-size: 12px;
+  background: #fff4;
+  padding: 12px;
+}
+.bf-stage-steps {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  margin: 24px 0;
+}
+.bf-stage-steps span {
+  opacity: 0.5;
+  padding-bottom: 8px;
+}
+.bf-stage-steps .active {
+  opacity: 1;
+  border-bottom: 2px solid var(--ink);
+}
+.bf-invite {
+  border: 1px solid var(--line-soft);
+  padding: 18px;
+  margin: 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 13px;
+  align-items: center;
+}
+.bf-invite > strong {
+  width: 100%;
+}
+.bf-invite div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.bf-invite a {
+  color: inherit;
+}
+.bf-invite button {
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  cursor: pointer;
+}
+.bf-script {
+  border-block: 1px solid var(--line-soft);
+  padding: 18px 0;
+  margin: 22px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.bf-script summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+.bf-records p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  font-size: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.bf-empty {
+  padding: 40px;
+  border: 1px solid var(--line-soft);
+  line-height: 1.6;
+}
+.bf-script code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 850px) {
+  .bf-admin {
+    padding: 30px 20px;
+  }
+  .bf-admin-grid {
+    grid-template-columns: 1fr;
+  }
+  .bf-admin-stats {
+    gap: 20px;
+  }
+  .bf-admin aside {
+    max-width: none;
+  }
+  .bf-records p {
+    gap: 8px;
+  }
+}

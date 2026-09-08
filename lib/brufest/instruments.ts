@@ -1,0 +1,598 @@
+import bank from "./question-bank.json";
+import { FESTIVAL_VERSION, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
+import { PAIR_VERSION, screeningQuestions } from './pair-topics';
+import type {
+  Answer,
+  Answers,
+  Context,
+  Question,
+  Role,
+  Study,
+  Wave,
+} from "./types";
+export const VERSION = "conflict_bench_v0.1";
+export const STUDIES = {
+  festival: {
+    number: "03",
+    title: "A festival of perspectives",
+    label: "Festival audience",
+    intro:
+      "What stays with you after a festival? A few questions about curiosity, disagreement and seeing things differently.",
+    note: "Come back afterwards with the same participant code. We’ll put the before and after pictures together.",
+    art: "festival",
+  },
+  panels: {
+    number: "04",
+    title: "When viewpoints meet",
+    label: "Panel conversations",
+    intro:
+      "Sometimes a disagreement opens something up. Sometimes it doesn’t. Tell us what you bring to this conversation—and what you take away.",
+    note: "Taking part on stage or listening in? There’s a short set of questions for each.",
+    art: "panels",
+  },
+  pairs: {
+    number: "05",
+    title: "Paired discussion study",
+    label: "Paired discussion study",
+    intro:
+      "Complete a private screening questionnaire. A helper will look for a willing partner with a different view.",
+    note: "You don’t have to agree. A clearer disagreement can be a good place to arrive.",
+    art: "pairs",
+  },
+} as const;
+export const PROGRAMME = [
+  "Sample: Opening talk",
+  "Sample: Panel A",
+  "Sample: Panel B",
+  "Sample: Hub workshop",
+  "Sample: Speakers’ Corner",
+];
+const yes = ["Yes", "No", "Not sure"];
+const topicChange = [
+  "No meaningful change",
+  "My overall view stayed the same but my reasons became clearer",
+  "My view stayed the same but became more qualified",
+  "I became less certain",
+  "I shifted on one part of the issue",
+  "I changed my overall conclusion",
+  "I better understood a different view",
+  "I left with a new question, distinction or proposal",
+  "Something else",
+];
+const festivalCore = [
+  "HUM_01",
+  "HUM_02",
+  "CUR_01",
+  "CUR_02",
+  "REG_01",
+  "REG_02",
+  "CPX_01",
+  "CPX_02",
+  "REV_01",
+  "REV_02",
+  "AGY_01",
+  "AGY_02",
+];
+const panelCore = [
+  "OPN_01",
+  "CUR_01",
+  "REG_01",
+  "REV_01",
+  "DEF_01",
+  "REV_02",
+  "GEN_01",
+  "AGY_01",
+];
+const pairCore = ["OPN_01", "CUR_01", "REG_01", "REV_01", "DEF_01", "AGY_01"];
+function q(
+  id: string,
+  section: string,
+  extra: Partial<Question> = {},
+): Question {
+  const prompt = (bank as Record<string, string>)[id];
+  if (!prompt && !extra.prompt) throw new Error(`Missing question ${id}`);
+  return {
+    id,
+    prompt,
+    section,
+    type: "likert",
+    min: 1,
+    max: 7,
+    low: "Not at all true of me now",
+    high: "Very true of me now",
+    required: true,
+    ...extra,
+  };
+}
+const single = (
+  id: string,
+  section: string,
+  options: string[],
+  prompt?: string,
+) => q(id, section, { type: "single", options, ...(prompt ? { prompt } : {}) });
+const multi = (
+  id: string,
+  section: string,
+  options: string[],
+  limit?: number,
+  exclusive: string[] = [
+    "None",
+    "Cannot remember",
+    "Not yet decided",
+    "No meaningful change",
+  ],
+) => q(id, section, { type: "multi", options, limit, exclusive });
+const text = (id: string, section: string, prompt?: string, required = false) =>
+  q(id, section, { type: "text", required, ...(prompt ? { prompt } : {}) });
+const scale = (
+  id: string,
+  section: string,
+  low = "Not at all",
+  high = "Extremely",
+  prompt?: string,
+) =>
+  q(id, section, {
+    type: "scale",
+    min: 0,
+    max: 10,
+    low,
+    high,
+    ...(prompt ? { prompt } : {}),
+  });
+const process = (id: string, section: string) =>
+  q(id, section, { low: "Strongly disagree", high: "Strongly agree" });
+export function validFlow(study: Study, role: Role, wave: Wave) {
+  return study === "festival"
+    ? role === "attendee" && ["pre", "post", "followup"].includes(wave)
+    : study === "panels"
+      ? ["speaker", "audience"].includes(role) && ["pre", "post"].includes(wave)
+      : role === "participant" &&
+        ["screen", "pre", "post", "joint", "partner"].includes(wave);
+}
+export function questions(ctx: Context, answers: Answers = {}): Question[] {
+  if (ctx.study === 'pairs' && ctx.wave === 'screen' && ctx.screeningBank === PAIR_VERSION) return screeningQuestions();
+  const { study, role, wave, session } = ctx;
+  if (!validFlow(study, role, wave))
+    throw new Error("Choose a valid questionnaire.");
+  let out: Question[] = [];
+  if (study === "festival") {
+    const revised = ctx.festivalVersion === FESTIVAL_VERSION;
+    const programme = revised ? FESTIVAL_PROGRAMME : PROGRAMME;
+    out = festivalCore.map((key, i) =>
+      q(
+        `E1_${key}`,
+        ["Your perspective", "Meeting another view", "Room to change"][
+          Math.floor(i / 4)
+        ],
+        {
+          reverse: ["HUM_02", "REV_02", "AGY_02"].includes(key),
+          construct: key.split("_")[0],
+        },
+      ),
+    );
+    if (wave === "pre")
+      out.push(
+        multi(
+          "E1_PRE_DAYS",
+          "Your festival",
+          ["Saturday", "Sunday", "Not sure"],
+          undefined,
+          ["Not sure"],
+        ),
+        single("E1_PRE_ACCESS", "Your festival", [
+          "Day ticket",
+          "Weekend ticket",
+          "Speaker / contributor",
+          "Other",
+        ]),
+        multi("E1_PRE_SESSIONS", "Your festival", [
+          ...programme,
+          "Not yet decided",
+        ]),
+        ...(!revised ? [single("E1_PRE_FAMILIAR", "Before you arrive", [
+          "Not at all",
+          "A little",
+          "Quite familiar",
+          "Very familiar",
+        ]),
+        single("E1_PRE_PRIOR", "Before you arrive", yes),
+        single("E1_PRE_EXPOSURE", "Before you arrive", yes),
+        scale("E1_PRE_INTEREST", "Before you arrive")] : []),
+      );
+    if (wave === "post") {
+      out.push(
+        multi("E1_POST_DAYS", "Your festival", ["Saturday", "Sunday"]),
+        multi("E1_POST_SESSIONS", "Your festival", [
+          ...programme,
+          "Other",
+          "Cannot remember",
+        ]),
+      );
+      const attended = answers.E1_POST_SESSIONS;
+      if (Array.isArray(attended))
+        attended
+          .filter((s) => programme.includes(s))
+          .forEach((s) =>
+            out.push(
+              single(
+                `EXPOSURE_${programme.indexOf(s)}_portion`,
+                "What you took part in",
+                ["All", "Part", "Not sure"],
+                `How much of “${s}” did you attend?`,
+              ),
+              single(
+                `EXPOSURE_${programme.indexOf(s)}_role`,
+                "What you took part in",
+                ["Listen/watch", "Actively take part", "Both", "Not sure"],
+                `How did you take part in “${s}”?`,
+              ),
+            ),
+          );
+      out.push(
+        multi("E1_POST_HUB", "What you took part in", revised ? [...HUB_PROGRAMME, "Other", "None"] : [
+          "Hub workshop",
+          "Speakers’ Corner",
+          "Soapbox / open mic",
+          "Other",
+          "None",
+        ]),
+        single("E1_POST_KEYNOTE", "What you took part in", [
+          "All",
+          "Part",
+          "No",
+          "Not sure",
+        ]),
+      );
+      if (revised) {
+        const keynote = out.find(q => q.id === "E1_POST_KEYNOTE")!;
+        keynote.prompt = `Did you attend “${BEAU_SESSION}” (with Beau Lotto)?`;
+      }
+      if (["All", "Part"].includes(String(answers.E1_POST_KEYNOTE)))
+        out.push(
+          scale(
+            "E1_POST_KEYNOTE_IMPACT",
+            "What you took part in",
+            "Not at all",
+            "A great deal",
+          ),
+        );
+      out.push(
+        single("E1_POST_DISAGREEMENT", "Conversations", yes),
+        single("E1_POST_TRIAL", "Conversations", yes),
+        multi(
+          "E1_POST_CHANGE",
+          "What stays with you",
+          [
+            "No meaningful change",
+            "More interested in understanding different views",
+            "More willing to qualify my own view",
+            "More aware of uncertainty",
+            "Better able to explain why people disagree",
+            "More able to handle a difficult exchange",
+            "Less willing to engage",
+            "Something else",
+          ],
+          2,
+        ),
+        text("E1_POST_OPEN", "What stays with you"),
+        text("E1_POST_GENERATED", "What stays with you"),
+        single("E1_POST_INFLUENCE", "Looking forward", [
+          ...programme,
+          "Informal conversation",
+          "Small-group study",
+          "Other",
+          "None",
+          "Not sure",
+        ]),
+        single("E1_POST_CHOICE", "Looking forward", [
+          "A strong case supporting my view",
+          "A strong case challenging my view",
+          "A comparison of different views",
+          "Nothing further",
+        ]),
+      );
+    }
+    if (wave === "followup")
+      out.push(
+        ...["OPPOSING", "CONVERSATION", "USED"].map((k) =>
+          single(`E1_FU_${k}`, "Since the festival", [
+            "Yes",
+            "No",
+            "No opportunity",
+            "Not sure",
+          ]),
+        ),
+        text("E1_FU_EXAMPLE", "Since the festival"),
+      );
+  } else {
+    const prefix =
+      study === "pairs" ? "E3" : role === "speaker" ? "E2P" : "E2A";
+    if (wave === "screen")
+      return [
+        scale(
+          "E3_SCREEN_POSITION",
+          "Participant screening questionnaire",
+          "Strongly oppose",
+          "Strongly support",
+        ),
+        scale("E3_SCREEN_IMPORTANCE", "Participant screening questionnaire"),
+        text("E3_SCREEN_REASON", "Participant screening questionnaire", undefined, true),
+        single("E3_SCREEN_WILLING", "Participant screening questionnaire", ["Yes", "No"]),
+      ].map((item) => resolve(item, ctx));
+    if (wave === "joint")
+      return ["TURN", "A", "B", "UNCERTAINTY", "NEW"].map((k) =>
+        text(`E3_JOINT_${k}`, "Joint discussion record", undefined, true),
+      );
+    if (wave === "partner")
+      return [
+        scale(
+          "E3_ACCURACY",
+          "Check your partner’s description",
+          "Not at all accurately",
+          "Very accurately",
+        ),
+        text("E3_CORRECTION", "Check your partner’s description"),
+      ];
+    if (role !== "audience")
+      out = (study === "pairs" ? pairCore : panelCore).map((k, i) =>
+        q(`${prefix}_${k}`, i < 4 ? "Entering disagreement" : "Staying open"),
+      );
+    out.push(
+      scale(
+        `${prefix}_POSITION`,
+        "Your view",
+        "Strongly oppose",
+        "Strongly support",
+      ),
+      scale(
+        `${prefix}_CONFIDENCE`,
+        "Your view",
+        "Not at all confident",
+        "Completely confident",
+      ),
+      scale(
+        `${prefix}_UNDERSTANDING`,
+        "Another perspective",
+        "Not at all",
+        "Extremely well",
+      ),
+    );
+    if (role === "speaker") {
+      session?.speakers.forEach((s, i) => {
+        if (i !== ctx.member)
+          out.push(
+            scale(
+              `E2P_PREDICT_${i}`,
+              "Another perspective",
+              "Strongly oppose",
+              "Strongly support",
+              `Where do you think ${s} stands on [proposition]?`,
+            ),
+          );
+      });
+      out.push(text("E2P_REASON", "Another perspective"));
+    }
+    if (study === "pairs") {
+      out.push(
+        scale(
+          "E3_PREDICT",
+          "Another perspective",
+          "Strongly oppose",
+          "Strongly support",
+        ),
+        text("E3_OTHER_REASON", "Another perspective", undefined, true),
+        text("E3_OWN_REASON", "Another perspective", undefined, true),
+      );
+      if (wave === "pre")
+        out.push(
+          single(
+            "E3_PRIOR",
+            "Before this conversation",
+            yes,
+            "Have you already received a disagreement briefing or joined another study conversation at this festival?",
+          ),
+          single("E3_SCREEN_KNOWN", "Before this conversation", yes),
+          text(
+            "E3_PRIOR_EXPOSURE",
+            "Before this conversation",
+            "Which festival talks, panels or workshops have you already attended?",
+          ),
+        );
+    }
+    if (role === "audience" && wave === "pre")
+      out.push(
+        scale(
+          "E2A_FAMILIARITY",
+          "Before the panel",
+          "Not at all",
+          "Extremely",
+          "How familiar are you with this subject?",
+        ),
+        scale(
+          "E2A_IMPORTANCE",
+          "Before the panel",
+          "Not at all",
+          "Extremely",
+          "How important is this issue to you personally?",
+        ),
+      );
+    if (wave === "post") {
+      if (role === "speaker") {
+        const ids = ctx.extended
+          ? ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]
+          : ["01", "03", "04", "06", "07"];
+        out.push(
+          ...ids.map((k) => process(`E2P_POST_${k}`, "The exchange")),
+          multi("E2P_CHANGE", "What changed", topicChange, 2),
+          text("E2P_OPEN_GENERATED", "What changed"),
+        );
+        if (ctx.extended)
+          out.push(
+            text("E2P_OPEN_OTHER", "What changed"),
+            text("E2P_OPEN_DIFFERENT", "What changed"),
+          );
+      } else if (role === "audience") {
+        const ids = ctx.extended
+          ? [
+              "PROC_01",
+              "PROC_02",
+              "PROC_03",
+              "PROC_04",
+              "GEN_01",
+              "GEN_02",
+              "UND_01",
+              "REL_01",
+              "REL_02",
+              "DEG_01",
+            ]
+          : ["PROC_01", "PROC_04", "GEN_01", "GEN_02", "UND_01", "REL_01"];
+        out.push(
+          ...ids.map((k) => process(`E2A_${k}`, "What you witnessed")),
+          single("E2A_CLOSEST", "What you took away", [
+            ...(session?.speakers || []),
+            "None",
+            "Unclear",
+          ]),
+          text("E2A_GENERATED", "What you took away"),
+        );
+        if (ctx.extended)
+          out.push(
+            scale("E2A_INTENSITY", "What you took away"),
+            multi("E2A_CHANGE", "What you took away", topicChange, 2),
+            scale(
+              "E2A_CONTINUE",
+              "What you took away",
+              "Not at all willing",
+              "Very willing",
+            ),
+            single(
+              "E2A_SHAPE",
+              "What you took away",
+              [
+                "Two parallel lines",
+                "Two lines colliding",
+                "Two lines gradually converging",
+                "Two lines crossing and continuing",
+                "A tangled knot",
+                "A widening fork",
+                "Hard to say",
+              ],
+              "Which shape best describes the discussion?",
+            ),
+          );
+      } else {
+        const ids = ctx.extended
+          ? ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+          : ["01", "03", "04", "05", "06", "07"];
+        out.push(...ids.map((k) => process(`E3_POST_${k}`, "The exchange")));
+        if (ctx.extended)
+          out.push(
+            multi("E3_CHANGE", "What changed", topicChange, 2),
+            text("E3_GENERATED", "What changed"),
+          );
+      }
+      if (role !== "audience")
+        out.push(
+          single(
+            "FID_ATTENDED",
+            "A final detail",
+            ["All", "Part", "No", "Not sure"],
+            "Did you receive the short briefing before this session?",
+          ),
+          text(
+            "FID_RECALL",
+            "A final detail",
+            "What do you remember from the briefing?",
+          ),
+          single(
+            "FID_USED",
+            "A final detail",
+            yes,
+            "Did anything from the briefing affect how you took part?",
+          ),
+        );
+    }
+  }
+  return out.map((item) => resolve(item, ctx));
+}
+function resolve(item: Question, ctx: Context): Question {
+  return {
+    ...item,
+    prompt: item.prompt
+      .replaceAll(
+        "[proposition]",
+        `“${ctx.session?.proposition || "the central question"}”`,
+      )
+      .replaceAll(
+        "[candidate proposition]",
+        `“${ctx.session?.proposition || "the central question"}”`,
+      )
+      .replaceAll("[Beau session title]", "Beau’s session"),
+    reverse: item.reverse || /(?:POST_08|DEG_01)$/.test(item.id),
+  };
+}
+export function isMissing(
+  a: unknown,
+): a is { missing: "prefer_not" | "cannot_assess" | "not_applicable" } {
+  return (
+    !!a &&
+    typeof a === "object" &&
+    !Array.isArray(a) &&
+    Object.keys(a).length === 1 &&
+    ["prefer_not", "cannot_assess", "not_applicable"].includes(
+      String((a as { missing?: unknown }).missing),
+    )
+  );
+}
+export function answerError(q: Question, a: unknown): string | null {
+  if (isMissing(a)) return null;
+  if (a === undefined || a === "" || (Array.isArray(a) && !a.length))
+    return q.required
+      ? "Choose an answer or select “Prefer not to answer”."
+      : null;
+  if (q.type === "scale" || q.type === "likert")
+    return typeof a === "number" &&
+      Number.isFinite(a) &&
+      a >= (q.min ?? 0) &&
+      a <= (q.max ?? 10) &&
+      (q.type !== "likert" || Number.isInteger(a))
+      ? null
+      : "Choose a value on this scale.";
+  if (q.type === "text")
+    return typeof a === "string" &&
+      a.trim().length <= 3000 &&
+      (!q.required || !!a.trim())
+      ? null
+      : "Write up to 3,000 characters, or choose to skip.";
+  if (q.type === "single")
+    return typeof a === "string" && q.options?.includes(a)
+      ? null
+      : "Choose one of the listed answers.";
+  if (
+    !Array.isArray(a) ||
+    !a.every((v) => typeof v === "string" && q.options?.includes(v)) ||
+    new Set(a).size !== a.length
+  )
+    return "Choose from the listed answers.";
+  if (q.limit && a.length > q.limit) return `Choose up to ${q.limit}.`;
+  if (a.length > 1 && a.some((v) => q.exclusive?.includes(v)))
+    return "This answer must be selected on its own.";
+  return null;
+}
+export function validateAnswers(
+  ctx: Context,
+  answers: unknown,
+): { questions: Question[]; answers: Answers } {
+  if (!answers || typeof answers !== "object" || Array.isArray(answers))
+    throw new Error("Answers could not be read.");
+  const values = answers as Answers,
+    items = questions(ctx, values),
+    clean: Answers = {};
+  for (const item of items) {
+    const err = answerError(item, values[item.id]);
+    if (err) throw new Error(`${item.prompt} ${err}`);
+    if (values[item.id] !== undefined)
+      clean[item.id] = values[item.id] as Answer;
+  }
+  return { questions: items, answers: clean };
+}
