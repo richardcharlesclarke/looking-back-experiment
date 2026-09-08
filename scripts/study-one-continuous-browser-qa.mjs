@@ -53,6 +53,7 @@ export default async function continuousQA(page) {
             const options=q.locator('.rating-scale-option');
             for(let i=0;i<5;i++){
               await options.nth(i).click();
+              await slider.evaluate(e=>Promise.all(e.getAnimations().map(a=>a.finished)));
               if(Number(await slider.getAttribute('aria-valuenow'))!==(i+.5)*20)throw new Error('Label did not select band centre');
               const button=await options.nth(i).boundingBox(),orb=await slider.boundingBox();
               if(Math.abs(button.x+button.width/2-orb.x-orb.width/2)>1)throw new Error('Label and slider misaligned');
@@ -64,7 +65,7 @@ export default async function continuousQA(page) {
             const during=Number(await slider.getAttribute('aria-valuenow'));await page.mouse.up();
             const after=Number(await slider.getAttribute('aria-valuenow'));if(during!==after||Math.abs(after-71.234567)>.7)throw new Error('Slider snapped or lost precision '+JSON.stringify({id,during,after,lane}));
             if(Number.isInteger(after))throw new Error('Pointer value was quantised');
-            if((await q.locator('.rating-scale .active').getAttribute('aria-label')).toLowerCase()!=='mostly true of me now')throw new Error('Wrong active response band');
+            if((await q.locator('.rating-scale .active').getAttribute('aria-label')).toLowerCase()!=='mostly true of me')throw new Error('Wrong active response band');
           }
           exactValues[id.replace('question-','')]=Number(await slider.getAttribute('aria-valuenow'));
         }

@@ -34,3 +34,11 @@ The live desktop journey passes all 55 states, including label selection/alignme
 The real public save/export/delete smoke check passed at `2026-09-08T16:57:12Z`, preserving an exact decimal and endpoint values. Its temporary record was removed and link revoked. All 15 existing participants and 17 existing responses remain unchanged. The existing volume remains `/study-one-data`.
 
 Receipts: `output/refined-live-smoke.json`, `output/refined-live-artwork.json`, `output/refined-deployment.json`, `output/playwright/refined-live-desktop.txt`, and `output/playwright/refined-live-specific-qa.txt`. Representative live screenshots: `output/playwright/refined-live-1366-pre-section-2.png` and `output/playwright/refined-live-native-mobile.png`.
+
+## Label copy and click animation refinement
+
+The core labels now omit “now” in the buttons, accessible names and selected-value readout. Every desktop button uses a consistent two-line layout: degree on the first line and “true of me” on the second. This is a presentation change; stored instrument metadata and numeric values are untouched.
+
+Selecting a label animates the orb to that band's center over 620ms with a smooth curve that does not overshoot. Pointer interaction immediately disables this transition, preserving continuous raw drag values; keyboard adjustments are also immediate. Reduced-motion preferences disable the transition.
+
+Repository lint and the standalone production build pass. Focused desktop/mobile browser checks sample the movement across frames, confirm intermediate positions and the exact endpoint without bounce, interrupt an active animation with a drag, verify exact draft restoration, compare all label row heights and check reduced motion. Receipts: `output/playwright/label-motion-local-qa.txt` and `output/label-motion-build.txt`.

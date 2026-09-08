@@ -34,6 +34,7 @@
 .s1-participant .s1-continuous .rating-orb-field { min-height: 72px; margin: 0 8px; }
 .s1-participant .s1-continuous .rating-orb-lane { width: 100%; margin: 0; }
 .s1-participant .s1-continuous .rating-orb-thumb { transition: none; animation: none; }
+.s1-participant .s1-continuous .rating-orb-thumb.label-motion:not(.dragging) { transition: left 620ms cubic-bezier(.22,1,.36,1), width 620ms cubic-bezier(.22,1,.36,1), height 620ms cubic-bezier(.22,1,.36,1); }
 .s1-participant .s1-continuous .rating-orb-thumb.unselected { border-style: dashed; }
 .s1-participant .s1-band-zones { position: absolute; inset: 20px 0; display: grid; grid-template-columns: repeat(5,1fr); }
 .s1-participant .s1-band-zones i { border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); }
@@ -41,6 +42,7 @@
 .s1-participant .s1-band-zones i.active { background: #ffffff24; }
 .s1-participant .rating-scale { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 0; margin-inline: 8px; }
 .s1-participant .s1-band-label-short { display: none; }
+.s1-participant .s1-band-label-long>span { display: block; white-space: nowrap; }
 .s1-participant .rating-scale-option { display: flex; align-items: center; justify-content: center; padding: 10px 8px; min-width: 0; min-height: 56px; line-height: 1.4; text-align: center; cursor: pointer; letter-spacing: .04em; }
 .s1-participant .rating-scale-option+.rating-scale-option { border-left: 0; }
 .s1-participant .rating-scale-option:not(.active):hover { background: #ffffff80; color: var(--ink); }
