@@ -39,4 +39,18 @@ The semantic connection preview and toolbar find the question by ID after the nu
 
 Pre-release authenticated read records **21 people and 17 responses**, retaining hashes/counts only. Deployment target remains the existing Railway project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environment `d86f82f2-579c-4de2-8085-f00903b86816`, service `9586c104-8863-467f-adab-bef9a2fa5432`, and `/study-one-data` volume. Package: `output/conflict-v3-final`. No production QA responses are submitted.
 
-Live verification will be recorded after release.
+## Verified production release
+
+Implementation commit `5da0adf` deployed successfully as Railway deployment `9fea822e-a794-473f-9273-0e3c46b611f4`. The 44-file source manifest was verified against the committed inputs. Railway's 1/1 health check succeeds; public Study One and public/direct service health endpoints return HTTP 200.
+
+Final rendered public checks pass at 1366, 390 and 320 pixels: all nine resulting prompts match the final wording above, each complete 19-question preview works, and the current study-about section names Beau Lotto with the verified contact address. Preview testing sends zero participant API requests. Native touch tap/drag, mouse drag, keyboard, reduced motion and semantic direct-circle navigation pass on the public route. The historical-v2 draft restores correctly; completing the direct preview leaves browser storage unchanged. Desktop and mobile screenshots were visually inspected.
+
+Authenticated post-release comparison confirms **all 21 existing people and all 17 existing responses are unchanged**, including their historical snapshots. No production research records were created for QA.
+
+Evidence: `output/playwright/conflict-live-review.txt`, `conflict-live-circles.txt`, `conflict-live-historical.txt`, `conflict-review-live-*-q*.png`, `conflict-live-current-information.png`; hash-only audit files `output/conflict-v3-live-baseline.json` and `output/conflict-v3-live-after.json`.
+
+Live participation: https://experiments.evolvable.me/study-one
+
+Review the new questionnaire without submitting: https://experiments.evolvable.me/study-one?preview=1
+
+Fresh direct circles view: https://experiments.evolvable.me/study-one?preview=1&step=connection-close
