@@ -10,8 +10,9 @@ export type Answers = Record<string, Answer>;
 export type Question = {
   id: string;
   prompt: string;
-  type: "likert" | "continuous" | "scale" | "single" | "multi" | "text";
+  type: "likert" | "continuous" | "circles" | "scale" | "single" | "multi" | "text";
   bands?: string[];
+  help?: string;
   options?: string[];
   min?: number;
   max?: number;

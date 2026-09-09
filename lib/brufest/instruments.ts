@@ -1,4 +1,4 @@
-import { CONTINUOUS_INSTRUMENT_VERSION, CONTINUOUS_LABELS } from "./festival/scales";
+import { PERSPECTIVES_INSTRUMENT_VERSION, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
 import bank from "./question-bank.json";
 import { FESTIVAL_VERSION, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
@@ -171,6 +171,14 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         },
       ),
     );
+    const perspectives = ctx.responseInstrument === PERSPECTIVES_INSTRUMENT_VERSION;
+    if (perspectives && (wave === 'pre' || wave === 'post')) out.push(
+      ...[['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']].map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
+        prompt: `How connected do you feel to ${group}?`, type: 'circles', min: 1, max: 7, bands: [...CONNECTION_LABELS], target, construct: 'felt_connection',
+        help: 'More overlap means a stronger feeling of connection. This is about connection, not whether you agree with everyone in the group.',
+      })),
+      q('E1_FUTURE_OUTLOOK', 'Looking ahead', {prompt: 'Thinking about life for people around the world over the next ten years, how optimistic or pessimistic do you feel?', type: 'single', options: ['Very pessimistic', 'Somewhat pessimistic', 'Neither optimistic nor pessimistic', 'Somewhat optimistic', 'Very optimistic', 'Not sure'], required: false, construct: 'future_outlook'}),
+    );
     if (wave === "pre")
       out.push(
         multi(
@@ -276,7 +284,7 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
           2,
         ),
         text("E1_POST_OPEN", "What stays with you"),
-        text("E1_POST_GENERATED", "What stays with you"),
+        ...(!perspectives ? [text("E1_POST_GENERATED", "What stays with you")] : []),
         single("E1_POST_INFLUENCE", "Looking forward", [
           ...programme,
           "Informal conversation",
@@ -292,6 +300,18 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
           "Nothing further",
         ]),
       );
+    }
+    if (perspectives && wave === 'post') {
+      const learning = [single('E1_POST_ENCOUNTER', 'Seeing things differently', ['Yes', 'No', 'Cannot recall'], 'At Big Brue, did you encounter a view on a topic that differed from yours?')];
+      if (answers.E1_POST_ENCOUNTER === 'Yes') {
+        learning.push(text('E1_POST_TOPIC', 'Seeing things differently', 'Think of one such occasion from a talk, workshop or conversation. What was the topic? Please avoid names or identifying details.', true));
+        learning.push(single('E1_POST_DEPTH', 'Seeing things differently', ['Shallower', 'About the same', 'Deeper', 'Changed in another way', 'Not sure'], 'Compared with before Big Brue, how would you describe your understanding of this topic?'));
+        learning.push(single('E1_POST_ASSUMPTION', 'Seeing things differently', ['Yes', 'No', 'Not sure'], 'Did you notice an assumption shaping your own view of this topic that you had not noticed before?'));
+        learning.push(single('E1_POST_POSITION_CHANGE', 'Seeing things differently', ['My position changed', 'My position stayed the same', 'I became less certain without settling on a different position', 'Not sure', 'I had no initial position'], 'Which best describes what happened to your position on this topic?'));
+        learning.push(text('E1_POST_UNDERSTANDING_ACCOUNT', 'Seeing things differently', 'What, if anything, do you understand differently now? Describe a particular reason, distinction or assumption. No change, greater confusion, or an experience that made understanding harder are equally useful to describe. Please avoid names or identifying details.'));
+      }
+      const insertion = out.findIndex(item => item.id === 'E1_POST_INFLUENCE');
+      out.splice(insertion, 0, ...learning);
     }
     if (wave === "followup")
       out.push(
@@ -519,7 +539,7 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
 function resolve(item: Question, ctx: Context): Question {
   return {
     ...item,
-    ...(ctx.study === 'festival' && ctx.responseInstrument === CONTINUOUS_INSTRUMENT_VERSION && item.type === 'likert' ? {type: 'continuous' as const, min: 0, max: 100, bands: [...CONTINUOUS_LABELS]} : {}),
+    ...(ctx.study === 'festival' && isContinuousInstrument(ctx.responseInstrument) && item.type === 'likert' ? {type: 'continuous' as const, min: 0, max: 100, bands: [...CONTINUOUS_LABELS]} : {}),
     prompt: item.prompt
       .replaceAll(
         "[proposition]",
@@ -552,12 +572,12 @@ export function answerError(q: Question, a: unknown): string | null {
     return q.required
       ? "Choose an answer or select “Prefer not to answer”."
       : null;
-  if (q.type === "scale" || q.type === "likert" || q.type === "continuous")
+  if (q.type === "scale" || q.type === "likert" || q.type === "continuous" || q.type === "circles")
     return typeof a === "number" &&
       Number.isFinite(a) &&
       a >= (q.min ?? 0) &&
       a <= (q.max ?? 10) &&
-      (q.type !== "likert" || Number.isInteger(a))
+      (!["likert", "circles"].includes(q.type) || Number.isInteger(a))
       ? null
       : "Choose a value on this scale.";
   if (q.type === "text")

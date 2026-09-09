@@ -38,7 +38,10 @@ test('Cached legacy clients stay seven-point; unknown formats fail; old 2 is nev
 test('Mixed before/after formats remain matched by identity but are explicitly non-comparable without conversion',()=>{
  const {data,p,c}=person();submit(p,c,'first',{wave:'pre',answers:answers('pre'),startedAt:timestamp()});const legacy=JSON.stringify(p.responses[0]);
  saveContact(data,p,c,{permission:true,email:'qa@example.com'});assistantAction(data,{action:'prepare_demo',id:p.id});
- submit(p,c,'after',{wave:'post',instrumentVersion:VERSION,answers:answers('post',VERSION),startedAt:timestamp()});
+ assert.throws(()=>submit(p,c,'after',{wave:'post',instrumentVersion:VERSION,answers:answers('post',VERSION),startedAt:timestamp()}),/personal link/);
+ // Existing mixed-format records remain readable even though new mixed submissions are prevented.
+ const checked=validateAnswers(context('post',VERSION),answers('post',VERSION));
+ p.responses.push({id:'historical-mixed',wave:'post',instrumentVersion:VERSION,programmeVersion:'historical',...checked,startedAt:timestamp(),completedAt:timestamp()});
  assert.equal(JSON.stringify(p.responses[0]),legacy);const rows=comparisons(data);assert.equal(rows.length,12);
  for(const r of rows){assert.equal(r.matched,true);assert.equal(r.comparable,false);assert.equal(r.before,4);assert.equal(r.after,71.23456789);assert.equal(r.beforeMax,7);assert.equal(r.afterMax,100);assert.match(r.comparisonNote,/Different/);assert.equal(r.beforeInstrumentVersion,FIRST_INSTRUMENT_VERSION);assert.equal(r.afterInstrumentVersion,VERSION);}
 });

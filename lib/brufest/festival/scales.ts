@@ -5,3 +5,7 @@ export const CONTINUOUS_LABELS = ['Not at all true of me now', 'Slightly true of
 export function responseBand(value: number, max = 100) {
   return Math.min(4, Math.max(0, Math.floor(value / max * 5)));
 }
+
+export const PERSPECTIVES_INSTRUMENT_VERSION = 'brufest-study-one-perspectives-v2-2026-09-09';
+export const CONNECTION_LABELS = ['Not at all connected', 'Very little connection', 'A little connection', 'Some connection', 'Quite connected', 'Very connected', 'Extremely connected'];
+export const isContinuousInstrument = (version?: string) => version === CONTINUOUS_INSTRUMENT_VERSION || version === PERSPECTIVES_INSTRUMENT_VERSION;

@@ -1,5 +1,6 @@
 "use client";
 import ContinuousOrb from './ContinuousOrb';
+import ConnectionCircles from './ConnectionCircles';
 import { useRef } from "react";
 import { ConflictBenchVoiceTextarea } from "../conflictbench/ConflictBenchVoiceTextarea";
 import type { Answer, Question as Item } from "@/lib/brufest/types";
@@ -82,7 +83,7 @@ export default function Question({
     );
   return (
     <fieldset
-      className={`bf-question ${!allowVoice?`rating-widget rating-widget-${motionDirection}`:''} ${value === undefined ? "bf-unanswered" : ""}`}
+      className={`bf-question ${item.type==='circles'?'s1-connection-question':''} ${!allowVoice?`rating-widget rating-widget-${motionDirection}`:''} ${value === undefined ? "bf-unanswered" : ""}`}
       id={`question-${item.id}`} tabIndex={-1} aria-invalid={invalid || undefined}
     >
       <legend>
@@ -91,6 +92,8 @@ export default function Question({
         </span>
         <span>{item.prompt}</span>
       </legend>
+      {item.help && <p className="s1-question-help">{item.help}</p>}
+      {item.type === "circles" && <ConnectionCircles item={item} value={n} onChange={onChange}/>}
       {(item.type === "continuous" || (item.type === "scale" && !allowVoice)) && <ContinuousOrb item={item} value={n} onChange={onChange}/> }
       {item.type === "likert" && (
         <>
@@ -195,7 +198,7 @@ export default function Question({
         <>
           <p className="bf-input-hint">
             {item.type === "single"
-              ? "Choose one"
+              ? item.required ? "Choose one" : "Optional · Choose one or continue"
               : item.limit
                 ? `Choose up to ${item.limit}`
                 : "Choose all that apply"}
@@ -240,7 +243,7 @@ export default function Question({
         >
           Prefer not to answer
         </button>
-        {(item.type === "scale" || item.type === "likert" || item.type === "continuous") && (
+        {(item.type === "scale" || item.type === "likert" || item.type === "continuous" || item.type === "circles") && (
           <button
             type="button"
             aria-pressed={isMissing(value) && value.missing === "cannot_assess"}

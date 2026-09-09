@@ -90,7 +90,7 @@ test('Fixed retention deletes contact first and research responses later',()=>{
 });
 
 test('Participant information contains the operational age, duration, contact and retention dates',()=>{
-  assert.equal(MINIMUM_AGE,18);assert.equal(ESTIMATED_MINUTES,7);assert.equal(CONTACT_EMAIL,'richardcharlesclarke@gmail.com');
+  assert.equal(MINIMUM_AGE,18);assert.equal(ESTIMATED_MINUTES,8);assert.equal(CONTACT_EMAIL,'richardcharlesclarke@gmail.com');
   assert.match(CONTACT_DELETE_AT,/2026-10-31/);assert.match(RESEARCH_DELETE_AT,/2027-09-30/);
 });
 

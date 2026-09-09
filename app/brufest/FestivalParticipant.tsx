@@ -1,7 +1,7 @@
 'use client';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { VectorDecoration } from '../looking-back/VectorDecoration';
-import { CONTINUOUS_INSTRUMENT_VERSION } from '@/lib/brufest/festival/scales';
+import { CONTINUOUS_INSTRUMENT_VERSION, PERSPECTIVES_INSTRUMENT_VERSION } from '@/lib/brufest/festival/scales';
 import { useEffect, useRef, useState } from 'react';
 import Question from './Question';
 import { answerError, questions } from '@/lib/brufest/instruments';
@@ -20,8 +20,10 @@ async function request(body:Record<string,unknown>):Promise<View>{
 }
 export default function FestivalParticipant(){
   const [access,setAccess]=useState(''),[kind,setKind]=useState<'first'|'after'>('first'),[view,setView]=useState<View|null>(null),[loaded,setLoaded]=useState(false),[registered,setRegistered]=useState(false),[invalidLink,setInvalidLink]=useState(false);
+  const [review,setReview]=useState(false),[reviewFinished,setReviewFinished]=useState(false),[reviewPage,setReviewPage]=useState<number|undefined>(),[reviewVisit,setReviewVisit]=useState(0);
   const [error,setError]=useState(''),[busy,setBusy]=useState(false),[agree,setAgree]=useState(false),[storageNote,setStorageNote]=useState('');
   useEffect(()=>{
+    if(new URLSearchParams(location.search).get('preview')==='1'){setReview(true);setAccess('preview-only');setKind('first');setView(previewView(new URLSearchParams(location.search).get('wave')==='post'?'post':'pre'));setLoaded(true);return;}
     const hash=new URLSearchParams(location.hash.slice(1));
     const linkKind=hash.has('after')?'after':'first';setKind(linkKind);
     let key=hash.get(linkKind)||'';
@@ -30,7 +32,9 @@ export default function FestivalParticipant(){
     else {let pending='';try{pending=localStorage.getItem('study-one-pending-v2')||'';}catch{}const next=pending||fresh();setAccess(next);try{localStorage.setItem('study-one-pending-v2',next);}catch{}setLoaded(true);}
   },[]);
   useEffect(()=>{const changed=()=>location.reload();window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed);},[]);
-  async function start(){setBusy(true);setError('');try{const v=await request({action:'enrol',access,agree,informationVersion:INFORMATION_VERSION});setView(v);setRegistered(true);history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}#first=${access}`);try{localStorage.setItem(STORAGE,access);}catch{setStorageNote('Your browser cannot save progress. Keep this page open.');}window.scrollTo({top:0});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  function previewView(wave:Wave):View{return {id:'preview-only',mode:'study',step:wave,message:'',contactChoiceSaved:false,permission:false,email:null,completed:[],responseInstrument:PERSPECTIVES_INSTRUMENT_VERSION};}
+  function openPreview(wave:Wave,page=0){setReviewFinished(false);setReviewPage(page);setReviewVisit(n=>n+1);setView(previewView(wave));history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}?preview=1&wave=${wave}`);window.scrollTo({top:0});}
+  async function start(){setBusy(true);setError('');try{const v=await request({action:'enrol',access,agree,informationVersion:INFORMATION_VERSION,instrumentVersion:PERSPECTIVES_INSTRUMENT_VERSION});setView(v);setRegistered(true);history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}#first=${access}`);try{localStorage.setItem(STORAGE,access);}catch{setStorageNote('Your browser cannot save progress. Keep this page open.');}window.scrollTo({top:0});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   async function act(body:Record<string,unknown>){const v=await request({...body,access,kind});if(body.action==='delete'){try{localStorage.removeItem(STORAGE);localStorage.removeItem('study-one-pending-v2');}catch{}history.replaceState(null,'',STUDY_ONE_PUBLIC_PATH);}setView(v);window.scrollTo({top:0});}
   async function remove(){if(!window.confirm('Remove your saved answers and contact details? This cannot be undone.'))return;setBusy(true);setError('');try{await act({action:'delete'});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   const screen = view?.step || (invalidLink ? 'invalid' : 'intro');
@@ -38,12 +42,13 @@ export default function FestivalParticipant(){
     if (loaded) document.querySelector<HTMLElement>('.s1-participant h1')?.focus({ preventScroll: true });
   }, [loaded, screen]);
   return <main className="s1-participant"><header className="topbar"><a className="mark" href="https://experiments.evolvable.me">Initiatives at evolvable.me</a><a href={EVOLVABLE_URL}>Explore evolvable.me</a></header>
-    {!loaded?<section className="stage s1-card" role="status" aria-live="polite"><p>Opening questionnaire…</p></section>:error&&!registered&&invalidLink?<section className="stage s1-card"><h1 tabIndex={-1}>Personal link could not be opened</h1><p role="alert">{error}</p><p>Use the original email link or ask the research assistant to resend it. Your answers will not be matched by guessing a code.</p></section>:!view?<section className="stage s1-card">
+    {review&&<aside className="s1-preview-bar" aria-label="Questionnaire preview"><p>Preview only · No study responses are sent.</p><div><button onClick={()=>openPreview('pre')}>Before Big Brue</button><button onClick={()=>openPreview('post')}>After Big Brue</button><button onClick={()=>openPreview('pre',12)}>Connection questions</button></div></aside>}
+    {review&&reviewFinished?<section className="stage s1-card"><h1 tabIndex={-1}>Preview complete</h1><p>Nothing has been submitted. Use the preview buttons above to explore either questionnaire.</p></section>:!loaded?<section className="stage s1-card" role="status" aria-live="polite"><p>Opening questionnaire…</p></section>:error&&!registered&&invalidLink?<section className="stage s1-card"><h1 tabIndex={-1}>Personal link could not be opened</h1><p role="alert">{error}</p><p>Use the original email link or ask the research assistant to resend it. Your answers will not be matched by guessing a code.</p></section>:!view?<section className="stage s1-card">
       <p className="eyebrow">Before Big Brue</p><h1 tabIndex={-1}>How We Disagree</h1><p className="s1-lead">A study of how people approach disagreement before and after Big Brue. Read about taking part below.</p>
       {INFORMATION.map(p=><div className="s1-information" key={p.title}><h2>{p.title}</h2><p>{p.text}</p></div>)}
       <label className="s1-check"><input type="checkbox" checked={agree} onChange={e=>setAgree(e.target.checked)}/><span>{CONSENT_TEXT}</span></label>
       <button className="primary" disabled={busy||!agree} onClick={start}>{busy?'Opening…':'Begin before Big Brue'}<ArrowRight size={18} aria-hidden="true"/></button>
-    </section>:view.step==='pre'||view.step==='post'?<FestivalForm key={`${access}:${view.step}`} access={access} wave={view.step} onSubmit={(wave,answers,startedAt)=>act({action:'submit',wave,answers,startedAt,instrumentVersion:CONTINUOUS_INSTRUMENT_VERSION})}/>:view.step==='contact'?<ContactForm onSubmit={(permission,email)=>act({action:'contact',permission,email})}/>:<section className="stage s1-card">
+    </section>:view.step==='pre'||view.step==='post'?<FestivalForm key={`${access}:${view.step}:${view.responseInstrument}:${reviewVisit}`} initialPage={review?reviewPage:undefined} access={access} wave={view.step} instrument={view.responseInstrument??CONTINUOUS_INSTRUMENT_VERSION} onSubmit={async(wave,answers,startedAt)=>{if(review){setReviewFinished(true);window.scrollTo({top:0});return;}await act({action:'submit',wave,answers,startedAt,instrumentVersion:view.responseInstrument??CONTINUOUS_INSTRUMENT_VERSION});}}/>:view.step==='contact'?<ContactForm onSubmit={(permission,email)=>act({action:'contact',permission,email})}/>:<section className="stage s1-card">
       <h1 tabIndex={-1}>{view.step==='deleted'?'Your study data has been removed':view.step==='complete'?'Thank you — both sets of answers are saved':view.step==='stopped'?'Your follow-up choice is saved':'Your answers before Big Brue are saved'}</h1><p className="s1-lead">{view.message}</p>
       {view.permission&&<p>Your follow-up email address: <strong>{view.email}</strong>.</p>}
       {view.step==='waiting'&&kind==='after'&&<button className="secondary" onClick={()=>act({action:'status'}).catch(e=>setError(e.message))}>Check if I can begin</button>}
@@ -64,7 +69,7 @@ function ContactForm({onSubmit,initialEmail='',embedded=false}:{embedded?:boolea
   const Heading = embedded ? 'h2' : 'h1';
   return <section className={embedded ? 's1-contact-edit' : 'stage s1-card'} aria-busy={busy}><Heading tabIndex={-1}>Stay in touch for after Big Brue</Heading><p>Your first answers are saved. Giving an email is optional. If you agree, the research assistant will email a personal link after the festival. The link will match your answers automatically.</p><label className="s1-field">Email address<input type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="s1-check"><input type="checkbox" checked={permission} onChange={e=>setPermission(e.target.checked)}/><span>{FOLLOWUP_TEXT}</span></label><div className="s1-actions"><button className="primary" disabled={busy||!permission||!email} onClick={()=>save(true)}>{busy?'Saving…':'Save my follow-up choice'}</button><button className="s1-skip-email" disabled={busy} onClick={()=>save(false)}>Finish without email follow-up</button></div>{error&&<p ref={errorRef} tabIndex={-1} role="alert" className="s1-error">{error}</p>}</section>;
 }
-function FestivalForm({access,wave,onSubmit}:{access:string;wave:Wave;onSubmit:(wave:Wave,answers:Answers,startedAt:string)=>Promise<void>}){
+function FestivalForm({access,wave,instrument,initialPage,onSubmit}:{access:string;wave:Wave;instrument:string;initialPage?:number;onSubmit:(wave:Wave,answers:Answers,startedAt:string)=>Promise<void>}){
   const [answers,setAnswers]=useState<Answers>({}),[page,setPage]=useState(0),[startedAt,setStartedAt]=useState(''),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[storageOK,setStorageOK]=useState(true);
   const [direction,setDirection]=useState<'forward'|'back'>('forward');
   const heading = useRef<HTMLHeadingElement>(null);
@@ -72,12 +77,12 @@ function FestivalForm({access,wave,onSubmit}:{access:string;wave:Wave;onSubmit:(
   const [invalidId,setInvalidId]=useState('');
   useEffect(()=>{heading.current?.focus({preventScroll:true});},[page,loaded]);
   useEffect(()=>{if(error)errorSummary.current?.focus();},[error]);
-  const draft=`study-one-draft:${CONTINUOUS_INSTRUMENT_VERSION}:${access}:${wave}`;
-  const items=questions({study:'festival',role:'attendee',wave,festivalVersion:FESTIVAL_VERSION,responseInstrument:CONTINUOUS_INSTRUMENT_VERSION},answers);
+  const draft=`study-one-draft:${instrument}:${access}:${wave}`;
+  const items=questions({study:'festival',role:'attendee',wave,festivalVersion:FESTIVAL_VERSION,responseInstrument:instrument},answers);
   const pages=items.map(q=>({title:q.section,items:[q]}));
   const pageIndex=Math.min(page,pages.length-1);
   const current=pages[pageIndex];
-  useEffect(()=>{try{const old=JSON.parse(localStorage.getItem(draft)||'null');if(old?.answers&&typeof old.page==='number'){setAnswers(old.answers);setPage(old.page);setStartedAt(old.startedAt);}else setStartedAt(new Date().toISOString());}catch{setStartedAt(new Date().toISOString());setStorageOK(false);}setLoaded(true);},[draft,access,wave]);
+  useEffect(()=>{try{const old=JSON.parse(localStorage.getItem(draft)||(![CONTINUOUS_INSTRUMENT_VERSION,PERSPECTIVES_INSTRUMENT_VERSION].includes(instrument)?localStorage.getItem(`study-one-draft:${access}:${wave}`):null)||'null');if(old?.answers&&typeof old.page==='number'){setAnswers(old.answers);setPage(initialPage??old.page);setStartedAt(old.startedAt);}else {setPage(initialPage??0);setStartedAt(new Date().toISOString());}}catch{setStartedAt(new Date().toISOString());setStorageOK(false);}setLoaded(true);},[draft,access,wave,instrument,initialPage]);
   useEffect(()=>{if(!loaded)return;try{localStorage.setItem(draft,JSON.stringify({answers,page,startedAt}));}catch{setStorageOK(false);}},[draft,loaded,answers,page,startedAt]);
   async function next(){let invalid=current.items.find(q=>answerError(q,answers[q.id]));if(!invalid&&pageIndex===pages.length-1)invalid=items.find(q=>answerError(q,answers[q.id]));if(invalid){setInvalidId(invalid.id);setError(`${invalid.prompt} ${answerError(invalid,answers[invalid.id])}`);setPage(pages.findIndex(p=>p.items.includes(invalid!)));return;}setInvalidId('');setError('');if(pageIndex<pages.length-1){setDirection('forward');setPage(pageIndex+1);window.scrollTo({top:0});return;}setBusy(true);try{await onSubmit(wave,answers,startedAt);try{localStorage.removeItem(draft);}catch{}}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   return <section className="stage ratings-stage s1-card s1-form" aria-busy={busy}><div className="ratings-stage-deco" aria-hidden="true">
