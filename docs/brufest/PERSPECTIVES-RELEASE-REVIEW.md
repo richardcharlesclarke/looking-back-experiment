@@ -33,3 +33,15 @@ Real local production HTTP integration passes for four synthetic people spanning
 Existing Railway project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environment `d86f82f2-579c-4de2-8085-f00903b86816`, service `9586c104-8863-467f-adab-bef9a2fa5432`; retain single replica and `/study-one-data` volume. Package: `output/perspectives-v2-final`.
 
 Pre-release authenticated read recorded 16 people and 18 responses, retaining only hashes and counts. No real participant submission/deletion is performed for QA. Browser participant API tests are intercepted; actual storage/exports are exercised against the isolated local runtime.
+
+## Verified live release
+
+Implementation commit `b428453` deployed successfully as Railway deployment `a51e17f9-ac85-4087-bd41-302321b5477e` on 9 September 2026. Both the public `/study-one/api/health` and direct service `/api/health` return HTTP 200 with live collection enabled. The service retains one replica and `/study-one-data`.
+
+The public route passes focused browser checks at 1366, 390 and 320 pixels, including native touch drag, keyboard selection, circle centring, draft restoration, opt-outs and reduced motion. Both preview waves complete with zero participant API requests. Original continuous and seven-point follow-up forms render correctly under intercepted historical fixtures. Desktop and mobile screenshots were visually inspected. Evidence: `output/playwright/perspectives-live-interactions.txt` and `output/playwright/perspectives-live-*-circles.png`.
+
+The authenticated post-release audit confirms all 16 existing people and 18 responses are unchanged against the pre-release hashes. Real persistence and research export were verified in the isolated production runtime; live browser QA did not create research records. Hash-only audit evidence is retained in `output/perspectives-live-baseline.json` and `output/perspectives-live-after.json`.
+
+Live questionnaire: https://experiments.evolvable.me/study-one
+
+Supplementary review without submission: https://experiments.evolvable.me/study-one?preview=1
