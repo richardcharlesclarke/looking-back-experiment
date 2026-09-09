@@ -45,3 +45,11 @@ The authenticated post-release audit confirms all 16 existing people and 18 resp
 Live questionnaire: https://experiments.evolvable.me/study-one
 
 Supplementary review without submission: https://experiments.evolvable.me/study-one?preview=1
+
+## Circle interaction cue and direct inspection link
+
+Richard authorised a focused follow-up: make dragging evident and provide a fresh direct inspection link. A small stationary double-arrow cue now says “Drag either circle” above the large diagram. Instructions distinguish dragging the large circles from clicking/tapping a smaller picture. Keyboard instructions are available to screen readers and become visible when the diagram has keyboard focus. Existing pointer, touch, keyboard, selection and reduced-motion behaviour is unchanged.
+
+https://experiments.evolvable.me/study-one?preview=1&step=connection-close resolves the first connection question by its stable question ID, not a numeric URL index. This view starts unanswered on every load, bypasses browser draft reads/writes/removal, and uses the existing preview completion guard. A participant hash cannot turn it into a real questionnaire. Normal participation and the original `?preview=1` flow retain their draft behaviour.
+
+Only `ConnectionCircles.tsx`, `FestivalParticipant.tsx` and the participant stylesheet change in the 44-file deployment manifest. Instrument, question-bank and server sources are identical to the previous release. Validation includes 42 passing tests, a standalone production build with lint/type checks, desktop/390px/320px rendered checks, mouse drag, native touch tap/drag, keyboard, reduced motion, fresh reload, original draft restoration, both standard previews and historical forms. Completing the direct inspection view sends zero participant API requests and leaves existing browser storage unchanged. Package: `output/circle-cue-release`; live deployment evidence follows.

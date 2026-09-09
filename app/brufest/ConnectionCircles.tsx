@@ -16,6 +16,7 @@ export default function ConnectionCircles({item,value,onChange}:{item:Question;v
   }
   return <div className="s1-circles">
     <div className="s1-circle-referents"><span><i className="s1-self-dot"/>Me</span><span><i className="s1-other-dot"/>{item.target}</span></div>
+    <p className="s1-circle-drag-cue" aria-hidden="true"><svg viewBox="0 0 28 16" fill="none"><path d="M2 8h24M7 3 2 8l5 5M21 3l5 5-5 5"/></svg>Drag either circle</p>
     <div className={`s1-circle-stage${dragging?' is-dragging':''}${value===null?' is-unanswered':''}`} role="slider" tabIndex={0}
       aria-label={item.prompt} aria-valuemin={1} aria-valuemax={7} aria-valuenow={n} aria-valuetext={value===null?'No response selected':`${labels[n-1]}, position ${n} of 7`} aria-describedby={`circles-help-${uid}`} aria-orientation="horizontal"
       onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.focus({preventScroll:true});gesture.current={x:e.clientX,value:n,travel:e.currentTarget.getBoundingClientRect().width*77.5/520,direction:e.clientX<e.currentTarget.getBoundingClientRect().left+e.currentTarget.getBoundingClientRect().width/2?1:-1};setDragging(true);}}
@@ -33,7 +34,7 @@ export default function ConnectionCircles({item,value,onChange}:{item:Question;v
       </svg>
     </div>
     <p className="s1-circle-readout" aria-live="polite">{value===null?'Choose how connected you feel':labels[n-1]}</p>
-    <p className="s1-circle-help" id={`circles-help-${uid}`}>Drag the circles together or apart, or choose a picture below.</p>
+    <p className="s1-circle-help" id={`circles-help-${uid}`}>Drag the large circles together or apart.<br/>Click or tap a picture below to choose. <span className="s1-circle-keyboard-help">You can also use the arrow keys.</span></p>
     <div className="s1-circle-choices" role="group" aria-label="Connection pictures">
       {labels.map((label,i)=><button type="button" key={label} aria-label={`${i+1} — ${label}`} aria-pressed={value===i+1} onClick={()=>onChange(i+1)}>
         <svg viewBox="0 0 64 40" aria-hidden="true"><circle cx="21" cy="20" r="13"/><circle cx={49-i*27/6} cy="20" r="13"/></svg><span aria-hidden="true">{i+1}</span>
