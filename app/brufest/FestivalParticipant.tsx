@@ -1,7 +1,7 @@
 'use client';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { VectorDecoration } from '../looking-back/VectorDecoration';
-import { CONTINUOUS_INSTRUMENT_VERSION, PERSPECTIVES_INSTRUMENT_VERSION } from '@/lib/brufest/festival/scales';
+import { CONTINUOUS_INSTRUMENT_VERSION, CONFLICT_INSTRUMENT_VERSION, isContinuousInstrument } from '@/lib/brufest/festival/scales';
 import { useEffect, useRef, useState } from 'react';
 import Question from './Question';
 import { answerError, questions } from '@/lib/brufest/instruments';
@@ -27,7 +27,7 @@ export default function FestivalParticipant(){
     if(params.get('preview')==='1'){
       const wave=params.get('wave')==='post'?'post':'pre';
       if(params.get('step')==='connection-close'){
-        const page=questions({study:'festival',role:'attendee',wave,festivalVersion:FESTIVAL_VERSION,responseInstrument:PERSPECTIVES_INSTRUMENT_VERSION},{}).findIndex(q=>q.id==='E1_CONNECTION_CLOSE');
+        const page=questions({study:'festival',role:'attendee',wave,festivalVersion:FESTIVAL_VERSION,responseInstrument:CONFLICT_INSTRUMENT_VERSION},{}).findIndex(q=>q.id==='E1_CONNECTION_CLOSE');
         setReviewPage(Math.max(0,page));setReviewFresh(true);
       }
       setReview(true);setAccess('preview-only');setKind('first');setView(previewView(wave));setLoaded(true);return;
@@ -40,9 +40,10 @@ export default function FestivalParticipant(){
     else {let pending='';try{pending=localStorage.getItem('study-one-pending-v2')||'';}catch{}const next=pending||fresh();setAccess(next);try{localStorage.setItem('study-one-pending-v2',next);}catch{}setLoaded(true);}
   },[]);
   useEffect(()=>{const changed=()=>location.reload();window.addEventListener('hashchange',changed);return()=>window.removeEventListener('hashchange',changed);},[]);
-  function previewView(wave:Wave):View{return {id:'preview-only',mode:'study',step:wave,message:'',contactChoiceSaved:false,permission:false,email:null,completed:[],responseInstrument:PERSPECTIVES_INSTRUMENT_VERSION};}
+  function connectionPage(wave:Wave){return Math.max(0,questions({study:'festival',role:'attendee',wave,festivalVersion:FESTIVAL_VERSION,responseInstrument:CONFLICT_INSTRUMENT_VERSION},{}).findIndex(q=>q.id==='E1_CONNECTION_CLOSE'));}
+  function previewView(wave:Wave):View{return {id:'preview-only',mode:'study',step:wave,message:'',contactChoiceSaved:false,permission:false,email:null,completed:[],responseInstrument:CONFLICT_INSTRUMENT_VERSION};}
   function openPreview(wave:Wave,page=0){setReviewFresh(false);setReviewFinished(false);setReviewPage(page);setReviewVisit(n=>n+1);setView(previewView(wave));history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}?preview=1&wave=${wave}`);window.scrollTo({top:0});}
-  async function start(){setBusy(true);setError('');try{const v=await request({action:'enrol',access,agree,informationVersion:INFORMATION_VERSION,instrumentVersion:PERSPECTIVES_INSTRUMENT_VERSION});setView(v);setRegistered(true);history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}#first=${access}`);try{localStorage.setItem(STORAGE,access);}catch{setStorageNote('Your browser cannot save progress. Keep this page open.');}window.scrollTo({top:0});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function start(){setBusy(true);setError('');try{const v=await request({action:'enrol',access,agree,informationVersion:INFORMATION_VERSION,instrumentVersion:CONFLICT_INSTRUMENT_VERSION});setView(v);setRegistered(true);history.replaceState(null,'',`${STUDY_ONE_PUBLIC_PATH}#first=${access}`);try{localStorage.setItem(STORAGE,access);}catch{setStorageNote('Your browser cannot save progress. Keep this page open.');}window.scrollTo({top:0});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   async function act(body:Record<string,unknown>){const v=await request({...body,access,kind});if(body.action==='delete'){try{localStorage.removeItem(STORAGE);localStorage.removeItem('study-one-pending-v2');}catch{}history.replaceState(null,'',STUDY_ONE_PUBLIC_PATH);}setView(v);window.scrollTo({top:0});}
   async function remove(){if(!window.confirm('Remove your saved answers and contact details? This cannot be undone.'))return;setBusy(true);setError('');try{await act({action:'delete'});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   const screen = view?.step || (invalidLink ? 'invalid' : 'intro');
@@ -50,9 +51,9 @@ export default function FestivalParticipant(){
     if (loaded) document.querySelector<HTMLElement>('.s1-participant h1')?.focus({ preventScroll: true });
   }, [loaded, screen]);
   return <main className="s1-participant"><header className="topbar"><a className="mark" href="https://experiments.evolvable.me">Initiatives at evolvable.me</a><a href={EVOLVABLE_URL}>Explore evolvable.me</a></header>
-    {review&&<aside className="s1-preview-bar" aria-label="Questionnaire preview"><p>Preview only · No study responses are sent.</p><div><button onClick={()=>openPreview('pre')}>Before Big Brue</button><button onClick={()=>openPreview('post')}>After Big Brue</button><button onClick={()=>openPreview('pre',12)}>Connection questions</button></div></aside>}
+    {review&&<aside className="s1-preview-bar" aria-label="Questionnaire preview"><p>Preview only · No study responses are sent.</p><div><button onClick={()=>openPreview('pre')}>Before Big Brue</button><button onClick={()=>openPreview('post')}>After Big Brue</button><button onClick={()=>openPreview('pre',connectionPage('pre'))}>Connection questions</button></div></aside>}
     {review&&reviewFinished?<section className="stage s1-card"><h1 tabIndex={-1}>Preview complete</h1><p>Nothing has been submitted. Use the preview buttons above to explore either questionnaire.</p></section>:!loaded?<section className="stage s1-card" role="status" aria-live="polite"><p>Opening questionnaire…</p></section>:error&&!registered&&invalidLink?<section className="stage s1-card"><h1 tabIndex={-1}>Personal link could not be opened</h1><p role="alert">{error}</p><p>Use the original email link or ask the research assistant to resend it. Your answers will not be matched by guessing a code.</p></section>:!view?<section className="stage s1-card">
-      <p className="eyebrow">Before Big Brue</p><h1 tabIndex={-1}>How We Disagree</h1><p className="s1-lead">A study of how people approach disagreement before and after Big Brue. Read about taking part below.</p>
+      <p className="eyebrow">Before Big Brue</p><h1 tabIndex={-1}>How We Disagree</h1><p className="s1-lead">A study of how people approach conflict before and after Big Brue. Read about taking part below.</p>
       {INFORMATION.map(p=><div className="s1-information" key={p.title}><h2>{p.title}</h2><p>{p.text}</p></div>)}
       <label className="s1-check"><input type="checkbox" checked={agree} onChange={e=>setAgree(e.target.checked)}/><span>{CONSENT_TEXT}</span></label>
       <button className="primary" disabled={busy||!agree} onClick={start}>{busy?'Opening…':'Begin before Big Brue'}<ArrowRight size={18} aria-hidden="true"/></button>
@@ -90,7 +91,7 @@ function FestivalForm({access,wave,instrument,initialPage,persistDraft=true,onSu
   const pages=items.map(q=>({title:q.section,items:[q]}));
   const pageIndex=Math.min(page,pages.length-1);
   const current=pages[pageIndex];
-  useEffect(()=>{if(!persistDraft){setPage(initialPage??0);setStartedAt(new Date().toISOString());setLoaded(true);return;}try{const old=JSON.parse(localStorage.getItem(draft)||(![CONTINUOUS_INSTRUMENT_VERSION,PERSPECTIVES_INSTRUMENT_VERSION].includes(instrument)?localStorage.getItem(`study-one-draft:${access}:${wave}`):null)||'null');if(old?.answers&&typeof old.page==='number'){setAnswers(old.answers);setPage(initialPage??old.page);setStartedAt(old.startedAt);}else {setPage(initialPage??0);setStartedAt(new Date().toISOString());}}catch{setStartedAt(new Date().toISOString());setStorageOK(false);}setLoaded(true);},[draft,access,wave,instrument,initialPage,persistDraft]);
+  useEffect(()=>{if(!persistDraft){setPage(initialPage??0);setStartedAt(new Date().toISOString());setLoaded(true);return;}try{const old=JSON.parse(localStorage.getItem(draft)||(!isContinuousInstrument(instrument)?localStorage.getItem(`study-one-draft:${access}:${wave}`):null)||'null');if(old?.answers&&typeof old.page==='number'){setAnswers(old.answers);setPage(initialPage??old.page);setStartedAt(old.startedAt);}else {setPage(initialPage??0);setStartedAt(new Date().toISOString());}}catch{setStartedAt(new Date().toISOString());setStorageOK(false);}setLoaded(true);},[draft,access,wave,instrument,initialPage,persistDraft]);
   useEffect(()=>{if(!loaded||!persistDraft)return;try{localStorage.setItem(draft,JSON.stringify({answers,page,startedAt}));}catch{setStorageOK(false);}},[draft,loaded,answers,page,startedAt,persistDraft]);
   async function next(){let invalid=current.items.find(q=>answerError(q,answers[q.id]));if(!invalid&&pageIndex===pages.length-1)invalid=items.find(q=>answerError(q,answers[q.id]));if(invalid){setInvalidId(invalid.id);setError(`${invalid.prompt} ${answerError(invalid,answers[invalid.id])}`);setPage(pages.findIndex(p=>p.items.includes(invalid!)));return;}setInvalidId('');setError('');if(pageIndex<pages.length-1){setDirection('forward');setPage(pageIndex+1);window.scrollTo({top:0});return;}setBusy(true);try{await onSubmit(wave,answers,startedAt);if(persistDraft)try{localStorage.removeItem(draft);}catch{}}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
   return <section className="stage ratings-stage s1-card s1-form" aria-busy={busy}><div className="ratings-stage-deco" aria-hidden="true">

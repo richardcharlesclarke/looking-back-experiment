@@ -8,4 +8,6 @@ export function responseBand(value: number, max = 100) {
 
 export const PERSPECTIVES_INSTRUMENT_VERSION = 'brufest-study-one-perspectives-v2-2026-09-09';
 export const CONNECTION_LABELS = ['Not at all connected', 'Very little connection', 'A little connection', 'Some connection', 'Quite connected', 'Very connected', 'Extremely connected'];
-export const isContinuousInstrument = (version?: string) => version === CONTINUOUS_INSTRUMENT_VERSION || version === PERSPECTIVES_INSTRUMENT_VERSION;
+export const CONFLICT_INSTRUMENT_VERSION = 'brufest-study-one-conflict-v3-2026-09-09';
+export const isPerspectivesInstrument = (version?: string) => version === PERSPECTIVES_INSTRUMENT_VERSION || version === CONFLICT_INSTRUMENT_VERSION;
+export const isContinuousInstrument = (version?: string) => version === CONTINUOUS_INSTRUMENT_VERSION || isPerspectivesInstrument(version);

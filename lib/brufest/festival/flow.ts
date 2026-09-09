@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { CONTINUOUS_INSTRUMENT_VERSION, PERSPECTIVES_INSTRUMENT_VERSION } from './scales';
+import { CONTINUOUS_INSTRUMENT_VERSION, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument } from './scales';
 import { validateAnswers } from '../instruments';
-import { FESTIVAL_VERSION, FIRST_INSTRUMENT_VERSION, INFORMATION, INFORMATION_VERSION, CONSENT_TEXT, FOLLOWUP_TEXT, PERMISSION_VERSION, PROGRAMME_VERSION, FIRST_CLOSES_AT, SECOND_OPENS_AT, STUDY_ONE_APPROVED, ORIGINAL_INFORMATION_VERSION, ORIGINAL_INFORMATION } from './content';
+import { FESTIVAL_VERSION, FIRST_INSTRUMENT_VERSION, INFORMATION, INFORMATION_VERSION, CONSENT_TEXT, FOLLOWUP_TEXT, PERMISSION_VERSION, PROGRAMME_VERSION, FIRST_CLOSES_AT, SECOND_OPENS_AT, STUDY_ONE_APPROVED, ORIGINAL_INFORMATION_VERSION, ORIGINAL_INFORMATION, PREVIOUS_INFORMATION_VERSION, PREVIOUS_INFORMATION } from './content';
 import type { Contact, Data, Person, View, Wave } from './types';
 const now = () => new Date().toISOString();
 export const digest = (s:string) => createHash('sha256').update(s).digest('hex');
@@ -11,7 +11,7 @@ export function submissionInstrument(wave:Wave, requested:unknown) {
   const legacy=wave==='pre'?FIRST_INSTRUMENT_VERSION:FESTIVAL_VERSION;
   // Requests from already-open legacy pages have no version field. Keep their original scale.
   if(requested===undefined || requested===legacy) return legacy;
-  if(requested===PERSPECTIVES_INSTRUMENT_VERSION) return PERSPECTIVES_INSTRUMENT_VERSION;
+  if(typeof requested==='string' && isPerspectivesInstrument(requested)) return requested;
   if(requested===CONTINUOUS_INSTRUMENT_VERSION) return CONTINUOUS_INSTRUMENT_VERSION;
   throw new Error('This questionnaire version is not supported. Reopen your personal link.');
 }
@@ -25,11 +25,14 @@ export function enrol(data:Data,b:Record<string,unknown>):{p:Person;c:Contact} {
   if (!keyValid(b.access)) throw new Error('Please reopen the first questionnaire.');
   const old=data.contacts.contacts.find(c=>c.firstHash===digest(b.access as string));
   if(old) return {p:data.research.people.find(p=>p.id===old.personId)!,c:old};
-  const originalInformation=b.informationVersion===ORIGINAL_INFORMATION_VERSION && b.instrumentVersion!==PERSPECTIVES_INSTRUMENT_VERSION;
-  if(b.agree!==true || (b.informationVersion!==INFORMATION_VERSION&&!originalInformation)) throw new Error('Read the study information and select the agreement before starting.');
+  const originalInformation=b.informationVersion===ORIGINAL_INFORMATION_VERSION && !isPerspectivesInstrument(typeof b.instrumentVersion==='string'?b.instrumentVersion:undefined);
+  const previousInformation=b.informationVersion===PREVIOUS_INFORMATION_VERSION && b.instrumentVersion!==CONFLICT_INSTRUMENT_VERSION;
+  if(b.agree!==true || (b.informationVersion!==INFORMATION_VERSION&&!originalInformation&&!previousInformation)) throw new Error('Read the study information and select the agreement before starting.');
+  const consentVersion=originalInformation?ORIGINAL_INFORMATION_VERSION:previousInformation?PREVIOUS_INFORMATION_VERSION:INFORMATION_VERSION;
+  const consentInformation=originalInformation?ORIGINAL_INFORMATION:previousInformation?PREVIOUS_INFORMATION:INFORMATION;
   if(STUDY_ONE_APPROVED && Date.now()>=Date.parse(FIRST_CLOSES_AT)) throw new Error('The first questionnaire is now closed.');
   const questionnaireInstrument=b.instrumentVersion===undefined?undefined:submissionInstrument('pre',b.instrumentVersion);
-  const p:Person={...(questionnaireInstrument?{questionnaireInstrument}:{}),id:randomUUID(),createdAt:now(),isTest:!STUDY_ONE_APPROVED,consent:{at:now(),version:originalInformation?ORIGINAL_INFORMATION_VERSION:INFORMATION_VERSION,text:CONSENT_TEXT,information:structuredClone(originalInformation?ORIGINAL_INFORMATION:INFORMATION),beforeExposureConfirmed:typeof b.beforeExposure==='boolean'?b.beforeExposure:null},responses:[]};
+  const p:Person={...(questionnaireInstrument?{questionnaireInstrument}:{}),id:randomUUID(),createdAt:now(),isTest:!STUDY_ONE_APPROVED,consent:{at:now(),version:consentVersion,text:CONSENT_TEXT,information:structuredClone(consentInformation),beforeExposureConfirmed:typeof b.beforeExposure==='boolean'?b.beforeExposure:null},responses:[]};
   const c:Contact={personId:p.id,firstHash:digest(b.access),afterKey:randomBytes(32).toString('hex'),email:null,permission:false,delivery:'not_sent',events:[]};
   data.research.people.push(p);data.contacts.contacts.push(c);return {p,c};
 }

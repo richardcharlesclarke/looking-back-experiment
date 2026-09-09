@@ -1,4 +1,4 @@
-import { PERSPECTIVES_INSTRUMENT_VERSION, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
+import { CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
 import bank from "./question-bank.json";
 import { FESTIVAL_VERSION, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
@@ -171,7 +171,21 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         },
       ),
     );
-    const perspectives = ctx.responseInstrument === PERSPECTIVES_INSTRUMENT_VERSION;
+    if (ctx.responseInstrument === CONFLICT_INSTRUMENT_VERSION) {
+      const prompts:Record<string,string> = {
+        E1_HUM_01: 'My view on an important issue contains weaknesses I have not yet recognized.',
+        E1_HUM_02: 'I see little value in revisiting the opposing case.',
+        E1_CUR_02: 'I am willing to spend time considering the strongest argument against a view I hold.',
+        E1_REG_01: 'When I reject someone’s conclusion, I can still understand the concern or value behind it.',
+        E1_REG_02: 'I can disagree strongly with a person’s view without rejecting the person.',
+        E1_CPX_02: 'A useful conflict can expand one’s perception of a problem, even when nobody changes sides.',
+      };
+      out = out.flatMap(item => item.id === 'E1_CPX_01' ? [
+        {...item, id:'E1_CPX_ISSUES', prompt:'Important conflicts often involve several issues, not just a choice between two sides.'},
+        {...item, id:'E1_CPX_CONSEQUENCES', prompt:'Choices in important conflicts can have several connected consequences.'},
+      ] : [{...item, ...(prompts[item.id] ? {prompt:prompts[item.id]} : {})}]);
+    }
+    const perspectives = isPerspectivesInstrument(ctx.responseInstrument);
     if (perspectives && (wave === 'pre' || wave === 'post')) out.push(
       ...[['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']].map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
         prompt: `How connected do you feel to ${group}?`, type: 'circles', min: 1, max: 7, bands: [...CONNECTION_LABELS], target, construct: 'felt_connection',
