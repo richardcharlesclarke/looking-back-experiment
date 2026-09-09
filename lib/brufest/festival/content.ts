@@ -1,7 +1,7 @@
 export const FESTIVAL_VERSION = 'brufest-study-one-v0.2-2026-09-07';
 // Keep the journey/draft key stable while recording the shortened first instrument.
 export const FIRST_INSTRUMENT_VERSION = 'brufest-study-one-pre-v0.3-2026-09-07';
-export const INFORMATION_VERSION = 'study-one-information-v6-2026-09-09';
+export const INFORMATION_VERSION = 'study-one-information-v7-2026-09-09';
 export const PERMISSION_VERSION = 'study-one-one-followup-email-v1';
 export const CONTACT_EMAIL = 'beau@labofmisfits.com';
 export const EVOLVABLE_URL = 'https://www.evolvable.me';
@@ -21,11 +21,19 @@ export function showEvolvableInvitation(step:string,kind:string,completed:string
   return kind==='first'&&completed.includes('pre')&&!completed.includes('post')&&['waiting','stopped'].includes(step);
 }
 export const INFORMATION = [
-  { title: 'What is the study about?', text: 'Beau Lotto leads the study. We want to understand whether festival attendees’ approach to conflict, feelings of connection and outlook change across Big Brue. We also ask what, if anything, they came to understand differently. We compare each person’s answers before and after the festival. This does not establish that the festival caused a change.' },
+  { title: 'What is the study about?', text: 'We want to understand whether festival attendees’ approach to conflict, feelings of connection and outlook change across Big Brue. We compare each person’s answers before and after the festival and ask what, if anything, they came to understand differently. This cannot establish that the festival caused any change.' },
   { title: 'What would you do?', text: 'Complete the first questionnaire before attending festival activities, then attend normally. After saving your first answers, you can give an email address and agree to receive a personal link to the questionnaire after the festival. You do not need to remember a code.' },
   { title: 'Taking part is your choice', text: `You must be ${MINIMUM_AGE} or over to take part. Allow about ${ESTIMATED_MINUTES} minutes for the first questionnaire. You can skip individual questions or stop. Giving an email address and agreeing to the follow-up are separate choices after the first questionnaire.` },
   { title: 'Who sees your information?', text: `Only the study team can see saved responses. Research answers use a random participant identifier. Email addresses and private access links are stored separately, are excluded from research exports, and are used only by the research assistant for this study's follow-up. Keep your personal link private.` },
   { title: 'How long do we keep it?', text: `We delete email addresses and personal links after 31 October 2026. We delete the remaining research responses after 30 September 2027. Before the contact details are deleted, you can remove both your answers and contact details using your personal link or by emailing ${CONTACT_EMAIL}. Once the contact details are deleted, we can no longer link a response to you. If a scheduled hosting backup contains deleted data, it can remain for up to 89 days; it is not used for research or contact, and deletion must be repeated before any restored copy is used.` },
+];
+export const CONFLICT_INFORMATION_VERSION = 'study-one-information-v6-2026-09-09';
+export const CONFLICT_INFORMATION = [
+  { title: 'What is the study about?', text: 'Beau Lotto leads the study. We want to understand whether festival attendees’ approach to conflict, feelings of connection and outlook change across Big Brue. We also ask what, if anything, they came to understand differently. We compare each person’s answers before and after the festival. This does not establish that the festival caused a change.' },
+  { title: 'What would you do?', text: 'Complete the first questionnaire before attending festival activities, then attend normally. After saving your first answers, you can give an email address and agree to receive a personal link to the questionnaire after the festival. You do not need to remember a code.' },
+  { title: 'Taking part is your choice', text: `You must be 18 or over to take part. Allow about 8 minutes for the first questionnaire. You can skip individual questions or stop. Giving an email address and agreeing to the follow-up are separate choices after the first questionnaire.` },
+  { title: 'Who sees your information?', text: `Only the study team can see saved responses. Research answers use a random participant identifier. Email addresses and private access links are stored separately, are excluded from research exports, and are used only by the research assistant for this study's follow-up. Keep your personal link private.` },
+  { title: 'How long do we keep it?', text: `We delete email addresses and personal links after 31 October 2026. We delete the remaining research responses after 30 September 2027. Before the contact details are deleted, you can remove both your answers and contact details using your personal link or by emailing beau@labofmisfits.com. Once the contact details are deleted, we can no longer link a response to you. If a scheduled hosting backup contains deleted data, it can remain for up to 89 days; it is not used for research or contact, and deletion must be repeated before any restored copy is used.` },
 ];
 export const PREVIOUS_INFORMATION_VERSION = 'study-one-information-v5-2026-09-09';
 export const PREVIOUS_INFORMATION = [

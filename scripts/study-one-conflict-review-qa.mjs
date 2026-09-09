@@ -39,8 +39,8 @@ export default async function conflictReviewQA(page) {
  // Current introduction is inspected without enrolment or participant data.
  await page.goto(origin+'/study-one/api/health');await page.evaluate(()=>localStorage.removeItem('study-one-first-link-v2'));
  await page.goto(origin+'/study-one');await page.getByRole('checkbox').waitFor();const intro=await page.locator('main').innerText();
- if(!intro.includes('Beau Lotto leads the study.')||!intro.includes('beau@labofmisfits.com')||!intro.includes('does not establish that the festival caused a change.'))throw new Error('Current study information missing');
- if(!(await page.locator('.s1-information').first().innerText()).includes('Beau Lotto leads the study.'))throw new Error('Study lead missing from study-about section');
+ if(!intro.includes('beau@labofmisfits.com')||!intro.includes('cannot establish that the festival caused any change.'))throw new Error('Current study information missing');
+ if(intro.includes('leads the study'))throw new Error('Study-lead attribution remains in current information');
  if(intro.includes('Richard Clarke leads the study.'))throw new Error('Old lead in current information');
- return {reports,participantRequests,currentStudyLead:'Beau Lotto',currentContact:'beau@labofmisfits.com'};
+ return {reports,participantRequests,currentContact:'beau@labofmisfits.com'};
 }

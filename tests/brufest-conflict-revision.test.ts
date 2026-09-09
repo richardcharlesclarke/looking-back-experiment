@@ -4,7 +4,7 @@ import {createHash,randomBytes} from 'node:crypto';
 import {questions} from '../lib/brufest/instruments';
 import {enrol,context,submit,saveContact,assistantAction,researchRows,comparisons,view} from '../lib/brufest/festival/flow';
 import {empty} from '../lib/brufest/festival/store';
-import {ORIGINAL_INFORMATION_VERSION,ORIGINAL_INFORMATION,PREVIOUS_INFORMATION_VERSION,PREVIOUS_INFORMATION,INFORMATION_VERSION,INFORMATION,FIRST_INSTRUMENT_VERSION,FESTIVAL_VERSION,CONTACT_EMAIL} from '../lib/brufest/festival/content';
+import {ORIGINAL_INFORMATION_VERSION,ORIGINAL_INFORMATION,PREVIOUS_INFORMATION_VERSION,PREVIOUS_INFORMATION,INFORMATION_VERSION,INFORMATION,CONFLICT_INFORMATION_VERSION,CONFLICT_INFORMATION,FIRST_INSTRUMENT_VERSION,FESTIVAL_VERSION,CONTACT_EMAIL} from '../lib/brufest/festival/content';
 import {CONTINUOUS_INSTRUMENT_VERSION,PERSPECTIVES_INSTRUMENT_VERSION as OLD,CONFLICT_INSTRUMENT_VERSION as VERSION} from '../lib/brufest/festival/scales';
 import type {Answers} from '../lib/brufest/types';
 const stamp=()=>new Date().toISOString();
@@ -50,9 +50,10 @@ test('Every prior instrument keeps its pinned first form and compatible follow-u
  const {p,c}=person(OLD,PREVIOUS_INFORMATION_VERSION);assert.throws(()=>submit(p,c,'first',{wave:'pre',instrumentVersion:VERSION,answers:fill('pre'),startedAt:stamp()}),/personal link/);
 });
 test('Historical information remains byte-for-byte identical while current contact is Beau',()=>{
+ assert.equal(hash(CONFLICT_INFORMATION),'ba582b88ae6cf3732d345b8f69713e3f0db8c517f268950b25a5736396d31ad2');
  assert.equal(hash(PREVIOUS_INFORMATION),'2f4c13d602cbbec77dda9ce898a8ee1a33c427fc3f3f42bb7383cd0ceb1a459a');
  assert.equal(hash(ORIGINAL_INFORMATION),'a5bfb048a0c5d1509f6d79afa5f9b6ca8e6e1ef8e9e6bbbfdb0b2147e2d2a475');
- assert.match(INFORMATION[0].text,/Beau Lotto leads the study/);assert.match(PREVIOUS_INFORMATION[3].text,/Richard Clarke leads the study/);assert.equal(CONTACT_EMAIL,'beau@labofmisfits.com');assert.match(INFORMATION[4].text,/beau@labofmisfits.com/);assert.match(INFORMATION[0].text,/does not establish that the festival caused/);
+ assert.ok(!JSON.stringify(INFORMATION).includes('leads the study'));assert.deepEqual(INFORMATION.slice(1),CONFLICT_INFORMATION.slice(1));assert.deepEqual(person(VERSION,CONFLICT_INFORMATION_VERSION).p.consent.information,CONFLICT_INFORMATION);assert.match(PREVIOUS_INFORMATION[3].text,/Richard Clarke leads the study/);assert.equal(CONTACT_EMAIL,'beau@labofmisfits.com');assert.match(INFORMATION[4].text,/beau@labofmisfits.com/);assert.match(INFORMATION[0].text,/cannot establish that the festival caused/);
  assert.deepEqual(person(OLD,PREVIOUS_INFORMATION_VERSION).p.consent.information,PREVIOUS_INFORMATION);
  assert.deepEqual(person(CONTINUOUS_INSTRUMENT_VERSION,ORIGINAL_INFORMATION_VERSION).p.consent.information,ORIGINAL_INFORMATION);
  for(const old of [PREVIOUS_INFORMATION_VERSION,ORIGINAL_INFORMATION_VERSION])assert.throws(()=>person(VERSION,old),/information/);

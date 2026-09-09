@@ -54,3 +54,16 @@ Live participation: https://experiments.evolvable.me/study-one
 Review the new questionnaire without submitting: https://experiments.evolvable.me/study-one?preview=1
 
 Fresh direct circles view: https://experiments.evolvable.me/study-one?preview=1&step=connection-close
+
+
+## Subsequent focused information edit — v7
+
+Richard authorised a further edit confined to “What is the study about?”, with Astra editorial review and live deployment. This supersedes the v6 study-lead wording described above. The current participant-facing information removes “Beau Lotto leads the study.” completely, while retaining Beau’s contact email and all four other information sections unchanged.
+
+Final paragraph:
+
+> We want to understand whether festival attendees’ approach to conflict, feelings of connection and outlook change across Big Brue. We compare each person’s answers before and after the festival and ask what, if anything, they came to understand differently. This cannot establish that the festival caused any change.
+
+Information version is now `study-one-information-v7-2026-09-09`; the questionnaire instrument remains v3. Cached v6 consent is accepted with the exact information it displayed. Its frozen SHA256 is `ba582b88ae6cf3732d345b8f69713e3f0db8c517f268950b25a5736396d31ad2`; earlier v5/v4 snapshots remain unchanged.
+
+All 47 tests and the standalone production build, lint and type checks pass. The 44-file allowlist package `output/about-copy-v7` differs from the previous release only in `lib/brufest/festival/content.ts` and `lib/brufest/festival/flow.ts`.
