@@ -1,4 +1,4 @@
-import { RESPONSE_SCALE_INSTRUMENT_VERSION, ITEM_RESPONSE_LABELS, isSelectiveInstrument, LIKELIHOOD_LABELS, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
+import { CONFLICT_PERCEPTION_INSTRUMENT_VERSION, isItemScalesInstrument, ITEM_RESPONSE_LABELS, isSelectiveInstrument, LIKELIHOOD_LABELS, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
 import bank from "./question-bank.json";
 import { FESTIVAL_VERSION, TOPIC_PROGRAMME, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
@@ -214,11 +214,29 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         ].map(([id,prompt,construct]) => q(id, 'What you expect', {prompt,construct,type:'continuous',min:0,max:100,low:LIKELIHOOD_LABELS[0],high:LIKELIHOOD_LABELS[4],bands:[...LIKELIHOOD_LABELS],reverse:id==='E1_EXPECT_CONNECTION_LOSS'})),
       ];
     }
-    if (ctx.responseInstrument === RESPONSE_SCALE_INSTRUMENT_VERSION) {
+    if (isItemScalesInstrument(ctx.responseInstrument)) {
       out = out.map(item => {
         const bands = ITEM_RESPONSE_LABELS[item.id];
         return bands ? {...item, type:'continuous', min:0, max:100, low:bands[0], high:bands[4], bands:[...bands]} : item;
       });
+    }
+    if (ctx.responseInstrument === CONFLICT_PERCEPTION_INSTRUMENT_VERSION && (wave === 'pre' || wave === 'post')) {
+      out.push(
+        q('E1_CONFLICT_PERCEPTION', 'How you see conflict', {
+          prompt:'When you think about conflict with someone over an issue that matters to you, how do you tend to see the conflict itself?',
+          type:'continuous', min:0, max:10, construct:'perceived_conflict_value',
+          low:'Something destructive that diminishes what’s possible', high:'Something generative that can create new possibilities',
+          help:'0 — Something destructive that diminishes what’s possible → 10 — Something generative that can create new possibilities',
+          bands:['Destructive', 'Mostly destructive', 'In between', 'Mostly generative', 'Generative'],
+        }),
+        q('E1_DISCUSSION_WILLINGNESS', 'Discussing a disagreement', {
+          prompt:'When you anticipate a disagreement with someone over an issue that matters to you, how willing are you to discuss it with them?',
+          type:'continuous', min:0, max:10, construct:'willingness_to_discuss_disagreement',
+          low:'Not at all willing to discuss it', high:'Very willing to discuss it',
+          help:'0 — Not at all willing to discuss it → 10 — Very willing to discuss it',
+          bands:['Not at all willing', 'Slightly willing', 'Moderately willing', 'Quite willing', 'Very willing'],
+        }),
+      );
     }
     const perspectives = isPerspectivesInstrument(ctx.responseInstrument);
     if (perspectives && (wave === 'pre' || wave === 'post')) out.push(

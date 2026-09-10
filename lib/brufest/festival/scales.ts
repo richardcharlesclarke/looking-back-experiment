@@ -12,6 +12,8 @@ export const CONFLICT_INSTRUMENT_VERSION = 'brufest-study-one-conflict-v3-2026-0
 export const SELECTIVE_INSTRUMENT_VERSION = 'brufest-study-one-selective-v4-2026-09-10';
 export const LIKELIHOOD_LABELS = ['Not at all likely', 'Slightly likely', 'Somewhat likely', 'Very likely', 'Extremely likely'];
 export const RESPONSE_SCALE_INSTRUMENT_VERSION = 'brufest-study-one-item-scales-v5-2026-09-10';
+export const CONFLICT_PERCEPTION_INSTRUMENT_VERSION = 'brufest-study-one-conflict-perception-v6-2026-09-10';
+export const isItemScalesInstrument = (version?: string) => version === RESPONSE_SCALE_INSTRUMENT_VERSION || version === CONFLICT_PERCEPTION_INSTRUMENT_VERSION;
 export const AGREEMENT_LABELS = ['Strongly disagree', 'Somewhat disagree', 'Neither agree nor disagree', 'Somewhat agree', 'Strongly agree'];
 export const WILLINGNESS_LABELS = ['Not at all willing', 'Slightly willing', 'Somewhat willing', 'Very willing', 'Completely willing'];
 export const DESIRE_LABELS = ['No desire', 'Slight desire', 'Some desire', 'Strong desire', 'Very strong desire'];
@@ -33,6 +35,6 @@ export const ITEM_RESPONSE_LABELS: Record<string, readonly string[]> = {
   E1_REV_WILLING: WILLINGNESS_LABELS,
   E1_ACK_COST: AGREEMENT_LABELS,
 };
-export const isSelectiveInstrument = (version?: string) => version === SELECTIVE_INSTRUMENT_VERSION || version === RESPONSE_SCALE_INSTRUMENT_VERSION;
+export const isSelectiveInstrument = (version?: string) => version === SELECTIVE_INSTRUMENT_VERSION || isItemScalesInstrument(version);
 export const isPerspectivesInstrument = (version?: string) => version === PERSPECTIVES_INSTRUMENT_VERSION || version === CONFLICT_INSTRUMENT_VERSION || isSelectiveInstrument(version);
 export const isContinuousInstrument = (version?: string) => version === CONTINUOUS_INSTRUMENT_VERSION || isPerspectivesInstrument(version);
