@@ -1,0 +1,7 @@
+.experiment-grid { grid-auto-rows: auto; }
+.experiment-card { grid-template-rows: 128px 1fr auto; min-height: 420px; }
+.experiment-card-copy { min-height: 180px; }
+.experiment-actions { padding-bottom: 6px; }
+.experiment-guide { display:block; margin:0 13px 13px; min-height:32px; font-size:13px; line-height:1.5; text-underline-offset:4px; }
+.hub-review-tools { width:min(1180px,calc(100% - 120px)); margin:0 auto; padding:0 0 40px; line-height:1.6; }
+@media(max-width:650px) { .experiment-card { min-height:390px; grid-template-rows:118px 1fr auto; } .experiment-card-copy { min-height:160px; } .hub-review-tools { width:calc(100% - 48px); } }

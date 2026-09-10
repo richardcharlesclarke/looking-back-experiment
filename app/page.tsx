@@ -1,6 +1,7 @@
 import { ArrowRight, Eye, Layers } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import "./hub.css";
 
 const experiments = [
   {
@@ -55,7 +56,6 @@ export default function ExperimentsHub() {
           <p>Short participatory studies from evolvable.me.</p>
         </div>
       </section>
-      <section style={{padding:"0 32px 40px"}} aria-label="For organisers and reviewers"><Link href="/study-two/review">Study Two: after-panel previews, setup and downloads →</Link></section>
 
       <section className="experiment-grid" aria-label="evolvable.me initiatives">
         {experiments.map((experiment, index) => (
@@ -90,7 +90,7 @@ export default function ExperimentsHub() {
                 </div>
               )}
             </div>
-            {experiment.href ? (
+            <div className="experiment-actions">{experiment.href ? (
               <Link className="primary experiment-link" href={experiment.href}>
                 Open <ArrowRight size={18} />
               </Link>
@@ -99,10 +99,12 @@ export default function ExperimentsHub() {
                 Soon
               </button>
             )}
-            {experiment.guide && <Link href={experiment.guide} style={{margin:"16px 24px 24px",textUnderlineOffset:"4px"}}>How to run this study →</Link>}
+            {experiment.guide && <Link href={experiment.guide} className="experiment-guide">How to run this study →</Link>}
+            </div>
           </article>
         ))}
       </section>
+      <section className="hub-review-tools" aria-label="For organisers and reviewers"><Link href="/study-two/review">For organisers: Study Two preview links, setup and downloads →</Link><p>Study Two uses illustrative panel details and saves answers only on this browser. It is published for inspection; participant distribution and real collection are not open.</p></section>
     </main>
   );
 }
