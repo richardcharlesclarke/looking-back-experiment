@@ -139,3 +139,13 @@ Every rendered question is listed below for each questionnaire, including all 26
 ## Validation and release
 
 57 automated tests pass, including complete frozen V4 snapshots (27 first / 91 second questions with every branch expanded), four earlier-version snapshots, exact before/after pairing, preservation of wording and numerical values, and explicit non-comparability of imported pairs with changed labels. The locked Next.js 15.5.25 production build passes, including lint and type checking. Seven synthetic local HTTP participants span all six generations and both learning branches; exact baselines, raw decimals, version pairing, exports, date gates and deletion of the synthetic records pass. Desktop and 390px mobile previews show the new agreement, willingness, desire and ability labels without clipping; keyboard Home/End preserve continuous endpoints. Live deployment verification follows below. No production research submissions are used for QA.
+
+Production release completed: implementation commit `7079bf5`, Railway deployment `94735afa-73b5-4a69-893c-59f2151def41`, status SUCCESS. Target remains project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environment `d86f82f2-579c-4de2-8085-f00903b86816`, service `9586c104-8863-467f-adab-bef9a2fa5432`, with the existing `/study-one-data` volume. Public preview and public/direct health endpoints return HTTP 200.
+
+The deployed 44-file source manifest matches the tested package exactly, with zero mismatches: SHA256 `f21177ea04b04f0c180ee75474d8689004a8498e54111de811d826f121633483`. Read-only audits immediately before and after deployment confirm identical complete research/contact hashes: 23 participant records, 17 responses, 23 contact records. No production research submissions were created for testing.
+
+Live browser verification read every one of the sixteen core questions and its five labels in both questionnaires; all before/after core labels match. Mobile label wrapping and continuous keyboard endpoints were checked against the identical local production source. Historical questions and conditional branches are covered by the frozen snapshots and local HTTP verification above.
+
+Evidence: `output/item-scales-tests.txt`, `output/item-scales-build.txt`, `output/item-scales-http-result.json`, `output/item-scales-question-inventory.json`, `output/item-scales-live-before.json`, `output/item-scales-live-after.json`, and `output/item-scales-live-manifest.json`. Live UI checks are recorded in this task's tool history. No Slack messages or invitations were sent.
+
+Review: https://experiments.evolvable.me/study-one?preview=1
