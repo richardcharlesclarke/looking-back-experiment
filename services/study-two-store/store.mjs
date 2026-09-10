@@ -67,7 +67,7 @@ export async function createStore(directory){
     const speakerId=b.role==='speaker'?(b.action==='prepare'?b.speakerId:panel.speakers[0].id):undefined;
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
     const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:VERSION,isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId),post:questions(panel,b.role,'post',speakerId)},forms:{}};
-    start(p,'pre');data.people.push(p);return publicRecord(p);
+    if(b.action==='enrol')start(p,'pre');data.people.push(p);return publicRecord(p);
    });
    checkRole(b.role);
    return transaction(data=>{
