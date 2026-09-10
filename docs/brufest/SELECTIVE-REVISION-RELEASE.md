@@ -54,7 +54,13 @@ The full first form contains 27 questions when the topic branch is completed, 24
 
 Production target: project ed40ec0d-aec9-48e2-b3af-1f820e94e5a9, environment d86f82f2-579c-4de2-8085-f00903b86816 (study-one-review), service 9586c104-8863-467f-adab-bef9a2fa5432 (study-one-review), existing /study-one-data volume. Pre-release deployment 24df8c21-d518-48ac-b449-59281e2b635b. Read-only storage audit records 22 people, 17 responses, 22 contacts; only counts and cryptographic hashes are retained locally.
 
-Pending: final production deployment and live verification.
+Production release complete: implementation commit `75db257` deployed as Railway deployment `13a9168a-67f2-4658-9fa1-9d34bee985db` with status SUCCESS and 1/1 health check passed. Public questionnaire and both public/direct service health endpoints return HTTP 200.
+
+The production container's 44-file manifest matches the tested package exactly: SHA256 `ffc20d99eecaa5c6deac477d4ec9248adc6f37d676f6381baef35eca55b5ad02`, zero file mismatches. Read-only post-release audit confirms the complete research and contact store hashes are identical to the pre-release audit: all 22 people, 17 responses and 22 contacts unchanged. No production research responses were created for QA.
+
+Live preview verification read all sixteen final core prompts, both likelihood label sets, and all three exact connection prompts. The full 27-question topic branch completes in preview mode without submission; the live certainty and reconsideration prompts display Bo's exact numeric endpoints. The selected panel and starting view render correctly. Desktop topic-reference and 390px mobile connection screenshots were visually inspected; the long different-views label wraps, all seven circle choices and navigation remain usable. Matched post-festival starting-view rendering was checked locally; server-side reference integrity and all versioned follow-ups are covered by automated and real local HTTP tests.
+
+Evidence in the worktree output directory: `selective-tests.txt`, `selective-build.txt`, `selective-http-result.json`, `selective-live-before.json`, `selective-live-after.json`, and `live-manifest-verification.json`. Browser verification is recorded in this task's tool history. No Slack messages or invitations were sent.
 
 Review: https://experiments.evolvable.me/study-one?preview=1
 
