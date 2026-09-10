@@ -1,12 +1,13 @@
-import { CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
+import { SELECTIVE_INSTRUMENT_VERSION, LIKELIHOOD_LABELS, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
 import bank from "./question-bank.json";
-import { FESTIVAL_VERSION, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
+import { FESTIVAL_VERSION, TOPIC_PROGRAMME, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
 import type {
   Answer,
   Answers,
   Context,
   Question,
+  TopicReference,
   Role,
   Study,
   Wave,
@@ -150,6 +151,10 @@ export function validFlow(study: Study, role: Role, wave: Wave) {
       : role === "participant" &&
         ["screen", "pre", "post", "joint", "partner"].includes(wave);
 }
+export function topicReferenceFromAnswers(answers: Answers): TopicReference | undefined {
+  const topic=answers.E1_PRE_TOPIC_PANEL, view=answers.E1_PRE_STARTING_VIEW;
+  return typeof topic==='string' && TOPIC_PROGRAMME.includes(topic) && typeof view==='string' && !!view.trim() ? {topic,view} : undefined;
+}
 export function questions(ctx: Context, answers: Answers = {}): Question[] {
   if (ctx.study === 'pairs' && ctx.wave === 'screen' && ctx.screeningBank === PAIR_VERSION) return screeningQuestions();
   const { study, role, wave, session } = ctx;
@@ -185,14 +190,51 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         {...item, id:'E1_CPX_CONSEQUENCES', prompt:'Choices in important conflicts can have several connected consequences.'},
       ] : [{...item, ...(prompts[item.id] ? {prompt:prompts[item.id]} : {})}]);
     }
+    if (ctx.responseInstrument === SELECTIVE_INSTRUMENT_VERSION) {
+      // A distinct item-level instrument. Historical prompts/IDs above stay frozen.
+      // Acknowledgement, willingness, perceived ability and expectations remain separate.
+      out = [
+        q('E1_HUM_01', 'Your perspective', {prompt:'My view on an important issue is likely to contain weaknesses I have not yet recognised.', construct:'humility'}),
+        q('E1_HUM_02', 'Your perspective', {prompt:'When I have a strong opinion about a topic that matters to me, I see little value in considering a perspective that challenges it.', reverse:true, construct:'openness'}),
+        q('E1_CUR_02', 'Meeting another view', {prompt:'I am willing to spend time considering the strongest argument against a view I hold.', construct:'willingness_to_consider'}),
+        q('E1_CUR_01', 'Meeting another view', {prompt:'When someone strongly disagrees with me, I want to understand how their view makes sense to them.', construct:'desire_to_understand'}),
+        q('E1_REG_01', 'Meeting another view', {prompt:'When I reject someone’s conclusion, I can still understand the concern or value behind it.', construct:'perceived_understanding'}),
+        q('E1_CPX_ISSUES', 'Seeing the issue', {prompt:'When I disagree with someone, I recognise that the issue may involve several connected concerns.', construct:'complexity'}),
+        q('E1_AGY_01', 'Staying in the conversation', {prompt:'I feel able to stop a difficult disagreement becoming personal.', construct:'perceived_agency'}),
+        q('E1_AGY_02', 'Staying in the conversation', {prompt:'When a disagreement becomes tense, there is little I can do to make it productive.', reverse:true, construct:'perceived_agency'}),
+        q('E1_REG_02', 'Staying in the conversation', {prompt:'I can disagree strongly with a person’s view without rejecting the person.', construct:'person_position_separation'}),
+        q('E1_ACK_01', 'Room to change', {prompt:'When I recognise a weakness in my view, I am willing to acknowledge it openly.', construct:'willingness_to_acknowledge'}),
+        q('E1_LEARN_01', 'Seeing the issue', {prompt:'I can learn something valuable from a view that challenges my own, even if my conclusion does not change.', construct:'perceived_learning'}),
+        q('E1_CPX_UNANTICIPATED', 'Seeing the issue', {prompt:'Even when I am convinced my view is correct, acting on it may have consequences I have not anticipated.', construct:'uncertainty'}),
+        q('E1_REV_WILLING', 'Room to change', {prompt:'When I see a good reason to do so, I am willing to revise my position in a disagreement.', construct:'willingness_to_revise'}),
+        q('E1_ACK_COST', 'Room to change', {prompt:'Acknowledging a weakness in my view feels like losing ground.', reverse:true, construct:'acknowledgement_cost'}),
+        ...[
+          ['E1_EXPECT_UNDERSTANDING', 'When you strongly disagree with someone about an issue that matters to you, how likely is the conversation to deepen your understanding?', 'expected_understanding'],
+          ['E1_EXPECT_CONNECTION_LOSS', 'When you strongly disagree with someone about an issue that matters to you, how likely is the conversation to leave you feeling less connected to that person?', 'expected_connection_loss'],
+        ].map(([id,prompt,construct]) => q(id, 'What you expect', {prompt,construct,type:'continuous',min:0,max:100,low:LIKELIHOOD_LABELS[0],high:LIKELIHOOD_LABELS[4],bands:[...LIKELIHOOD_LABELS],reverse:id==='E1_EXPECT_CONNECTION_LOSS'})),
+      ];
+    }
     const perspectives = isPerspectivesInstrument(ctx.responseInstrument);
     if (perspectives && (wave === 'pre' || wave === 'post')) out.push(
-      ...[['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']].map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
+      ...(ctx.responseInstrument===SELECTIVE_INSTRUMENT_VERSION ? [['SIMILAR', 'people who have similar views to your own', 'People with similar views'], ['DIFFERENT', 'people who have views that are significantly different from your own', 'People with significantly different views'], ['WORLD', 'people all over the world', 'People all over the world']] : [['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']]).map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
         prompt: `How connected do you feel to ${group}?`, type: 'circles', min: 1, max: 7, bands: [...CONNECTION_LABELS], target, construct: 'felt_connection',
         help: 'More overlap means a stronger feeling of connection. This is about connection, not whether you agree with everyone in the group.',
       })),
       q('E1_FUTURE_OUTLOOK', 'Looking ahead', {prompt: 'Thinking about life for people around the world over the next ten years, how optimistic or pessimistic do you feel?', type: 'single', options: ['Very pessimistic', 'Somewhat pessimistic', 'Neither optimistic nor pessimistic', 'Somewhat optimistic', 'Very optimistic', 'Not sure'], required: false, construct: 'future_outlook'}),
     );
+    if (ctx.responseInstrument===SELECTIVE_INSTRUMENT_VERSION) {
+      if (wave==='pre') {
+        out.push(single('E1_PRE_TOPIC_PANEL', 'Your selected topic', [...TOPIC_PROGRAMME, 'None of these', 'Not sure'], 'Which of the panels is discussing a topic about which you feel very certain?'));
+        if (typeof answers.E1_PRE_TOPIC_PANEL==='string' && TOPIC_PROGRAMME.includes(answers.E1_PRE_TOPIC_PANEL)) out.push(text('E1_PRE_STARTING_VIEW', 'Your selected topic', 'What is your current view on this topic? State it briefly in your own words. Please avoid names or identifying details.', true));
+      }
+      const reference=wave==='pre'?topicReferenceFromAnswers(answers):ctx.topicReference;
+      if(reference && (wave==='pre'||wave==='post')) out.push(
+        ...[
+          ['E1_TOPIC_CERTAINTY','How certain are you that your current view on this topic is correct?','Not at all certain','Completely certain','topic_certainty'],
+          ['E1_TOPIC_RECONSIDER','How willing are you to reconsider your current view on this topic?','Not at all willing','Completely willing','topic_reconsideration'],
+        ].map(([id,prompt,low,high,construct])=>q(id,'Your selected topic',{prompt,type:'continuous',min:0,max:10,low,high,help:`0 — ${low} → 10 — ${high}`,bands:[low,'Slightly '+(id==='E1_TOPIC_CERTAINTY'?'certain':'willing'),'Somewhat '+(id==='E1_TOPIC_CERTAINTY'?'certain':'willing'),'Very '+(id==='E1_TOPIC_CERTAINTY'?'certain':'willing'),high],construct,target:JSON.stringify(reference)})),
+      );
+    }
     if (wave === "pre")
       out.push(
         multi(

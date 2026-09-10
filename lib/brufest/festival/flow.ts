@@ -1,12 +1,13 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { CONTINUOUS_INSTRUMENT_VERSION, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument } from './scales';
-import { validateAnswers } from '../instruments';
+import { CONTINUOUS_INSTRUMENT_VERSION, SELECTIVE_INSTRUMENT_VERSION, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument } from './scales';
+import { validateAnswers, topicReferenceFromAnswers } from '../instruments';
 import { FESTIVAL_VERSION, FIRST_INSTRUMENT_VERSION, INFORMATION, INFORMATION_VERSION, CONSENT_TEXT, FOLLOWUP_TEXT, PERMISSION_VERSION, PROGRAMME_VERSION, FIRST_CLOSES_AT, SECOND_OPENS_AT, STUDY_ONE_APPROVED, ORIGINAL_INFORMATION_VERSION, ORIGINAL_INFORMATION, PREVIOUS_INFORMATION_VERSION, PREVIOUS_INFORMATION, CONFLICT_INFORMATION_VERSION, CONFLICT_INFORMATION } from './content';
+import type { TopicReference } from '../types';
 import type { Contact, Data, Person, View, Wave } from './types';
 const now = () => new Date().toISOString();
 export const digest = (s:string) => createHash('sha256').update(s).digest('hex');
 const keyValid = (key:unknown):key is string => typeof key==='string' && /^[a-f0-9]{64}$/.test(key);
-export function context(wave:Wave, responseInstrument?:string) { return {study:'festival' as const,role:'attendee' as const,wave,festivalVersion:FESTIVAL_VERSION,responseInstrument}; }
+export function context(wave:Wave, responseInstrument?:string, topicReference?:TopicReference) { return {topicReference,study:'festival' as const,role:'attendee' as const,wave,festivalVersion:FESTIVAL_VERSION,responseInstrument}; }
 export function submissionInstrument(wave:Wave, requested:unknown) {
   const legacy=wave==='pre'?FIRST_INSTRUMENT_VERSION:FESTIVAL_VERSION;
   // Requests from already-open legacy pages have no version field. Keep their original scale.
@@ -26,7 +27,7 @@ export function enrol(data:Data,b:Record<string,unknown>):{p:Person;c:Contact} {
   const old=data.contacts.contacts.find(c=>c.firstHash===digest(b.access as string));
   if(old) return {p:data.research.people.find(p=>p.id===old.personId)!,c:old};
   const originalInformation=b.informationVersion===ORIGINAL_INFORMATION_VERSION && !isPerspectivesInstrument(typeof b.instrumentVersion==='string'?b.instrumentVersion:undefined);
-  const previousInformation=b.informationVersion===PREVIOUS_INFORMATION_VERSION && b.instrumentVersion!==CONFLICT_INSTRUMENT_VERSION;
+  const previousInformation=b.informationVersion===PREVIOUS_INFORMATION_VERSION && b.instrumentVersion!==CONFLICT_INSTRUMENT_VERSION && b.instrumentVersion!==SELECTIVE_INSTRUMENT_VERSION;
   const conflictInformation=b.informationVersion===CONFLICT_INFORMATION_VERSION;
   if(b.agree!==true || (b.informationVersion!==INFORMATION_VERSION&&!originalInformation&&!previousInformation&&!conflictInformation)) throw new Error('Read the study information and select the agreement before starting.');
   const consentVersion=originalInformation?ORIGINAL_INFORMATION_VERSION:previousInformation?PREVIOUS_INFORMATION_VERSION:conflictInformation?CONFLICT_INFORMATION_VERSION:INFORMATION_VERSION;
@@ -46,7 +47,8 @@ export function identify(data:Data,key:unknown,kind:unknown) {
 }
 export function view(p:Person,c:Contact,kind:string):View {
   const completed=p.responses.map(r=>r.wave);
-  const result:View={responseInstrument:participantInstrument(p,kind==='after'?'post':'pre'),id:p.id,mode:'study',step:'waiting',message:'Your first questionnaire is saved. Attend the festival as normal. The research assistant will email your personal second-questionnaire link if you agreed to follow-up.',contactChoiceSaved:!!c.contactChoiceSaved,permission:c.permission,email:c.email,completed};
+  const reference=p.responses.find(r=>r.wave==='pre');
+  const result:View={...(kind==='after'&&reference?.instrumentVersion===SELECTIVE_INSTRUMENT_VERSION?{topicReference:topicReferenceFromAnswers(reference.answers)}:{}),responseInstrument:participantInstrument(p,kind==='after'?'post':'pre'),id:p.id,mode:'study',step:'waiting',message:'Your first questionnaire is saved. Attend the festival as normal. The research assistant will email your personal second-questionnaire link if you agreed to follow-up.',contactChoiceSaved:!!c.contactChoiceSaved,permission:c.permission,email:c.email,completed};
   if(c.delivery==='stopped')return {...result,step:'stopped',message:'Follow-up contact has stopped. Your email address has been removed from the contact list. Previously submitted research answers have not been deleted.'};
   if(completed.includes('post'))return {...result,step:'complete',message:'Both questionnaires are saved and matched. Thank you for taking part.'};
   if(kind==='after'&&!completed.includes('pre'))throw new Error('No first questionnaire is linked to this invitation. Contact the research assistant; do not supply a retrospective first response.');
@@ -68,7 +70,7 @@ export function submit(p:Person,c:Contact,kind:string,b:Record<string,unknown>) 
   if(wave==='pre'&&!p.isTest&&Date.now()>=Date.parse(FIRST_CLOSES_AT))throw new Error('The first questionnaire is now closed.');
   const instrumentVersion=submissionInstrument(wave,b.instrumentVersion);
   if((wave==='post'||p.questionnaireInstrument)&&instrumentVersion!==participantInstrument(p,wave))throw new Error('Please reopen your personal link to continue with your questionnaire.');
-  const checked=validateAnswers(context(wave,instrumentVersion),b.answers);
+  const checked=validateAnswers(context(wave,instrumentVersion,wave==='post'&&instrumentVersion===SELECTIVE_INSTRUMENT_VERSION?topicReferenceFromAnswers(p.responses.find(r=>r.wave==='pre')!.answers):undefined),b.answers);
   if(typeof b.startedAt!=='string'||!Number.isFinite(Date.parse(b.startedAt))||Date.parse(b.startedAt)>Date.now()+60000)throw new Error('Questionnaire start time is invalid.');
   p.responses.push({id:randomUUID(),wave,answers:checked.answers,questions:checked.questions,instrumentVersion,programmeVersion:PROGRAMME_VERSION,startedAt:b.startedAt,completedAt:now()});
   return {duplicate:false};

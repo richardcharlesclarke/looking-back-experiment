@@ -19,7 +19,7 @@ s=s[:s.index('export const STUDIES =')]+s[s.index('export const PROGRAMME ='):]
 a=s.index('const topicChange =');b=s.index('const festivalCore =',a);s=s[:a]+s[b:]
 a=s.index('const panelCore =');b=s.index('function q(',a);s=s[:a]+s[b:]
 a=s.index('const process =');b=s.index('export function validFlow',a);s=s[:a]+s[b:]
-a=s.index('export function validFlow');b=s.index('export function questions',a);s=s[:a]+'''export function validFlow(study: Study, role: Role, wave: Wave) {
+a=s.index('export function validFlow');b=s.index('export function topicReferenceFromAnswers',a);s=s[:a]+'''export function validFlow(study: Study, role: Role, wave: Wave) {
   return study === 'festival' && role === 'attendee' && ['pre','post'].includes(wave);
 }
 '''+s[b:]

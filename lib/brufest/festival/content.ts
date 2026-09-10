@@ -64,6 +64,12 @@ export const FESTIVAL_PROGRAMME = [
   'Sunday — Flipping the Narrative', 'Sunday — New World Order?', 'Sunday — The Third Act',
   'Sunday — An Anarchist in the Garden', 'Sunday — Life Lessons', 'Sunday — Music from the Frontline',
 ];
+// Panel-topic choices checked against https://bigbrue.com/programme/ on 10 September.
+// Do not rewrite the historical attendance programme or saved participant selections.
+export const TOPIC_PROGRAMME = FESTIVAL_PROGRAMME.filter(title => ![
+  'Saturday — Welcome to Big Brue', 'Saturday — Poetry Battle', 'Saturday — Crafting for Survival',
+  'Sunday — The Third Act', 'Sunday — Life Lessons', 'Sunday — Music from the Frontline',
+].includes(title)).map(title => title === 'Sunday — How to Be an Entrepreneur' ? 'Sunday — Who Wants to Be an Entrepreneur?' : title);
 export const HUB_PROGRAMME = ['Speakers’ Corner', 'Live music at the Hub', 'Children’s pop-up theatre', 'Barefoot movement', 'Life drawing', 'Future Family Lab', 'How to Have a Great Family Row', 'Slow Scent', 'Leathercraft', 'I Didn’t Lick It', 'Apple pressing', 'AI and the Creative Life', 'No Dig demonstration', 'The Big Brue Daily'];
 export const BEAU_SESSION = 'Saturday — Reaching for Wonderment';
 export function invitation(firstLink: string) {

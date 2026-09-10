@@ -48,7 +48,9 @@ export type PublicSession = Pick<
   Session,
   "id" | "study" | "title" | "proposition" | "speakers" | "stage" | "isTest"
 >;
+export type TopicReference = { topic: string; view: string };
 export type Context = {
+  topicReference?: TopicReference;
   festivalVersion?: string;
   responseInstrument?: string;
   screeningBank?: string;

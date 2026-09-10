@@ -9,5 +9,7 @@ export function responseBand(value: number, max = 100) {
 export const PERSPECTIVES_INSTRUMENT_VERSION = 'brufest-study-one-perspectives-v2-2026-09-09';
 export const CONNECTION_LABELS = ['Not at all connected', 'Very little connection', 'A little connection', 'Some connection', 'Quite connected', 'Very connected', 'Extremely connected'];
 export const CONFLICT_INSTRUMENT_VERSION = 'brufest-study-one-conflict-v3-2026-09-09';
-export const isPerspectivesInstrument = (version?: string) => version === PERSPECTIVES_INSTRUMENT_VERSION || version === CONFLICT_INSTRUMENT_VERSION;
+export const SELECTIVE_INSTRUMENT_VERSION = 'brufest-study-one-selective-v4-2026-09-10';
+export const LIKELIHOOD_LABELS = ['Not at all likely', 'Slightly likely', 'Somewhat likely', 'Very likely', 'Extremely likely'];
+export const isPerspectivesInstrument = (version?: string) => version === PERSPECTIVES_INSTRUMENT_VERSION || version === CONFLICT_INSTRUMENT_VERSION || version === SELECTIVE_INSTRUMENT_VERSION;
 export const isContinuousInstrument = (version?: string) => version === CONTINUOUS_INSTRUMENT_VERSION || isPerspectivesInstrument(version);
