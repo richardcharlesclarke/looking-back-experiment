@@ -1,4 +1,4 @@
-import { SELECTIVE_INSTRUMENT_VERSION, LIKELIHOOD_LABELS, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
+import { RESPONSE_SCALE_INSTRUMENT_VERSION, ITEM_RESPONSE_LABELS, isSelectiveInstrument, LIKELIHOOD_LABELS, CONFLICT_INSTRUMENT_VERSION, isPerspectivesInstrument, CONTINUOUS_LABELS, CONNECTION_LABELS, isContinuousInstrument } from "./festival/scales";
 import bank from "./question-bank.json";
 import { FESTIVAL_VERSION, TOPIC_PROGRAMME, FESTIVAL_PROGRAMME, HUB_PROGRAMME, BEAU_SESSION } from "./festival/content";
 import { PAIR_VERSION, screeningQuestions } from './pair-topics';
@@ -190,7 +190,7 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         {...item, id:'E1_CPX_CONSEQUENCES', prompt:'Choices in important conflicts can have several connected consequences.'},
       ] : [{...item, ...(prompts[item.id] ? {prompt:prompts[item.id]} : {})}]);
     }
-    if (ctx.responseInstrument === SELECTIVE_INSTRUMENT_VERSION) {
+    if (isSelectiveInstrument(ctx.responseInstrument)) {
       // A distinct item-level instrument. Historical prompts/IDs above stay frozen.
       // Acknowledgement, willingness, perceived ability and expectations remain separate.
       out = [
@@ -214,15 +214,21 @@ export function questions(ctx: Context, answers: Answers = {}): Question[] {
         ].map(([id,prompt,construct]) => q(id, 'What you expect', {prompt,construct,type:'continuous',min:0,max:100,low:LIKELIHOOD_LABELS[0],high:LIKELIHOOD_LABELS[4],bands:[...LIKELIHOOD_LABELS],reverse:id==='E1_EXPECT_CONNECTION_LOSS'})),
       ];
     }
+    if (ctx.responseInstrument === RESPONSE_SCALE_INSTRUMENT_VERSION) {
+      out = out.map(item => {
+        const bands = ITEM_RESPONSE_LABELS[item.id];
+        return bands ? {...item, type:'continuous', min:0, max:100, low:bands[0], high:bands[4], bands:[...bands]} : item;
+      });
+    }
     const perspectives = isPerspectivesInstrument(ctx.responseInstrument);
     if (perspectives && (wave === 'pre' || wave === 'post')) out.push(
-      ...(ctx.responseInstrument===SELECTIVE_INSTRUMENT_VERSION ? [['SIMILAR', 'people who have similar views to your own', 'People with similar views'], ['DIFFERENT', 'people who have views that are significantly different from your own', 'People with significantly different views'], ['WORLD', 'people all over the world', 'People all over the world']] : [['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']]).map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
+      ...(isSelectiveInstrument(ctx.responseInstrument) ? [['SIMILAR', 'people who have similar views to your own', 'People with similar views'], ['DIFFERENT', 'people who have views that are significantly different from your own', 'People with significantly different views'], ['WORLD', 'people all over the world', 'People all over the world']] : [['CLOSE', 'your close friends and family', 'My close friends and family'], ['WORLD', 'people all over the world', 'People all over the world']]).map(([id, group, target]) => q(`E1_CONNECTION_${id}`, 'Feeling connected', {
         prompt: `How connected do you feel to ${group}?`, type: 'circles', min: 1, max: 7, bands: [...CONNECTION_LABELS], target, construct: 'felt_connection',
         help: 'More overlap means a stronger feeling of connection. This is about connection, not whether you agree with everyone in the group.',
       })),
       q('E1_FUTURE_OUTLOOK', 'Looking ahead', {prompt: 'Thinking about life for people around the world over the next ten years, how optimistic or pessimistic do you feel?', type: 'single', options: ['Very pessimistic', 'Somewhat pessimistic', 'Neither optimistic nor pessimistic', 'Somewhat optimistic', 'Very optimistic', 'Not sure'], required: false, construct: 'future_outlook'}),
     );
-    if (ctx.responseInstrument===SELECTIVE_INSTRUMENT_VERSION) {
+    if (isSelectiveInstrument(ctx.responseInstrument)) {
       if (wave==='pre') {
         out.push(single('E1_PRE_TOPIC_PANEL', 'Your selected topic', [...TOPIC_PROGRAMME, 'None of these', 'Not sure'], 'Which of the panels is discussing a topic about which you feel very certain?'));
         if (typeof answers.E1_PRE_TOPIC_PANEL==='string' && TOPIC_PROGRAMME.includes(answers.E1_PRE_TOPIC_PANEL)) out.push(text('E1_PRE_STARTING_VIEW', 'Your selected topic', 'What is your current view on this topic? State it briefly in your own words. Please avoid names or identifying details.', true));
