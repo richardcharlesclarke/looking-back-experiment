@@ -37,3 +37,13 @@ The locked Next.js 15.5.25 production build, lint and type checking pass. Real l
 Live verification and deployment evidence follow after production release. No production QA submissions or Slack sends are authorised or performed.
 
 Review: https://experiments.evolvable.me/study-one?preview=1
+
+## Production release verified
+
+Implementation commit `6b747a8` deployed as Railway `eafe3067-c4e1-4fb4-9e07-3fc74a912cf5`, status SUCCESS. Target: project `ed40ec0d-aec9-48e2-b3af-1f820e94e5a9`, environment `d86f82f2-579c-4de2-8085-f00903b86816`, service `9586c104-8863-467f-adab-bef9a2fa5432`, existing `/study-one-data` volume. Public questionnaire and public/direct service health endpoints return HTTP 200.
+
+The production container matches all 44 tested source-manifest files, with zero mismatches. Manifest SHA256: `f04a892eea44a3e525b5f7208ec0512bf8d75b40a5dd53f1ce662d25361920af`.
+
+Live browser verification confirms both additions at questions 17/18 in the first questionnaire and again in the actual After Big Brue questionnaire. Exact stems, full 0/10 endpoints, five bands, unselected state and explicit missing choices are visible. The live second-questionnaire heading and timing instruction were verified, rather than inferred from a preview shortcut. Full first-questionnaire count is 29 with the selected-topic branch, or 26 before that branch; the second starts with 33 when no baseline topic reference is supplied in preview.
+
+Read-only pre/post-release audits confirm identical complete research and contact hashes: 24 participant records, 18 responses, 24 contacts. No production test submissions were made. Evidence: `output/conflict-perception-tests.txt`, `output/conflict-perception-build.txt`, `output/conflict-perception-http-result.json`, `output/conflict-perception-live-before.json`, `output/conflict-perception-live-after.json`, `output/conflict-perception-live-manifest.json`, and the browser checks in this task’s tool history. No Slack messages or invitations were sent.
