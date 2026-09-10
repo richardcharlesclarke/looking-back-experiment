@@ -48,7 +48,7 @@ test('reject invalid input, wrong versions, stale concurrent saves and unauthori
 test('panel setup is protected, stable across people and frozen within a person',async()=>{
  const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-panels-')));
  const b={action:'prepare',role:'speaker',access:key(),instrumentVersion:VERSION,panel:SAMPLE,speakerId:'speaker-b'};
- await assert.rejects(store.action(b),/Administrator/);const p=await store.action(b,true);const p2=await store.action({...b,access:key()},true);assert.equal(p.panel.id,p2.panel.id);assert.notEqual(p.id,p2.id);
+ await assert.rejects(store.action(b),/Administrator/);const p=await store.action(b,true);const p2=await store.action({...b,access:key()},true);assert.equal(p.panel.id,p2.panel.id);assert.notEqual(p.id,p2.id);const ordinary=await store.action({action:'enrol',role:'audience',access:key(),instrumentVersion:VERSION});assert.equal(ordinary.panel.id,p.panel.id);
  assert(!p.questionnaires.pre.some(q=>q.target==='speaker-b'));
  const edited=await store.action({...b,access:key(),panel:{...SAMPLE,proposition:'Another claim.'}},true);assert.notEqual(p.panel.id,edited.panel.id);
  assert.equal((await store.action({action:'status',role:b.role,access:b.access})).panel.proposition,SAMPLE.proposition);

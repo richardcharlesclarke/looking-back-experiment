@@ -63,7 +63,7 @@ export async function createStore(directory){
     if(existing){if(existing.role!==b.role)fail('This personal key already belongs to another role.',409);return publicRecord(existing);}
     if(b.action==='prepare'&&!admin)fail('Administrator access required.',403);
     if(b.action==='enrol'&&(b.panel!==undefined||b.speakerId!==undefined))fail('Use the panel details from your invitation.');
-    const panel=b.action==='prepare'?panelInput(b.panel):structuredClone(SAMPLE);
+    const panel=panelInput(b.action==='prepare'?b.panel:SAMPLE);
     const speakerId=b.role==='speaker'?(b.action==='prepare'?b.speakerId:panel.speakers[0].id):undefined;
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
     const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:VERSION,isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId),post:questions(panel,b.role,'post',speakerId)},forms:{}};

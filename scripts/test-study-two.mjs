@@ -19,3 +19,6 @@ assert(questions(changed,'speaker','post','speaker-a').find(q=>q.id==='S2S_POSIT
 assert(questions(changed,'speaker','pre','speaker-a').find(q=>q.target==='speaker-b').prompt.includes('revised'));
 assert(VERSION.includes('review'));
 console.log('Study Two: four forms, exact repeated wording/scales, response anchors, speaker targets and substitutions verified.');
+
+const generated=ts.transpileModule(fs.readFileSync('lib/study-two/instrument.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText;
+assert.equal(fs.readFileSync('services/study-two-store/instrument.mjs','utf8'),'// Generated from lib/study-two/instrument.ts by scripts/sync-study-two-service.mjs.\n'+generated,'Server instrument must match canonical instrument');

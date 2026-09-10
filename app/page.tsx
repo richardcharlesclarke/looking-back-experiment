@@ -104,7 +104,7 @@ export default function ExperimentsHub() {
           </article>
         ))}
       </section>
-      <section className="hub-review-tools" aria-label="For organisers and reviewers"><Link href="/study-two/review">For organisers: Study Two preview links, setup and downloads →</Link><p>Study Two uses illustrative panel details and saves answers only on this browser. It is published for inspection; participant distribution and real collection are not open.</p></section>
+      <section className="hub-review-tools" aria-label="For organisers and reviewers"><Link href="/study-two/review">For organisers: Study Two preview links, setup and downloads →</Link><p>Study Two uses illustrative panel details and saves answers to a separate persistent server store. It is published for inspection; participant distribution and real collection are not open.</p></section>
     </main>
   );
 }
