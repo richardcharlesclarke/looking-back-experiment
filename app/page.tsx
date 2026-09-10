@@ -15,21 +15,28 @@ const experiments = [
     title: "How We Disagree",
     status: "Live",
     href: "/study-one",
+    guide: "/study-guides/study-one",
     summary: "A Big Brue study of how audience members approach disagreement before and after the festival.",
     meta: "Disagreement / before and after the festival",
     visual: "study-one"
   },
   {
-    title: "Coming soon",
-    status: "Coming soon",
-    summary: "",
-    meta: ""
+    title: "Panel speakers",
+    status: "Draft review",
+    href: "/study-two/speaker/before",
+    guide: "/study-guides/study-two",
+    summary: "Before the panel: questions about your view and how you approach the discussion.",
+    meta: "Study Two / speaker questionnaire",
+    visual: "study-one"
   },
   {
-    title: "Coming soon",
-    status: "Coming soon",
-    summary: "",
-    meta: ""
+    title: "Panel audience",
+    status: "Draft review",
+    href: "/study-two/audience/before",
+    guide: "/study-guides/study-two",
+    summary: "Before the panel: five questions about your view on the subject.",
+    meta: "Study Two / audience questionnaire",
+    visual: "study-one"
   }
 ];
 
@@ -48,6 +55,7 @@ export default function ExperimentsHub() {
           <p>Short participatory studies from evolvable.me.</p>
         </div>
       </section>
+      <section style={{padding:"0 32px 40px"}} aria-label="For organisers and reviewers"><Link href="/study-two/review">Study Two: after-panel previews, setup and downloads →</Link></section>
 
       <section className="experiment-grid" aria-label="evolvable.me initiatives">
         {experiments.map((experiment, index) => (
@@ -91,6 +99,7 @@ export default function ExperimentsHub() {
                 Soon
               </button>
             )}
+            {experiment.guide && <Link href={experiment.guide} style={{margin:"16px 24px 24px",textUnderlineOffset:"4px"}}>How to run this study →</Link>}
           </article>
         ))}
       </section>
