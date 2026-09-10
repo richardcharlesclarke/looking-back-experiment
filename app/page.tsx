@@ -91,9 +91,9 @@ export default function ExperimentsHub() {
               )}
             </div>
             <div className="experiment-actions">{experiment.href ? (
-              <Link className="primary experiment-link" href={experiment.href}>
+              <a className="primary experiment-link" href={experiment.href}>
                 Open <ArrowRight size={18} />
-              </Link>
+              </a>
             ) : (
               <button className="secondary experiment-link" disabled>
                 Soon
