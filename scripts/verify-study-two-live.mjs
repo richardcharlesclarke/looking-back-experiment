@@ -1,6 +1,7 @@
 import {randomBytes,createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {INFORMATION_VERSION} from '../services/study-two-store/participation.mjs';
 import {instrumentVersion} from '../services/study-two-store/instrument.mjs';
 const [mode='seed',proofPath='/tmp/study-two-live-persistence-proof.json',base='https://experiments.evolvable.me']=process.argv.slice(2);
 async function api(body,expected=200){const response=await fetch(base+'/study-two/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();assert.equal(response.status,expected,data.error??'Unexpected status');return data;}
@@ -11,7 +12,7 @@ if(mode==='seed'){
  const file=await fs.open(proofPath,'wx',0o600);await file.close();const proof={health,records:[]};
  for(const role of ['speaker','audience']){
   const access=randomBytes(32).toString('hex'),common={access,role,instrumentVersion:instrumentVersion(role)};
-  let p=await api({...common,action:'enrol',testLabel:'QA speaker 21 before 25 after 2026-09-15'});assert(p.isTest);const id=p.id;
+  let p=await api({...common,action:'enrol',agree:true,informationVersion:INFORMATION_VERSION,acknowledgementKind:'review',testLabel:'QA speaker 21 before 25 after 2026-09-15'});assert(p.isTest);const id=p.id;
   assert.equal((await api({...common,action:'enrol'})).id,id);
   await api({...common,action:'start',wave:'post'},409);
   for(const wave of ['pre','post']){

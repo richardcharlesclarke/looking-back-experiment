@@ -1,3 +1,4 @@
+import {PARTICIPATION} from './participation.mjs';
 import {mkdir,readFile,open,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -37,7 +38,14 @@ export function validateAnswers(items,raw,complete){
  }
  return answers;
 }
-const publicRecord=p=>({id:p.id,panel:p.panel,role:p.role,speakerId:p.speakerId,instrumentVersion:p.instrumentVersion,isTest:p.isTest,testLabel:p.testLabel,createdAt:p.createdAt,forms:p.forms,questionnaires:p.questionnaires});
+const publicRecord=p=>({id:p.id,panel:p.panel,role:p.role,speakerId:p.speakerId,instrumentVersion:p.instrumentVersion,isTest:p.isTest,testLabel:p.testLabel,createdAt:p.createdAt,forms:p.forms,questionnaires:p.questionnaires,...(p.participation?{participation:p.participation}:{})});
+function acknowledge(p,b){
+ if(!p.participation)fail('This older record has no consent step. Its history has not been changed.',409);
+ const info=p.participation.information;
+ if(b.agree!==true||b.informationVersion!==info.version||b.acknowledgementKind!=='review'||info.status!=='review')fail('Read the current study information and confirm the test walkthrough.',409);
+ p.participation.acknowledgement??={kind:'review',informationVersion:info.version,acceptedAt:new Date().toISOString(),text:info.acknowledgementText};
+}
+function requireAcknowledgement(p){if(p.participation&&!p.participation.acknowledgement)fail('Read the study information before starting the questionnaire.',409);}
 export async function createStore(directory){
  await mkdir(directory,{recursive:true,mode:0o700});
  const filename=path.join(directory,'state.json');
@@ -51,7 +59,7 @@ export async function createStore(directory){
  function transaction(fn,write=true){const task=async()=>{const data=await read();if(data.schema!==1||!Array.isArray(data.people))throw new Error('Unsupported or damaged Study Two storage.');const result=await fn(data);if(write)await publish(data);return result;};const result=queue.then(task,task);queue=result.catch(()=>{});return result;}
  await transaction(()=>{});
  const identify=(data,b)=>{if(!keyValid(b.access))fail('Open your private return link.',401);const p=data.people.find(p=>p.accessHash===hash(b.access));if(!p)fail('This private link is not recognised. Please use your original link.',404);if(p.role!==b.role)fail('Use the private link for your questionnaire role.',403);return p;};
- function start(p,wave){checkWave(wave);if(wave==='post'&&!p.forms.pre?.completedAt)fail('Complete the before questionnaire first, then use its personal after-panel link.',409);p.forms[wave]??={answers:{},page:0,revision:0,startedAt:new Date().toISOString()};}
+ function start(p,wave){requireAcknowledgement(p);checkWave(wave);if(wave==='post'&&!p.forms.pre?.completedAt)fail('Complete the before questionnaire first, then use its personal after-panel link.',409);p.forms[wave]??={answers:{},page:0,revision:0,startedAt:new Date().toISOString()};}
  return {
   health:()=>transaction(data=>({ok:true,study:'two',storeId:data.storeId,storage:'persistent-volume',realCollection:false}),false),
   async action(b,admin=false){
@@ -69,14 +77,17 @@ export async function createStore(directory){
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
     const targetSpeakerId=b.role==='speaker'?(b.action==='prepare'?b.targetSpeakerId:panel.speakers.find(s=>s.id!==speakerId).id):undefined;
     const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:instrumentVersion(b.role),isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId,targetSpeakerId),post:questions(panel,b.role,'post',speakerId,targetSpeakerId)},forms:{}};
+    if(b.role==='speaker'){p.participation={information:structuredClone(PARTICIPATION)};if(b.action==='enrol')acknowledge(p,b);}
     if(b.action==='enrol')start(p,'pre');data.people.push(p);return publicRecord(p);
    });
    checkRole(b.role);
    return transaction(data=>{
     const p=identify(data,b);if(b.action==='status')return publicRecord(p);
+    if(b.action==='acknowledge'){acknowledge(p,b);return publicRecord(p);}
     checkWave(b.wave);if(b.instrumentVersion!==p.instrumentVersion)fail('Use your original questionnaire version.',409);
     if(b.action==='start'){start(p,b.wave);return publicRecord(p);}
     if(b.action!=='save')fail('Unknown questionnaire request.');
+    requireAcknowledgement(p);
     if(!p.forms[b.wave])fail('Open this questionnaire before saving.');
     const form=p.forms[b.wave],items=p.questionnaires[b.wave],complete=b.complete===true;
     if(typeof b.complete!=='boolean')fail('Choose whether this is a draft or completed response.');

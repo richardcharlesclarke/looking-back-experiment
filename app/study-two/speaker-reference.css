@@ -10,3 +10,9 @@
 @media(max-width:860px) {
   .s2-speaker .s1-about-button { font-size: 10px; max-width: 120px; }
 }
+
+.s2-speaker .s2-review-notice { border-top: 2px solid var(--ink); }
+.s2-speaker .s2-review-notice li { margin: 8px 0; line-height: 1.5; }
+.s2-speaker .s2-legacy-notice { width: min(860px, calc(100% - 64px)); margin: 0 auto; font-size: 13px; }
+.s2-speaker .s2-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+@media(max-width:650px){.s2-speaker .s2-legacy-notice { width: calc(100% - 32px); }}

@@ -29,3 +29,7 @@ console.log('Exact Slack wording/sections, 21 common items and four post-only it
 const reference=JSON.parse(fs.readFileSync('docs/study-two/study-one-ui-reference.json','utf8'));
 assert.equal(fs.readFileSync('app/study-two/ContinuousOrb.tsx','utf8').split('// Adapted from')[1],reference.component.split('// Adapted from')[1],'Orb interaction and rendering must be identical to actual Study One');
 console.log('Study One orb rendering, pointer capture, keyboard and label-selection implementation match exactly.');
+
+const participation=fs.readFileSync('lib/study-two/participation.ts','utf8');
+assert.equal(fs.readFileSync('services/study-two-store/participation.mjs','utf8'),'// Generated from lib/study-two/participation.ts.\n'+ts.transpileModule(participation,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+console.log('Participant information snapshot matches between browser and durable store.');
