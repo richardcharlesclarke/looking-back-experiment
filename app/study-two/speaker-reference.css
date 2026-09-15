@@ -16,3 +16,5 @@
 .s2-speaker .s2-legacy-notice { width: min(860px, calc(100% - 64px)); margin: 0 auto; font-size: 13px; }
 .s2-speaker .s2-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 @media(max-width:650px){.s2-speaker .s2-legacy-notice { width: calc(100% - 32px); }}
+
+.s2-speaker .s2-withdrawal { width:min(860px,calc(100% - 64px)); margin:24px auto; }

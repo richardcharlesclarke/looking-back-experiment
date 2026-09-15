@@ -36,3 +36,17 @@ Apply:
 ```bash
 psql "$DATABASE_URL" -f schema.sql
 ```
+
+## Study Two speaker release
+
+The speaker study at `/study-two/speaker/before` collects the approved 21 before /
+25 after responses after explicit research consent. Returning historical links
+create a separate consented pair; historical answers and acknowledgements remain
+unchanged. Participants can withdraw through their private link. Research records
+expire after 30 September 2027; Beau Lotto is the participant contact. Recording
+permission is separate. The audience home-page entry remains inactive.
+
+Study Two uses the separate `study-two-store` service and its persistent volume,
+not the preview store described above. The Railway `looking-back` environment
+builds both `app` and `study-two-store` from GitHub branch `looking-back`. Verify
+both deployments and `/study-two/api` after an authorised release.

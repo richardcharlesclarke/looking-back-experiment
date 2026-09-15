@@ -15,7 +15,7 @@ export async function proxyStudyTwo(request:Request,admin=false){
   let size=0;const chunks:Uint8Array[]=[];
   while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>65536){await reader.cancel();return Response.json({error:'Request too large.'},{status:413,headers:responseHeaders});}chunks.push(value);}
   let body:Record<string,unknown>;try{body=JSON.parse(Buffer.concat(chunks).toString());}catch{return Response.json({error:'Invalid JSON request.'},{status:400,headers:responseHeaders});}
-  const allowed=admin?['export','prepare']:['enrol','status','start','save','acknowledge'];
+  const allowed=admin?['export','prepare']:['enrol','status','start','save','acknowledge','consent','join','withdraw'];
   if(!body||!allowed.includes(String(body.action)))return Response.json({error:'Unknown request.'},{status:400,headers:responseHeaders});
   const base=process.env.STUDY_TWO_API_URL,key=process.env.STUDY_TWO_SERVICE_KEY;
   if(!base||!key)return Response.json({error:'Saving is temporarily unavailable. Please try again shortly.'},{status:503,headers:responseHeaders});

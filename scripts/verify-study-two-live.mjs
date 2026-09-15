@@ -12,7 +12,7 @@ if(mode==='seed'){
  const file=await fs.open(proofPath,'wx',0o600);await file.close();const proof={health,records:[]};
  for(const role of ['speaker','audience']){
   const access=randomBytes(32).toString('hex'),common={access,role,instrumentVersion:instrumentVersion(role)};
-  let p=await api({...common,action:'enrol',agree:true,informationVersion:INFORMATION_VERSION,acknowledgementKind:'review',testLabel:'QA speaker 21 before 25 after 2026-09-15'});assert(p.isTest);const id=p.id;
+  let p=await api({...common,action:'enrol',agree:true,informationVersion:INFORMATION_VERSION,consentKind:'research',isTest:true,testLabel:'QA speaker 21 before 25 after 2026-09-15'});assert(p.isTest);const id=p.id;
   assert.equal((await api({...common,action:'enrol'})).id,id);
   await api({...common,action:'start',wave:'post'},409);
   for(const wave of ['pre','post']){

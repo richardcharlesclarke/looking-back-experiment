@@ -7,6 +7,7 @@ if(process.env.RAILWAY_ENVIRONMENT_ID&&process.env.RAILWAY_VOLUME_MOUNT_PATH!==d
 const serviceKey=process.env.STUDY_TWO_SERVICE_KEY;
 if(!serviceKey||serviceKey.length<64)throw new Error('A private service key is required.');
 const store=await createStore(directory),instanceId=randomUUID();
+const retentionTimer=setInterval(()=>{void store.runRetention().catch(e=>console.error('Study Two retention failed:',e.code??e.name));},6*60*60*1000);retentionTimer.unref();
 const authenticated=raw=>typeof raw==='string'&&Buffer.byteLength(raw)===Buffer.byteLength(serviceKey)&&timingSafeEqual(Buffer.from(raw),Buffer.from(serviceKey));
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
@@ -20,4 +21,4 @@ const server=http.createServer(async(req,res)=>{
  }catch(e){res.statusCode=e instanceof StudyError?e.status:503;res.end(JSON.stringify({error:e instanceof StudyError?e.message:'Answers could not be saved. Please try again.'}));if(!(e instanceof StudyError))console.error('Study Two storage operation failed:',e.code??e.name);}
 });
 server.listen(Number(process.env.PORT??3000),'::',()=>console.log('Study Two persistence service ready',instanceId));
-process.on('SIGTERM',()=>server.close(()=>process.exit(0)));
+process.on('SIGTERM',()=>{clearInterval(retentionTimer);server.close(()=>process.exit(0));});
