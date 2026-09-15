@@ -17,7 +17,9 @@ for(const speaker of SAMPLE.speakers)for(const target of SAMPLE.speakers.filter(
  assert.equal(pre.length,20);assert.deepEqual(pre,post);
  assert.deepEqual(pre.map(q=>q.prompt),expected.map(p=>p.replace(/\[name\]/gi,target.name)));
  assert.deepEqual(pre.filter(q=>q.type==='text').map(q=>q.id),['S2S_V2_10','S2S_V2_20']);
- for(const q of pre.filter(q=>q.type==='rating'))assert.deepEqual([q.min,q.max,q.low,q.high,q.cannot],[1,7,'Strongly disagree','Strongly agree','dont_know']);
+ for(const q of pre.filter(q=>q.type==='continuous'))assert.deepEqual([q.min,q.max,q.low,q.high,q.cannot],[0,100,'Strongly disagree','Strongly agree','cannot_assess']);
+ assert.equal(pre.filter(q=>q.type==='continuous').length,18);
+ for(const q of pre.filter(q=>q.type==='continuous'))assert.deepEqual(q.bands,['Strongly disagree','Somewhat disagree','Neither agree nor disagree','Somewhat agree','Strongly agree']);
  assert(pre.slice(13).every(q=>q.target===target.id));
 }
 for(const wave of ['pre','post'])assert.deepEqual(questions(SAMPLE,'audience',wave),original.questions(SAMPLE,'audience',wave));
@@ -25,4 +27,8 @@ assert.equal(instrumentVersion('audience'),original.VERSION);
 assert.notEqual(instrumentVersion('speaker'),original.VERSION);
 const generated=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText;
 assert.equal(fs.readFileSync('services/study-two-store/instrument.mjs','utf8'),'// Generated from lib/study-two/instrument.ts by scripts/sync-study-two-service.mjs.\n'+generated);
-console.log('Exact Slack wording/sections, twenty identical pre/post items, 1–7 scales, every named target, unchanged audience and server parity verified.');
+console.log('Exact Slack wording/sections, twenty identical pre/post items, five-band continuous scales, every named target, unchanged audience and server parity verified.');
+
+const reference=JSON.parse(fs.readFileSync('docs/study-two/study-one-ui-reference.json','utf8'));
+assert.equal(fs.readFileSync('app/study-two/ContinuousOrb.tsx','utf8').split('// Adapted from')[1],reference.component.split('// Adapted from')[1],'Orb interaction and rendering must be identical to actual Study One');
+console.log('Study One orb rendering, pointer capture, keyboard and label-selection implementation match exactly.');

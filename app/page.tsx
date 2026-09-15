@@ -23,10 +23,10 @@ const experiments = [
   },
   {
     title: "Panel speakers",
-    status: "Draft review",
+    status: "Before and after",
     href: "/study-two/speaker/before",
     guide: "/study-guides/study-two",
-    summary: "Before the panel: questions about your view and how you approach the discussion.",
+    summary: "Twenty questions about conflict, the issue, yourself and another panellist, before and after the conversation.",
     meta: "Study Two / speaker questionnaire",
     visual: "study-one"
   },

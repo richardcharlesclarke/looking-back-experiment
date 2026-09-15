@@ -1,0 +1,69 @@
+'use client';
+// Question presentation and navigation follow Study One's FestivalParticipant / FestivalForm.
+// Study Two retains its own draft status, before/after matching and durable API.
+import {useEffect,useRef,useState} from 'react';
+import {ArrowLeft,ArrowRight} from 'lucide-react';
+import Link from 'next/link';
+import {VectorDecoration} from '../looking-back/VectorDecoration';
+import SpeakerQuestion from './SpeakerQuestion';
+import {SAMPLE,SPEAKER_PANEL,instrumentVersion,questions,type Answer,type Question,type Wave} from '@/lib/study-two/instrument';
+import type {SavedPerson} from '@/lib/study-two/types';
+import './speaker-reference.css';
+const role='speaker';
+const newAccess=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
+async function request(body:Record<string,unknown>):Promise<SavedPerson>{
+ let response:Response;try{response=await fetch('/study-two/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});}catch{throw new Error('We could not connect. Check your connection and try again.');}
+ const data=await response.json().catch(()=>{throw new Error('We could not complete that request. Please try again.');});
+ if(!response.ok)throw new Error(data.error||'We could not complete that request. Please try again.');return data;
+}
+function answerError(q:Question,value:Answer|undefined){
+ if(value===undefined||value==='')return q.optional?null:'Choose an answer or select “Prefer not to answer”.';
+ if(typeof value==='object')return value.missing==='prefer_not'||(q.optional&&value.missing==='skipped')||value.missing===q.cannot?null:'Choose a response for this question.';
+ if(q.type==='text')return typeof value==='string'&&value.length<=3000?null:'Write up to 3,000 characters, or choose to skip.';
+ return typeof value==='number'&&Number.isFinite(value)&&value>=(q.min??0)&&value<=(q.max??100)&&(q.type!=='rating'||Number.isInteger(value))?null:'Choose a value on this scale.';
+}
+export default function SpeakerParticipant({wave}:{wave:Wave}){
+ const [run,setRun]=useState<SavedPerson|null>(null),[access,setAccess]=useState(''),[loaded,setLoaded]=useState(false),[invalid,setInvalid]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[copied,setCopied]=useState(false);
+ const studyInformation=useRef<HTMLDialogElement>(null);
+ useEffect(()=>{let cancelled=false;async function load(){let key=new URLSearchParams(location.hash.slice(1)).get('access')??'';try{if(!key)key=localStorage.getItem('study-two-return:speaker')??'';}catch{}if(key){setAccess(key);history.replaceState(null,'',`${location.pathname}#access=${key}`);try{const saved=await request({action:'status',access:key,role});if(!cancelled)setRun(saved);}catch(e){if(!cancelled){setInvalid(true);setError((e as Error).message);}}}else if(wave==='post'){setInvalid(true);setError('Use the personal link from your before questionnaire to continue after the panel.');}if(!cancelled)setLoaded(true);}void load();return()=>{cancelled=true;};},[wave]);
+ const form=run?.forms[wave],screen=!loaded?'loading':invalid?'invalid':!form?'intro':form.completedAt?'complete':'form';
+ useEffect(()=>{if(loaded)document.querySelector<HTMLElement>('.s2-speaker h1')?.focus({preventScroll:true});},[loaded,screen]);
+ async function begin(){setBusy(true);setError('');const key=access||newAccess();setAccess(key);history.replaceState(null,'',`${location.pathname}#access=${key}`);try{localStorage.setItem('study-two-return:speaker',key);}catch{}try{setRun(await request(run?{action:'start',access:key,role,wave,instrumentVersion:run.instrumentVersion}:{action:'enrol',access:key,role,instrumentVersion:instrumentVersion(role)}));window.scrollTo({top:0});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ async function copyLink(){try{await navigator.clipboard.writeText(`${location.origin}${location.pathname}#access=${access}`);setCopied(true);}catch{setError('Copy the address from your browser to keep your personal link.');}}
+ const panel=run?.panel??SPEAKER_PANEL,items=run?.questionnaires[wave]??questions(SPEAKER_PANEL,role,wave,'speaker-a');
+ return <main className="s1-participant s2-speaker"><header className="topbar"><button type="button" className="s1-about-button" aria-haspopup="dialog" onClick={()=>studyInformation.current?.showModal()}>About this study</button></header>
+  <dialog ref={studyInformation} className="s1-about-dialog" aria-labelledby="s2-about-title" onKeyDown={e=>{if(e.key==='Tab'){e.preventDefault();e.currentTarget.querySelector('button')?.focus();}}}><div className="s1-about-heading"><h2 id="s2-about-title">About this study</h2><button type="button" className="secondary" onClick={()=>studyInformation.current?.close()}>Close</button></div><section><h3>Study Two · Panel speakers</h3><p>Questions about your approach to conflict, the issue being discussed, yourself and another panellist, before and after the conversation.</p></section><section><h3>Your responses</h3><p>You can decline any question. Progress saves to the Study Two server when you continue. Keep your private return link to reopen the same record and matched after questionnaire. </p></section></dialog>
+  {!loaded?<section className="stage s1-card" role="status" aria-live="polite"><p>Opening questionnaire…</p></section>:invalid?<section className="stage s1-card"><h1 tabIndex={-1}>Personal link could not be opened</h1><p role="alert">{error}</p><p>Use your original personal return link. Your existing answers have not been changed.</p></section>:!form?<section className="stage s1-card"><p className="eyebrow">Panel speakers · {wave==='pre'?'Before':'After'} the conversation</p><h1 tabIndex={-1}>{wave==='pre'?'Before the conversation':'After the conversation'}</h1><p className="s1-lead">Answer for how you see things now, in relation to this panel’s topic.</p>{![SAMPLE.title,SPEAKER_PANEL.title].includes(panel.title)&&<div className="s1-information"><h2>{panel.title}</h2>{![SAMPLE.proposition,SPEAKER_PANEL.proposition].includes(panel.proposition)&&<p>{panel.proposition}</p>}</div>}<p>There are {items.length} questions, including {items.filter(q=>q.type==='text').length} optional written responses. You can decline any question.</p><button className="primary" disabled={busy} onClick={begin}>{busy?'Opening…':'Begin questionnaire'}<ArrowRight size={18} aria-hidden="true"/></button></section>:form.completedAt?<section className="stage s1-card"><h1 tabIndex={-1}>Thank you. Your answers are saved.</h1><p className="s1-lead">{wave==='pre'?'Complete your second questionnaire after the discussion.':'You have finished this questionnaire.'}</p>{wave==='pre'&&<p><Link href={`/study-two/speaker/after#access=${access}`}>Your questionnaire for after the panel →</Link></p>}<p>Keep your personal link to return on another device.</p></section>:run?<SpeakerForm key={`${access}:${wave}:${run.instrumentVersion}`} access={access} wave={wave} run={run} onComplete={setRun}/>:null}
+  {error&&!invalid&&<p className="s1-error" role="alert">{error}</p>}<footer className="bf-footer"><span>Study Two · Panel speakers</span>{access&&run&&<button className="s1-skip-email" onClick={copyLink}>{copied?'Personal link copied':'Copy my return link'}</button>}</footer>
+ </main>;
+}
+function SpeakerForm({access,wave,run,onComplete}:{access:string;wave:Wave;run:SavedPerson;onComplete:(run:SavedPerson)=>void}){
+ const initial=run.forms[wave]!,items=run.questionnaires[wave];
+ const [answers,setAnswers]=useState<Record<string,Answer>>(initial.answers),[page,setPage]=useState(initial.page),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[storageOK,setStorageOK]=useState(true),[invalidId,setInvalidId]=useState(''),[direction,setDirection]=useState<'forward'|'back'>('forward'),[revision,setRevision]=useState(initial.revision);
+ const heading=useRef<HTMLHeadingElement>(null),errorSummary=useRef<HTMLParagraphElement>(null),serverRevision=useRef(initial.revision),queue=useRef<Promise<void>>(Promise.resolve()),syncFailed=useRef(false);
+ const draft=`study-two-speaker-draft:${run.instrumentVersion}:${access}:${wave}`;
+ const pageIndex=Math.min(page,items.length-1),item=items[pageIndex];
+ useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(draft)||'null');if(saved?.answers&&Number.isInteger(saved.page)&&saved.page>=0&&saved.page<items.length){if(saved.revision===initial.revision){setAnswers(saved.answers);setPage(saved.page);}else{localStorage.setItem(`${draft}:unmerged`,JSON.stringify(saved));}}}catch{setStorageOK(false);}setLoaded(true);},[draft,initial.revision,items.length]);
+ useEffect(()=>{if(!loaded)return;try{localStorage.setItem(draft,JSON.stringify({answers,page,revision}));}catch{setStorageOK(false);}},[draft,loaded,answers,page,revision]);
+ useEffect(()=>{heading.current?.focus({preventScroll:true});},[page,loaded]);
+ useEffect(()=>{if(error)errorSummary.current?.focus();},[error]);
+ function save(nextAnswers:Record<string,Answer>,target:number,complete=false){
+  const task=queue.current.then(async()=>{
+   if(syncFailed.current)throw new Error('Progress could not be saved. Keep your personal link and reload this page before continuing. Your browser draft is retained.');
+   const payload={action:'save',access,role,wave,instrumentVersion:run.instrumentVersion,revision:serverRevision.current,answers:nextAnswers,page:target,complete};
+   let saved:SavedPerson;
+   try{saved=await request(payload);}catch(e){
+    // A lost acknowledgement must not overwrite newer data. Recover only this exact save.
+    const current=await request({action:'status',access,role}).catch(()=>null),f=current?.forms[wave];
+    const canonical=(a:Record<string,Answer>)=>{const normal={...a};if(complete)for(const q of items)if(q.optional&&(normal[q.id]===undefined||normal[q.id]===''))normal[q.id]={missing:'skipped'};return JSON.stringify(Object.fromEntries(Object.entries(normal).sort(([a],[b])=>a.localeCompare(b))));};
+    if(current&&f&&f.page===target&&Boolean(f.completedAt)===complete&&canonical(f.answers)===canonical(nextAnswers))saved=current;else{syncFailed.current=true;throw e;}
+   }
+   serverRevision.current=saved.forms[wave]!.revision;setRevision(serverRevision.current);
+   if(complete){try{localStorage.removeItem(draft);}catch{}onComplete(saved);}
+  });
+  queue.current=task.catch(()=>{});return task;
+ }
+ function goBack(){setDirection('back');setPage(pageIndex-1);setError('');setInvalidId('');window.scrollTo({top:0});void save(answers,pageIndex-1).catch(e=>setError((e as Error).message));}
+ async function next(){let invalid=answerError(item,answers[item.id])?item:undefined;if(!invalid&&pageIndex===items.length-1)invalid=items.find(q=>answerError(q,answers[q.id]));if(invalid){setInvalidId(invalid.id);setError(`${invalid.prompt} ${answerError(invalid,answers[invalid.id])}`);setPage(items.indexOf(invalid));return;}setInvalidId('');setError('');if(pageIndex<items.length-1){setDirection('forward');setPage(pageIndex+1);window.scrollTo({top:0});void save(answers,pageIndex+1).catch(e=>setError((e as Error).message));return;}setBusy(true);try{await save(answers,pageIndex,true);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ return <section className="stage ratings-stage s1-card s1-form" aria-busy={busy}><div className="ratings-stage-deco" aria-hidden="true"><VectorDecoration className="ratings-v1" src="/vector-decoration/profile-vector-new-1.svg" delay="0s" drawDuration="22s" stroke="#F4F3F4" activateImmediately/><VectorDecoration className="ratings-v2" src="/vector-decoration/profile-vector-new-2-open.svg" delay="0s" stroke="#F4F3F4" variant="profile-2-hero"/></div><p className="eyebrow">Panel speakers · {wave==='pre'?'Before':'After'} the conversation</p><div className="step-header s1-step-header"><h1 ref={heading} tabIndex={-1}>{item.section}</h1><p>Think about the issue being discussed. Answer for how you see things now. {wave==='pre'?'Complete this before the conversation.':'Answer now that the conversation is over.'}</p></div><div className="rating-focus-header"><span>Question {pageIndex+1} of {items.length}</span><progress className="s1-progress" value={pageIndex+1} max={items.length} aria-label={`Questionnaire progress: question ${pageIndex+1} of ${items.length}`}/></div><SpeakerQuestion key={item.id} item={item} value={answers[item.id]} index={pageIndex} invalid={invalidId===item.id} motionDirection={direction} onChange={value=>{if(!busy){setAnswers(a=>({...a,[item.id]:value}));setError('');setInvalidId('');}}}/>{error&&<p ref={errorSummary} tabIndex={-1} className="s1-error" role="alert">{error}{invalidId&&<> <a href={`#question-${invalidId}`} onClick={e=>{e.preventDefault();document.getElementById(`question-${invalidId}`)?.focus();}}>Go to question</a></>}</p>}<nav className="actions bf-nav" aria-label="Questionnaire navigation"><button className="secondary" disabled={pageIndex===0||busy||syncFailed.current} onClick={goBack}><ArrowLeft size={18} aria-hidden="true"/>Back</button>{!storageOK&&<span>Keep this page open; draft cannot be saved</span>}<button className="primary" disabled={busy||!loaded||syncFailed.current} onClick={next}>{busy?'Saving…':pageIndex<items.length-1?'Continue':'Save my answers'}{!busy&&<ArrowRight size={18} aria-hidden="true"/>}</button></nav></section>;
+}

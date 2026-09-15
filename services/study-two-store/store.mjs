@@ -1,7 +1,7 @@
 import {mkdir,readFile,open,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
-import {instrumentVersion,SAMPLE,questions} from './instrument.mjs';
+import {instrumentVersion,SAMPLE,SPEAKER_PANEL,questions} from './instrument.mjs';
 export class StudyError extends Error {constructor(message,status=400){super(message);this.status=status;}}
 const fail=(message,status=400)=>{throw new StudyError(message,status);};
 const hash=s=>createHash('sha256').update(s).digest('hex');
@@ -64,7 +64,7 @@ export async function createStore(directory){
     if(existing){if(existing.role!==b.role)fail('This personal key already belongs to another role.',409);return publicRecord(existing);}
     if(b.action==='prepare'&&!admin)fail('Administrator access required.',403);
     if(b.action==='enrol'&&(b.panel!==undefined||b.speakerId!==undefined))fail('Use the panel details from your invitation.');
-    const panel=panelInput(b.action==='prepare'?b.panel:SAMPLE);
+    const panel=panelInput(b.action==='prepare'?b.panel:b.role==='speaker'?SPEAKER_PANEL:SAMPLE);
     const speakerId=b.role==='speaker'?(b.action==='prepare'?b.speakerId:panel.speakers[0].id):undefined;
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
     const targetSpeakerId=b.role==='speaker'?(b.action==='prepare'?b.targetSpeakerId:panel.speakers.find(s=>s.id!==speakerId).id):undefined;

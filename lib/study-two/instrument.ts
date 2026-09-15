@@ -1,5 +1,5 @@
 export const VERSION = 'study-two-review-v1-2026-09-10';
-export const SPEAKER_VERSION = 'study-two-speaker-review-v2-2026-09-15';
+export const SPEAKER_VERSION = 'study-two-speaker-review-v3-2026-09-15';
 export const instrumentVersion = (role:Role) => role === 'speaker' ? SPEAKER_VERSION : VERSION;
 export type Role = 'speaker' | 'audience';
 export type Wave = 'pre' | 'post';
@@ -7,6 +7,8 @@ export type Answer = number | string | {missing:'prefer_not'|'cannot_assess'|'ca
 export type Question = {id:string;prompt:string;section:string;type:'continuous'|'text'|'single'|'rating';min?:number;max?:number;low?:string;high?:string;bands?:string[];options?:string[];target?:string;optional?:boolean;cannot?:'cannot_assess'|'cannot_estimate'|'dont_know'};
 export type Panel = {id:string;title:string;proposition:string;speakers:{id:string;name:string}[]};
 export const SAMPLE:Panel = {id:'sample-panel',title:'Who should shape our town?',proposition:'Residents should have the final say on major changes to their town.',speakers:[{id:'speaker-a',name:'Speaker A'},{id:'speaker-b',name:'Speaker B'},{id:'speaker-c',name:'Speaker C'}]};
+// Neutral inspection context only. Real named panels are prepared through protected setup.
+export const SPEAKER_PANEL:Panel = {...SAMPLE,id:'speaker-panel',title:'Panel conversation',proposition:'The issue being discussed'};
 const agreement=['Strongly disagree','Somewhat disagree','Neither agree nor disagree','Somewhat agree','Strongly agree'];
 const support=['Strongly oppose','Lean against','Neither oppose nor support','Lean towards','Strongly support'];
 const extent=['Not at all','A little','Somewhat','Very well','Extremely well'];
@@ -16,100 +18,109 @@ export const SPEAKER_ITEMS:Question[] = [
     "id": "S2S_V2_01",
     "prompt": "I actively look for something in an opposing view that could expand my understanding.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_02",
     "prompt": "I can remain curious about someone’s reasons even when I strongly disagree with their position.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_03",
     "prompt": "I am prepared for my own position on this issue to change.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_04",
     "prompt": "During disagreement, I find myself preparing my response rather than fully listening.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_05",
     "prompt": "Changing my position during a disagreement would feel like losing.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_06",
     "prompt": "A disagreement can be successful if my understanding expands, even when my position stays the same.",
     "section": "A. How I approach conflict",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_07",
     "prompt": "There are important aspects of this issue that I may not yet see.",
     "section": "B. How I understand the issue",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_08",
     "prompt": "Addressing this issue involves trade-offs between things that matter.",
     "section": "B. How I understand the issue",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_09",
     "prompt": "My current position on this issue feels important to who I am.",
     "section": "B. How I understand the issue",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_10",
@@ -122,100 +133,109 @@ export const SPEAKER_ITEMS:Question[] = [
     "id": "S2S_V2_11",
     "prompt": "I feel positive about myself right now.",
     "section": "C. How I feel about myself and the future",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_12",
     "prompt": "I feel hopeful about people’s ability to work through serious disagreements.",
     "section": "C. How I feel about myself and the future",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_13",
     "prompt": "I can see a workable way forward on this issue.",
     "section": "C. How I feel about myself and the future",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_14",
     "prompt": "I understand why [name] holds their position on this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_15",
     "prompt": "My impression of [name] goes beyond their position on this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_16",
     "prompt": "I believe [name] wants good outcomes for the people affected by this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_17",
     "prompt": "I consider [name] knowledgeable about this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_18",
     "prompt": "[Name] and I favour similar approaches to addressing this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_19",
     "prompt": "[Name] and I share underlying concerns about this issue.",
     "section": "D. How I perceive another panellist",
-    "type": "rating",
-    "min": 1,
-    "max": 7,
+    "type": "continuous",
+    "min": 0,
+    "max": 100,
+    "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
     "low": "Strongly disagree",
     "high": "Strongly agree",
-    "cannot": "dont_know"
+    "cannot": "cannot_assess"
   },
   {
     "id": "S2S_V2_20",

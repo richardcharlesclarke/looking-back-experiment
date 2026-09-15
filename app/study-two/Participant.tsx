@@ -2,11 +2,15 @@
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import ContinuousOrb from './ContinuousOrb';
+import SpeakerParticipant from './SpeakerParticipant';
 import {SAMPLE,instrumentVersion,questions,type Answer,type Role,type Wave} from '@/lib/study-two/instrument';
 import type {SavedPerson} from '@/lib/study-two/types';
 function newAccess(){return Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');}
 async function request(body:Record<string,unknown>):Promise<SavedPerson>{const response=await fetch('/study-two/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});const data=await response.json();if(!response.ok)throw new Error(data.error??'Saving failed. Please try again.');return data;}
-export default function Participant({role,wave}:{role:Role;wave:Wave}){
+export default function Participant(props:{role:Role;wave:Wave}){
+ return props.role==='speaker'?<SpeakerParticipant wave={props.wave}/>:<ExistingParticipant {...props}/>;
+}
+function ExistingParticipant({role,wave}:{role:Role;wave:Wave}){
  const [run,setRun]=useState<SavedPerson|null>(null),[access,setAccess]=useState(''),[loaded,setLoaded]=useState(false),[begun,setBegun]=useState(false),[error,setError]=useState(''),[invalid,setInvalid]=useState(false),[busy,setBusy]=useState(false),[copied,setCopied]=useState(false);
  const heading=useRef<HTMLHeadingElement>(null);
  useEffect(()=>{let cancelled=false;async function load(){let key=new URLSearchParams(location.hash.slice(1)).get('access')??'';try{if(!key)key=localStorage.getItem(`study-two-return:${role}`)??'';}catch{}if(key){setAccess(key);history.replaceState(null,'',`${location.pathname}#access=${key}`);try{const found=await request({action:'status',access:key,role});if(!cancelled){setRun(found);setBegun(Boolean(found.forms[wave]));}}catch(e){if(!cancelled){setInvalid(true);setError((e as Error).message);}}}else if(wave==='post'){setInvalid(true);setError('Use the personal link from your before questionnaire to continue after the panel.');}if(!cancelled)setLoaded(true);}void load();return()=>{cancelled=true;};},[role,wave]);

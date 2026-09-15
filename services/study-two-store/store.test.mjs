@@ -1,3 +1,4 @@
+import {execFileSync} from 'node:child_process';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile} from 'node:fs/promises';
@@ -22,7 +23,7 @@ test('both roles: restart recovery, exact matching, zero, idempotent retries and
   p=await store.action({...base,action:'status'});assert.deepEqual(p.forms.pre.answers,answers);
   const final={...draft,revision:1,page:p.questionnaires.pre.length-1,complete:true};p=await store.action(final);
   assert(p.forms.pre.completedAt);assert.equal((await store.action(final)).duplicate,true);
-  await assert.rejects(store.action({...final,answers:{...answers,[p.questionnaires.pre[0].id]:100}}),/already saved|outside/);
+  await assert.rejects(store.action({...final,answers:{...answers,[p.questionnaires.pre[0].id]:101}}),/already saved|outside/);
   p=await store.action({...base,action:'start',wave:'post'});
   p=await store.action({...base,action:'save',wave:'post',revision:0,page:p.questionnaires.post.length-1,complete:true,answers:complete(p.questionnaires.post)});
   for(const q of p.questionnaires.pre){const after=p.questionnaires.post.find(x=>x.id===q.id);if(after)assert.deepEqual(after,q);}
@@ -36,7 +37,7 @@ test('both roles: restart recovery, exact matching, zero, idempotent retries and
 test('reject invalid input, wrong versions, stale concurrent saves and unauthorised export',async()=>{
  const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-validation-'))),base={role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker')};const p=await store.action({...base,action:'enrol'});
  const save={...base,action:'save',wave:'pre',revision:0,page:1,complete:false};
- for(const answers of [{S2S_V2_01:0},{S2S_V2_01:1.5},{S2S_V2_01:8},{fake:1},{S2S_V2_01:-1},{S2S_V2_01:101},{S2S_V2_01:'0'},{S2S_V2_01:{missing:'cannot_assess'}},{S2S_V2_10:'x'.repeat(3001)}])await assert.rejects(store.action({...save,answers}));
+ for(const answers of [{fake:1},{S2S_V2_01:-1},{S2S_V2_01:101},{S2S_V2_01:'0'},{S2S_V2_01:{missing:'dont_know'}},{S2S_V2_10:'x'.repeat(3001)}])await assert.rejects(store.action({...save,answers}));
  await assert.rejects(store.action({...save,answers:{},complete:true}));
  await assert.rejects(store.action({...save,answers:{S2S_V2_01:1},instrumentVersion:'wrong'}),/version/);
  await assert.rejects(store.action({action:'export'}),/Administrator/);
@@ -74,7 +75,20 @@ test('uncertainty, named target validation and scale bounds survive export',asyn
  const base={role:'speaker',access,instrumentVersion:instrumentVersion('speaker')};
  await assert.rejects(store.action({...base,action:'prepare',panel:SAMPLE,speakerId:'speaker-a',targetSpeakerId:'speaker-a'},true),/different panellist/);
  let p=await store.action({...base,action:'enrol'});const answers=complete(p.questionnaires.pre);
- answers.S2S_V2_01={missing:'dont_know'};answers.S2S_V2_02=7;answers.S2S_V2_10='Trade-offs in both directions.';
+ answers.S2S_V2_01={missing:'cannot_assess'};answers.S2S_V2_02=37.125;answers.S2S_V2_10='Trade-offs in both directions.';
  p=await store.action({...base,action:'save',wave:'pre',revision:0,page:19,complete:true,answers});
  const exported=await store.action({action:'export'},true);assert.deepEqual(exported.records[0].forms.pre.answers,answers);assert.equal(p.questionnaires.pre[13].target,'speaker-b');
+});
+
+test('seven-point v2 speaker records remain seven-point through v3 deployment',async()=>{
+ const prior=await import('data:text/javascript;base64,'+Buffer.from(execFileSync('git',['show','32736f0:services/study-two-store/instrument.mjs'],{encoding:'utf8'})).toString('base64'));
+ const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-v2-')),access=key();let store=await createStore(dir);
+ await store.action({action:'enrol',role:'speaker',access,instrumentVersion:instrumentVersion('speaker')});
+ const file=path.join(dir,'state.json'),state=JSON.parse(await readFile(file,'utf8')),p=state.people[0];
+ p.instrumentVersion=prior.SPEAKER_VERSION;p.questionnaires={pre:prior.questions(SAMPLE,'speaker','pre','speaker-a'),post:prior.questions(SAMPLE,'speaker','post','speaker-a')};await writeFile(file,JSON.stringify(state));store=await createStore(dir);
+ const base={role:'speaker',access,instrumentVersion:prior.SPEAKER_VERSION};const answers=complete(p.questionnaires.pre);answers.S2S_V2_01=7;answers.S2S_V2_02={missing:'dont_know'};
+ await store.action({...base,action:'save',wave:'pre',revision:0,page:19,complete:true,answers});await store.action({...base,action:'start',wave:'post'});
+ await assert.rejects(store.action({...base,action:'save',wave:'post',revision:0,page:19,complete:true,answers:{...answers,S2S_V2_01:37.125}}),/outside/);
+ const done=await store.action({...base,action:'save',wave:'post',revision:0,page:19,complete:true,answers});
+ assert.equal(done.forms.post.answers.S2S_V2_01,7);assert.equal(done.instrumentVersion,prior.SPEAKER_VERSION);assert.deepEqual(done.questionnaires.pre,p.questionnaires.pre);
 });
