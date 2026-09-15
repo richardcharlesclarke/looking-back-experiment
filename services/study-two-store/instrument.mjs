@@ -1,35 +1,244 @@
 // Generated from lib/study-two/instrument.ts by scripts/sync-study-two-service.mjs.
 export const VERSION = 'study-two-review-v1-2026-09-10';
+export const SPEAKER_VERSION = 'study-two-speaker-review-v2-2026-09-15';
+export const instrumentVersion = (role) => role === 'speaker' ? SPEAKER_VERSION : VERSION;
 export const SAMPLE = { id: 'sample-panel', title: 'Who should shape our town?', proposition: 'Residents should have the final say on major changes to their town.', speakers: [{ id: 'speaker-a', name: 'Speaker A' }, { id: 'speaker-b', name: 'Speaker B' }, { id: 'speaker-c', name: 'Speaker C' }] };
 const agreement = ['Strongly disagree', 'Somewhat disagree', 'Neither agree nor disagree', 'Somewhat agree', 'Strongly agree'];
 const support = ['Strongly oppose', 'Lean against', 'Neither oppose nor support', 'Lean towards', 'Strongly support'];
 const extent = ['Not at all', 'A little', 'Somewhat', 'Very well', 'Extremely well'];
 function scale(id, prompt, section, bands = agreement, max = 100) { return { id, prompt, section, type: 'continuous', max, bands }; }
-export function questions(panel, role, wave, speakerId) {
-    const p = role === 'speaker' ? 'S2S' : 'S2A';
-    const out = role === 'speaker' ? [
-        scale('S2S_OPEN', 'I can see ways in which my current view on this issue may be incomplete.', 'How you approach this discussion'),
-        scale('S2S_CURIOUS', 'I want to understand why the other speakers see this issue as they do.', 'How you approach this discussion'),
-        scale('S2S_REVISE', 'I am willing to say publicly where an argument leads me to qualify my view.', 'How you approach this discussion'),
-        scale('S2S_RESPECT', 'I can take the other speakers’ reasons seriously even when I disagree with their conclusions.', 'How you approach this discussion'),
-        scale('S2S_ABLE', 'How able do you feel to keep a difficult discussion focused on the issue when someone challenges you?', 'How you approach this discussion', ['Not at all able', 'Slightly able', 'Somewhat able', 'Very able', 'Extremely able'])
-    ] : [];
-    out.push(scale(p + '_POSITION', `To what extent do you support this claim: “${panel.proposition}”`, 'Your view', support, 10), scale(p + '_CONFIDENCE', `How confident are you in your position on this claim: “${panel.proposition}”`, 'Your view', ['Not at all confident', 'Slightly confident', 'Somewhat confident', 'Very confident', 'Completely confident'], 10), scale(p + '_UNDERSTANDING', `How well do you understand the strongest reasons for a view different from yours on this claim: “${panel.proposition}”`, 'Understanding another view', extent, 10));
-    if (role === 'speaker') {
-        for (const speaker of panel.speakers.filter(s => s.id !== speakerId))
-            out.push({ ...scale('S2S_PREDICT_' + speaker.id, `Where do you think ${speaker.name} stands on this claim: “${panel.proposition}”`, 'Understanding another view', support, 10), target: speaker.id, cannot: 'cannot_estimate' });
-        out.push({ id: 'S2S_REASON', prompt: `What is the strongest reason someone might disagree with your position on this claim: “${panel.proposition}”`, section: 'Understanding another view', type: 'text', optional: true });
+export const SPEAKER_ITEMS = [
+    {
+        "id": "S2S_V2_01",
+        "prompt": "I actively look for something in an opposing view that could expand my understanding.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_02",
+        "prompt": "I can remain curious about someone’s reasons even when I strongly disagree with their position.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_03",
+        "prompt": "I am prepared for my own position on this issue to change.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_04",
+        "prompt": "During disagreement, I find myself preparing my response rather than fully listening.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_05",
+        "prompt": "Changing my position during a disagreement would feel like losing.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_06",
+        "prompt": "A disagreement can be successful if my understanding expands, even when my position stays the same.",
+        "section": "A. How I approach conflict",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_07",
+        "prompt": "There are important aspects of this issue that I may not yet see.",
+        "section": "B. How I understand the issue",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_08",
+        "prompt": "Addressing this issue involves trade-offs between things that matter.",
+        "section": "B. How I understand the issue",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_09",
+        "prompt": "My current position on this issue feels important to who I am.",
+        "section": "B. How I understand the issue",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_10",
+        "prompt": "What are the main considerations that shape how you currently see this issue? Where, if anywhere, do they pull in different directions?",
+        "section": "B. How I understand the issue",
+        "type": "text",
+        "optional": true
+    },
+    {
+        "id": "S2S_V2_11",
+        "prompt": "I feel positive about myself right now.",
+        "section": "C. How I feel about myself and the future",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_12",
+        "prompt": "I feel hopeful about people’s ability to work through serious disagreements.",
+        "section": "C. How I feel about myself and the future",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_13",
+        "prompt": "I can see a workable way forward on this issue.",
+        "section": "C. How I feel about myself and the future",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_14",
+        "prompt": "I understand why [name] holds their position on this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_15",
+        "prompt": "My impression of [name] goes beyond their position on this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_16",
+        "prompt": "I believe [name] wants good outcomes for the people affected by this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_17",
+        "prompt": "I consider [name] knowledgeable about this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_18",
+        "prompt": "[Name] and I favour similar approaches to addressing this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_19",
+        "prompt": "[Name] and I share underlying concerns about this issue.",
+        "section": "D. How I perceive another panellist",
+        "type": "rating",
+        "min": 1,
+        "max": 7,
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "dont_know"
+    },
+    {
+        "id": "S2S_V2_20",
+        "prompt": "What do you currently think explains [name]’s position on this issue? Say what you are unsure about, too.",
+        "section": "D. How I perceive another panellist",
+        "type": "text",
+        "optional": true
     }
-    else if (wave === 'pre')
+];
+export function questions(panel, role, wave, speakerId, targetSpeakerId) {
+    if (role === 'speaker') {
+        const target = panel.speakers.find(s => s.id === targetSpeakerId && s.id !== speakerId) ?? panel.speakers.find(s => s.id !== speakerId);
+        if (!target)
+            throw new Error('A different panellist is required.');
+        return SPEAKER_ITEMS.map(q => q.prompt.match(/\[name\]/i) ? { ...q, prompt: q.prompt.replace(/\[name\]/gi, target.name), target: target.id } : { ...q });
+    }
+    const p = 'S2A';
+    const out = [];
+    out.push(scale(p + '_POSITION', `To what extent do you support this claim: “${panel.proposition}”`, 'Your view', support, 10), scale(p + '_CONFIDENCE', `How confident are you in your position on this claim: “${panel.proposition}”`, 'Your view', ['Not at all confident', 'Slightly confident', 'Somewhat confident', 'Very confident', 'Completely confident'], 10), scale(p + '_UNDERSTANDING', `How well do you understand the strongest reasons for a view different from yours on this claim: “${panel.proposition}”`, 'Understanding another view', extent, 10));
+    if (wave === 'pre')
         out.push(scale('S2A_FAMILIAR', 'How familiar are you with the subject of this panel?', 'Before the panel', ['Not at all familiar', 'Slightly familiar', 'Somewhat familiar', 'Very familiar', 'Extremely familiar'], 10), scale('S2A_IMPORTANCE', 'How much does this issue matter to you personally?', 'Before the panel', ['Not at all', 'A little', 'Somewhat', 'A lot', 'Extremely'], 10));
     if (wave === 'post') {
-        const process = role === 'speaker' ? [
-            ['UNDERSTOOD', 'The discussion helped me understand another speaker’s reasons more clearly.'], ['QUALIFIED', 'I qualified or refined a claim because of something another speaker said.'], ['NEW', 'The discussion produced a useful question, distinction or possibility that I had not considered before.'], ['RESPECTED', 'I felt respected when other speakers challenged me.'], ['CONTINUE', 'I would be willing to continue this discussion with these speakers.']
-        ] : [['RESPONDED', 'The speakers responded to one another’s reasons.'], ['QUALIFIED', 'At least one speaker qualified or refined a claim in response to another speaker.'], ['UNDERSTOOD', 'The discussion helped me understand why people hold different views on this issue.'], ['NEW', 'The discussion gave me a useful question, distinction or possibility I had not considered before.'], ['RESPECT', 'The speakers treated one another with respect when they disagreed.']];
-        out.push(...process.map(([id, prompt]) => ({ ...scale(p + '_POST_' + id, prompt, role === 'speaker' ? 'The discussion' : 'What you heard'), cannot: 'cannot_assess' })));
+        const process = [['RESPONDED', 'The speakers responded to one another’s reasons.'], ['QUALIFIED', 'At least one speaker qualified or refined a claim in response to another speaker.'], ['UNDERSTOOD', 'The discussion helped me understand why people hold different views on this issue.'], ['NEW', 'The discussion gave me a useful question, distinction or possibility I had not considered before.'], ['RESPECT', 'The speakers treated one another with respect when they disagreed.']];
+        out.push(...process.map(([id, prompt]) => ({ ...scale(p + '_POST_' + id, prompt, 'What you heard'), cannot: 'cannot_assess' })));
         if (role === 'audience')
             out.push({ id: 'S2A_CLOSEST', prompt: 'Which speaker’s position was closest to yours?', section: 'What you heard', type: 'single', options: [...panel.speakers.map(s => s.name), 'None of these speakers', 'Not sure'] });
-        out.push({ id: p + '_NEW_EXAMPLE', prompt: role === 'speaker' ? 'What did the discussion help you see or say differently, if anything?' : 'What is one idea or question from the panel that you had not considered before, if any?', section: 'In your own words', type: 'text', optional: true });
+        out.push({ id: p + '_NEW_EXAMPLE', prompt: 'What is one idea or question from the panel that you had not considered before, if any?', section: 'In your own words', type: 'text', optional: true });
     }
     return out;
 }

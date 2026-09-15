@@ -5,13 +5,13 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {createStore} from './store.mjs';
-import {VERSION,SAMPLE} from './instrument.mjs';
+import {VERSION,SAMPLE,instrumentVersion} from './instrument.mjs';
 const key=()=>randomBytes(32).toString('hex');
-const complete=items=>Object.fromEntries(items.map(q=>[q.id,q.type==='continuous'?0:q.type==='text'?{missing:'skipped'}:q.options[0]]));
+const complete=items=>Object.fromEntries(items.map(q=>[q.id,q.type==='rating'?1:q.type==='continuous'?0:q.type==='text'?{missing:'skipped'}:q.options[0]]));
 test('both roles: restart recovery, exact matching, zero, idempotent retries and immutable final answers',async()=>{
  for(const role of ['speaker','audience']){
   const directory=await mkdtemp(path.join(os.tmpdir(),'study-two-test-')),access=key();let store=await createStore(directory);
-  const base={access,role,instrumentVersion:VERSION};let p=await store.action({...base,action:'enrol',testLabel:'automated-persistence-test'});
+  const base={access,role,instrumentVersion:instrumentVersion(role)};let p=await store.action({...base,action:'enrol',testLabel:'automated-persistence-test'});
   assert.equal((await store.action({...base,action:'enrol'})).id,p.id);
   await assert.rejects(store.action({...base,action:'start',wave:'post'}),/Complete the before/);
   const answers=complete(p.questionnaires.pre),draft={...base,action:'save',wave:'pre',revision:0,answers,page:1,complete:false};
@@ -34,20 +34,20 @@ test('both roles: restart recovery, exact matching, zero, idempotent retries and
  }
 });
 test('reject invalid input, wrong versions, stale concurrent saves and unauthorised export',async()=>{
- const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-validation-'))),base={role:'speaker',access:key(),instrumentVersion:VERSION};const p=await store.action({...base,action:'enrol'});
+ const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-validation-'))),base={role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker')};const p=await store.action({...base,action:'enrol'});
  const save={...base,action:'save',wave:'pre',revision:0,page:1,complete:false};
- for(const answers of [{fake:1},{S2S_OPEN:-1},{S2S_OPEN:101},{S2S_OPEN:'0'},{S2S_OPEN:{missing:'cannot_assess'}},{S2S_REASON:'x'.repeat(3001)}])await assert.rejects(store.action({...save,answers}));
+ for(const answers of [{S2S_V2_01:0},{S2S_V2_01:1.5},{S2S_V2_01:8},{fake:1},{S2S_V2_01:-1},{S2S_V2_01:101},{S2S_V2_01:'0'},{S2S_V2_01:{missing:'cannot_assess'}},{S2S_V2_10:'x'.repeat(3001)}])await assert.rejects(store.action({...save,answers}));
  await assert.rejects(store.action({...save,answers:{},complete:true}));
- await assert.rejects(store.action({...save,answers:{S2S_OPEN:0},instrumentVersion:'wrong'}),/version/);
+ await assert.rejects(store.action({...save,answers:{S2S_V2_01:1},instrumentVersion:'wrong'}),/version/);
  await assert.rejects(store.action({action:'export'}),/Administrator/);
- const outcomes=await Promise.allSettled([store.action({...save,answers:{S2S_OPEN:0}}),store.action({...save,answers:{S2S_OPEN:50}})]);
+ const outcomes=await Promise.allSettled([store.action({...save,answers:{S2S_V2_01:1}}),store.action({...save,answers:{S2S_V2_01:7}})]);
  assert.equal(outcomes.filter(r=>r.status==='fulfilled').length,1);assert.equal(outcomes.filter(r=>r.status==='rejected').length,1);
- assert.equal((await store.action({...base,action:'status'})).forms.pre.answers.S2S_OPEN,0);
+ assert.equal((await store.action({...base,action:'status'})).forms.pre.answers.S2S_V2_01,1);
  assert(p.questionnaires.pre.some(q=>q.target==='speaker-b'));
 });
 test('panel setup is protected, stable across people and frozen within a person',async()=>{
  const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-panels-')));
- const b={action:'prepare',role:'speaker',access:key(),instrumentVersion:VERSION,panel:SAMPLE,speakerId:'speaker-b'};
+ const b={action:'prepare',role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker'),panel:SAMPLE,speakerId:'speaker-b',targetSpeakerId:'speaker-a'};
  await assert.rejects(store.action(b),/Administrator/);const p=await store.action(b,true);assert.deepEqual(p.forms,{});const begun=await store.action({...b,action:'start',wave:'pre'});assert(begun.forms.pre.startedAt);const p2=await store.action({...b,access:key()},true);assert.equal(p.panel.id,p2.panel.id);assert.notEqual(p.id,p2.id);const ordinary=await store.action({action:'enrol',role:'audience',access:key(),instrumentVersion:VERSION});assert.equal(ordinary.panel.id,p.panel.id);
  assert(!p.questionnaires.pre.some(q=>q.target==='speaker-b'));
  const edited=await store.action({...b,access:key(),panel:{...SAMPLE,proposition:'Another claim.'}},true);assert.notEqual(p.panel.id,edited.panel.id);
@@ -55,4 +55,26 @@ test('panel setup is protected, stable across people and frozen within a person'
 });
 test('corrupt storage fails closed instead of replacing saved responses',async()=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-corruption-'));await writeFile(path.join(dir,'state.json'),'not json');await assert.rejects(createStore(dir));assert.equal(await readFile(path.join(dir,'state.json'),'utf8'),'not json');
+});
+test('old saved speaker questionnaires retain their version, zero scale and post form',async()=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-legacy-')),access=key();let store=await createStore(dir);
+ let p=await store.action({action:'enrol',role:'speaker',access,instrumentVersion:instrumentVersion('speaker')});
+ const filename=path.join(dir,'state.json'),state=JSON.parse(await readFile(filename,'utf8'));
+ const legacyQuestion={id:'S2S_OPEN',prompt:'Legacy wording',section:'Legacy',type:'continuous',max:100};
+ state.people[0].instrumentVersion=VERSION;state.people[0].questionnaires={pre:[legacyQuestion],post:[legacyQuestion]};
+ await writeFile(filename,JSON.stringify(state));store=await createStore(dir);
+ const base={access,role:'speaker',instrumentVersion:VERSION};
+ p=await store.action({...base,action:'save',wave:'pre',revision:0,page:0,complete:true,answers:{S2S_OPEN:0}});
+ p=await store.action({...base,action:'start',wave:'post'});
+ p=await store.action({...base,action:'save',wave:'post',revision:0,page:0,complete:true,answers:{S2S_OPEN:0}});
+ assert.equal(p.instrumentVersion,VERSION);assert.deepEqual(p.questionnaires.post,[legacyQuestion]);assert.equal(p.forms.post.answers.S2S_OPEN,0);
+});
+test('uncertainty, named target validation and scale bounds survive export',async()=>{
+ const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-scale-'))),access=key();
+ const base={role:'speaker',access,instrumentVersion:instrumentVersion('speaker')};
+ await assert.rejects(store.action({...base,action:'prepare',panel:SAMPLE,speakerId:'speaker-a',targetSpeakerId:'speaker-a'},true),/different panellist/);
+ let p=await store.action({...base,action:'enrol'});const answers=complete(p.questionnaires.pre);
+ answers.S2S_V2_01={missing:'dont_know'};answers.S2S_V2_02=7;answers.S2S_V2_10='Trade-offs in both directions.';
+ p=await store.action({...base,action:'save',wave:'pre',revision:0,page:19,complete:true,answers});
+ const exported=await store.action({action:'export'},true);assert.deepEqual(exported.records[0].forms.pre.answers,answers);assert.equal(p.questionnaires.pre[13].target,'speaker-b');
 });

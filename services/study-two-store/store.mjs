@@ -1,7 +1,7 @@
 import {mkdir,readFile,open,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
-import {VERSION,SAMPLE,questions} from './instrument.mjs';
+import {instrumentVersion,SAMPLE,questions} from './instrument.mjs';
 export class StudyError extends Error {constructor(message,status=400){super(message);this.status=status;}}
 const fail=(message,status=400)=>{throw new StudyError(message,status);};
 const hash=s=>createHash('sha256').update(s).digest('hex');
@@ -29,7 +29,8 @@ export function validateAnswers(items,raw,complete){
    if(Object.keys(value).length!==1||!permitted.includes(value.missing))fail('This missing-answer choice does not fit the question.');
    answers[q.id]={missing:value.missing};continue;
   }
-  if(q.type==='continuous'){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>q.max)fail('A numeric answer is outside its response scale.');}
+  if(q.type==='rating'){if(typeof value!=='number'||!Number.isInteger(value)||value<q.min||value>q.max)fail('A numeric answer is outside its response scale.');}
+  else if(q.type==='continuous'){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>q.max)fail('A numeric answer is outside its response scale.');}
   else if(q.type==='single'){if(typeof value!=='string'||!q.options.includes(value))fail('Choose one of the listed answers.');}
   else if(typeof value!=='string'||value.length>3000)fail('A written answer is too long or invalid.');
   answers[q.id]=value;
@@ -58,7 +59,7 @@ export async function createStore(directory){
    if(b.action==='export'){if(!admin)fail('Administrator access required.',403);return transaction(data=>({schema:1,exportedAt:new Date().toISOString(),records:data.people.map(publicRecord)}),false);}
    if(b.action==='enrol'||b.action==='prepare')return transaction(data=>{
     checkRole(b.role);if(!keyValid(b.access))fail('A secure personal key is required.');
-    if(b.instrumentVersion!==VERSION)fail('Reopen the current questionnaire before starting.',409);
+    if(b.instrumentVersion!==instrumentVersion(b.role))fail('Reopen the current questionnaire before starting.',409);
     const existing=data.people.find(p=>p.accessHash===hash(b.access));
     if(existing){if(existing.role!==b.role)fail('This personal key already belongs to another role.',409);return publicRecord(existing);}
     if(b.action==='prepare'&&!admin)fail('Administrator access required.',403);
@@ -66,7 +67,9 @@ export async function createStore(directory){
     const panel=panelInput(b.action==='prepare'?b.panel:SAMPLE);
     const speakerId=b.role==='speaker'?(b.action==='prepare'?b.speakerId:panel.speakers[0].id):undefined;
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
-    const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:VERSION,isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId),post:questions(panel,b.role,'post',speakerId)},forms:{}};
+    const targetSpeakerId=b.role==='speaker'?(b.action==='prepare'?b.targetSpeakerId:panel.speakers.find(s=>s.id!==speakerId).id):undefined;
+    if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===targetSpeakerId&&s.id!==speakerId))fail('Choose a different panellist for section D.');
+    const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:instrumentVersion(b.role),isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId,targetSpeakerId),post:questions(panel,b.role,'post',speakerId,targetSpeakerId)},forms:{}};
     if(b.action==='enrol')start(p,'pre');data.people.push(p);return publicRecord(p);
    });
    checkRole(b.role);
