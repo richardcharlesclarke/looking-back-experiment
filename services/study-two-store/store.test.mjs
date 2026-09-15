@@ -8,7 +8,7 @@ import {randomBytes} from 'node:crypto';
 import {createStore} from './store.mjs';
 import {VERSION,SAMPLE,instrumentVersion} from './instrument.mjs';
 const key=()=>randomBytes(32).toString('hex');
-const complete=items=>Object.fromEntries(items.map(q=>[q.id,q.type==='rating'?1:q.type==='continuous'?0:q.type==='text'?{missing:'skipped'}:q.options[0]]));
+const complete=items=>Object.fromEntries(items.map(q=>[q.id,q.type==='rating'?1:q.type==='continuous'?0:q.type==='text'?(q.optional?{missing:'skipped'}:'Synthetic verification response'):q.options[0]]));
 test('both roles: restart recovery, exact matching, zero, idempotent retries and immutable final answers',async()=>{
  for(const role of ['speaker','audience']){
   const directory=await mkdtemp(path.join(os.tmpdir(),'study-two-test-')),access=key();let store=await createStore(directory);
@@ -44,7 +44,7 @@ test('reject invalid input, wrong versions, stale concurrent saves and unauthori
  const outcomes=await Promise.allSettled([store.action({...save,answers:{S2S_V2_01:1}}),store.action({...save,answers:{S2S_V2_01:7}})]);
  assert.equal(outcomes.filter(r=>r.status==='fulfilled').length,1);assert.equal(outcomes.filter(r=>r.status==='rejected').length,1);
  assert.equal((await store.action({...base,action:'status'})).forms.pre.answers.S2S_V2_01,1);
- assert(p.questionnaires.pre.some(q=>q.target==='speaker-b'));
+ assert(p.questionnaires.pre.every(q=>!q.target));
 });
 test('panel setup is protected, stable across people and frozen within a person',async()=>{
  const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-panels-')));
@@ -73,11 +73,11 @@ test('old saved speaker questionnaires retain their version, zero scale and post
 test('uncertainty, named target validation and scale bounds survive export',async()=>{
  const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-scale-'))),access=key();
  const base={role:'speaker',access,instrumentVersion:instrumentVersion('speaker')};
- await assert.rejects(store.action({...base,action:'prepare',panel:SAMPLE,speakerId:'speaker-a',targetSpeakerId:'speaker-a'},true),/different panellist/);
+
  let p=await store.action({...base,action:'enrol'});const answers=complete(p.questionnaires.pre);
  answers.S2S_V2_01={missing:'cannot_assess'};answers.S2S_V2_02=37.125;answers.S2S_V2_10='Trade-offs in both directions.';
  p=await store.action({...base,action:'save',wave:'pre',revision:0,page:19,complete:true,answers});
- const exported=await store.action({action:'export'},true);assert.deepEqual(exported.records[0].forms.pre.answers,answers);assert.equal(p.questionnaires.pre[13].target,'speaker-b');
+ const exported=await store.action({action:'export'},true);assert.deepEqual(exported.records[0].forms.pre.answers,answers);assert(p.questionnaires.pre.every(q=>!q.target));
 });
 
 test('seven-point v2 speaker records remain seven-point through v3 deployment',async()=>{
@@ -91,4 +91,18 @@ test('seven-point v2 speaker records remain seven-point through v3 deployment',a
  await assert.rejects(store.action({...base,action:'save',wave:'post',revision:0,page:19,complete:true,answers:{...answers,S2S_V2_01:37.125}}),/outside/);
  const done=await store.action({...base,action:'save',wave:'post',revision:0,page:19,complete:true,answers});
  assert.equal(done.forms.post.answers.S2S_V2_01,7);assert.equal(done.instrumentVersion,prior.SPEAKER_VERSION);assert.deepEqual(done.questionnaires.pre,p.questionnaires.pre);
+});
+
+test('v3 twenty-question snapshots survive the 21/25 release and restart',async()=>{
+ const prior=await import('data:text/javascript;base64,'+Buffer.from(execFileSync('git',['show','d826dc1:services/study-two-store/instrument.mjs'],{encoding:'utf8'})).toString('base64'));
+ const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-v3-')),access=key();let store=await createStore(dir);
+ await store.action({action:'enrol',role:'speaker',access,instrumentVersion:instrumentVersion('speaker')});
+ const file=path.join(dir,'state.json'),state=JSON.parse(await readFile(file,'utf8')),p=state.people[0];
+ p.instrumentVersion=prior.SPEAKER_VERSION;p.questionnaires={pre:prior.questions(SAMPLE,'speaker','pre','speaker-a'),post:prior.questions(SAMPLE,'speaker','post','speaker-a')};await writeFile(file,JSON.stringify(state));store=await createStore(dir);
+ const base={role:'speaker',access,instrumentVersion:prior.SPEAKER_VERSION};
+ await store.action({...base,action:'save',wave:'pre',revision:0,page:19,complete:true,answers:complete(p.questionnaires.pre)});await store.action({...base,action:'start',wave:'post'});
+ await store.action({...base,action:'save',wave:'post',revision:0,page:19,complete:true,answers:complete(p.questionnaires.post)});store=await createStore(dir);
+ const done=await store.action({...base,action:'status'});assert.deepEqual(done.questionnaires,p.questionnaires);assert(done.forms.post.completedAt);assert.equal(done.instrumentVersion,prior.SPEAKER_VERSION);
+ const fresh=await store.action({action:'enrol',role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker')});assert.equal(fresh.questionnaires.pre.length,21);assert.equal(fresh.questionnaires.post.length,25);
+ await store.action({action:'save',role:'speaker',access:base.access,instrumentVersion:prior.SPEAKER_VERSION,wave:'post',revision:1,page:19,complete:true,answers:complete(p.questionnaires.post)});
 });

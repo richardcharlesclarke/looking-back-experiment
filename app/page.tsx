@@ -26,18 +26,15 @@ const experiments = [
     status: "Before and after",
     href: "/study-two/speaker/before",
     guide: "/study-guides/study-two",
-    summary: "Twenty questions about conflict, the issue, yourself and another panellist, before and after the conversation.",
+    summary: "21 questions before and 25 after the conversation, about conflict, the issue, yourself and the other panellists.",
     meta: "Study Two / speaker questionnaire",
     visual: "study-one"
   },
   {
-    title: "Panel audience",
-    status: "Draft review",
-    href: "/study-two/audience/before",
-    guide: "/study-guides/study-two",
-    summary: "Before the panel: five questions about your view on the subject.",
-    meta: "Study Two / audience questionnaire",
-    visual: "study-one"
+    title: "",
+    status: "",
+    summary: "",
+    meta: ""
   }
 ];
 

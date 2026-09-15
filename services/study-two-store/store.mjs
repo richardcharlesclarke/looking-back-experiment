@@ -68,7 +68,6 @@ export async function createStore(directory){
     const speakerId=b.role==='speaker'?(b.action==='prepare'?b.speakerId:panel.speakers[0].id):undefined;
     if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===speakerId))fail('Choose a speaker from this panel.');
     const targetSpeakerId=b.role==='speaker'?(b.action==='prepare'?b.targetSpeakerId:panel.speakers.find(s=>s.id!==speakerId).id):undefined;
-    if(b.role==='speaker'&&!panel.speakers.some(s=>s.id===targetSpeakerId&&s.id!==speakerId))fail('Choose a different panellist for section D.');
     const p={id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,instrumentVersion:instrumentVersion(b.role),isTest:true,testLabel:typeof b.testLabel==='string'?b.testLabel.slice(0,100):'Study Two questionnaire inspection',createdAt:new Date().toISOString(),questionnaires:{pre:questions(panel,b.role,'pre',speakerId,targetSpeakerId),post:questions(panel,b.role,'post',speakerId,targetSpeakerId)},forms:{}};
     if(b.action==='enrol')start(p,'pre');data.people.push(p);return publicRecord(p);
    });

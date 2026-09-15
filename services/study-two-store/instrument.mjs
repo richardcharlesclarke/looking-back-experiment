@@ -1,6 +1,6 @@
 // Generated from lib/study-two/instrument.ts by scripts/sync-study-two-service.mjs.
 export const VERSION = 'study-two-review-v1-2026-09-10';
-export const SPEAKER_VERSION = 'study-two-speaker-review-v3-2026-09-15';
+export const SPEAKER_VERSION = 'study-two-speaker-review-v4-2026-09-15';
 export const instrumentVersion = (role) => role === 'speaker' ? SPEAKER_VERSION : VERSION;
 export const SAMPLE = { id: 'sample-panel', title: 'Who should shape our town?', proposition: 'Residents should have the final say on major changes to their town.', speakers: [{ id: 'speaker-a', name: 'Speaker A' }, { id: 'speaker-b', name: 'Speaker B' }, { id: 'speaker-c', name: 'Speaker C' }] };
 // Neutral inspection context only. Real named panels are prepared through protected setup.
@@ -17,7 +17,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -29,7 +35,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -41,7 +53,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -53,19 +71,31 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
         "id": "S2S_V2_05",
-        "prompt": "Changing my position during a disagreement would feel like losing.",
+        "prompt": "Changing my mind during a disagreement can feel like losing.",
         "section": "A. How I approach conflict",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -77,7 +107,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -89,19 +125,49 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_08",
-        "prompt": "Addressing this issue involves trade-offs between things that matter.",
+        "id": "S2S_V4_POSITION_TENSION",
+        "prompt": "There are things that matter to me about this issue that don’t fit neatly with my current position.",
         "section": "B. How I understand the issue",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "cannot_assess"
+    },
+    {
+        "id": "S2S_V4_COUNTER_CASE",
+        "prompt": "I can make a strong case for parts of this issue that don’t support my current position.",
+        "section": "B. How I understand the issue",
+        "type": "continuous",
+        "min": 0,
+        "max": 100,
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -113,14 +179,20 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
         "id": "S2S_V2_10",
-        "prompt": "What are the main considerations that shape how you currently see this issue? Where, if anywhere, do they pull in different directions?",
+        "prompt": "What are the main considerations that shape how you currently see this issue? Where, if anywhere, do they pull you in different directions?",
         "section": "B. How I understand the issue",
         "type": "text",
         "optional": true
@@ -132,7 +204,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -144,7 +222,13 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
@@ -156,98 +240,189 @@ export const SPEAKER_ITEMS = [
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_14",
-        "prompt": "I understand why [name] holds their position on this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_UNDERSTANDING",
+        "prompt": "I understand why the other panellists hold their positions on this issue.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_15",
-        "prompt": "My impression of [name] goes beyond their position on this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_IMPRESSION",
+        "prompt": "My impression of the other panellists goes beyond their positions on this issue.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_16",
-        "prompt": "I believe [name] wants good outcomes for the people affected by this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_LEGITIMATE_INTENTIONS",
+        "prompt": "Even where I disagree with the other panellists, I can recognise legitimate intentions behind their positions.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_17",
-        "prompt": "I consider [name] knowledgeable about this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_KNOWLEDGE",
+        "prompt": "I consider the other panellists knowledgeable about this issue.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_18",
-        "prompt": "[Name] and I favour similar approaches to addressing this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_APPROACHES",
+        "prompt": "The other panellists and I favour similar approaches to addressing this issue.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_19",
-        "prompt": "[Name] and I share underlying concerns about this issue.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_CONCERNS",
+        "prompt": "The other panellists and I share underlying concerns about this issue.",
+        "section": "D. How I perceive the other panellists",
         "type": "continuous",
         "min": 0,
         "max": 100,
-        "bands": ["Strongly disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Strongly agree"],
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
         "low": "Strongly disagree",
         "high": "Strongly agree",
         "cannot": "cannot_assess"
     },
     {
-        "id": "S2S_V2_20",
-        "prompt": "What do you currently think explains [name]’s position on this issue? Say what you are unsure about, too.",
-        "section": "D. How I perceive another panellist",
+        "id": "S2S_V4_OTHERS_REASONS",
+        "prompt": "What do you currently think explains the other panellists’ positions on this issue? Please say what you are unsure about, too.",
+        "section": "D. How I perceive the other panellists",
+        "type": "text",
+        "optional": true
+    }
+];
+export const SPEAKER_POST_ITEMS = [
+    {
+        "id": "S2S_V4_NEW_INSIGHT",
+        "prompt": "The other panellists helped me see something about this issue that I had not seen before.",
+        "section": "E. Learning from difference — post-panel only",
+        "type": "continuous",
+        "min": 0,
+        "max": 100,
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "cannot_assess"
+    },
+    {
+        "id": "S2S_V4_POSITION_COMPLEXITY",
+        "prompt": "Something the other panellists said made my own position more complex.",
+        "section": "E. Learning from difference — post-panel only",
+        "type": "continuous",
+        "min": 0,
+        "max": 100,
+        "bands": [
+            "Strongly disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Strongly agree"
+        ],
+        "low": "Strongly disagree",
+        "high": "Strongly agree",
+        "cannot": "cannot_assess"
+    },
+    {
+        "id": "S2S_V4_EXPANDED_VIEW",
+        "prompt": "What, if anything, did the other panellists say that changed, complicated or expanded how you see the issue?",
+        "section": "E. Learning from difference — post-panel only",
+        "type": "text"
+    },
+    {
+        "id": "S2S_V4_SEE_NOW",
+        "prompt": "What do you see now that you did not see when you entered the conversation?",
+        "section": "E. Learning from difference — post-panel only",
         "type": "text",
         "optional": true
     }
 ];
 export function questions(panel, role, wave, speakerId, targetSpeakerId) {
-    if (role === 'speaker') {
-        const target = panel.speakers.find(s => s.id === targetSpeakerId && s.id !== speakerId) ?? panel.speakers.find(s => s.id !== speakerId);
-        if (!target)
-            throw new Error('A different panellist is required.');
-        return SPEAKER_ITEMS.map(q => q.prompt.match(/\[name\]/i) ? { ...q, prompt: q.prompt.replace(/\[name\]/gi, target.name), target: target.id } : { ...q });
-    }
+    void speakerId;
+    void targetSpeakerId;
+    if (role === 'speaker')
+        return [...SPEAKER_ITEMS, ...(wave === 'post' ? SPEAKER_POST_ITEMS : [])].map(q => ({ ...q }));
     const p = 'S2A';
     const out = [];
     out.push(scale(p + '_POSITION', `To what extent do you support this claim: “${panel.proposition}”`, 'Your view', support, 10), scale(p + '_CONFIDENCE', `How confident are you in your position on this claim: “${panel.proposition}”`, 'Your view', ['Not at all confident', 'Slightly confident', 'Somewhat confident', 'Very confident', 'Completely confident'], 10), scale(p + '_UNDERSTANDING', `How well do you understand the strongest reasons for a view different from yours on this claim: “${panel.proposition}”`, 'Understanding another view', extent, 10));
