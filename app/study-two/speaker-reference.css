@@ -18,3 +18,6 @@
 @media(max-width:650px){.s2-speaker .s2-legacy-notice { width: calc(100% - 32px); }}
 
 .s2-speaker .s2-withdrawal { width:min(860px,calc(100% - 64px)); margin:24px auto; }
+
+.s1-participant .s1-optional-next { max-width: 760px; padding: 24px; margin: 24px 0; border: 1px solid var(--ink); border-radius: 19px; background: #ffffff40; }
+.s1-participant .s1-optional-next a { display: inline-flex; align-items: center; min-height: 44px; }
