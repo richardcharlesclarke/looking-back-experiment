@@ -144,3 +144,34 @@ test('retention removes research records after their promised deadline while pre
  const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-retention-'));let instant=new Date('2026-09-15T12:00:00Z');const store=await createStore(dir,{now:()=>instant});const b={role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker'),...researchConsent};await store.action({...b,action:'enrol'});
  instant=new Date('2027-10-01T00:00:00Z');await store.runRetention();assert.equal((await store.action({action:'export'},true)).records.length,0);assert.equal((await store.health()).realCollection,false);await assert.rejects(store.action({...b,access:key(),action:'enrol'}),/not accepting/);
 });
+
+// Resets use isolated temporary stores, never real participant records.
+for (const scope of ['pre','post','both']) test(`reset ${scope}: archive, stable link, exact unreset wave, retry, restart and stale saves`,async()=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'study-two-reset-'));let store=await createStore(dir);
+ const b={role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker'),...researchConsent};let p=await store.action({...b,action:'enrol'});
+ const save=wave=>({...b,action:'save',wave,attempt:1,beforeAttempt:1,revision:0,page:p.questionnaires[wave].length-1,complete:true,answers:complete(p.questionnaires[wave])});
+ p=await store.action(save('pre'));await store.action({...b,action:'start',wave:'post'});p=await store.action(save('post'));const old=structuredClone(p);
+ const reset={action:'reset',id:p.id,scope,confirm:true,expectedResetVersion:0,requestId:key()};
+ await assert.rejects(store.action(reset),/Administrator/);p=await store.action(reset,true);
+ assert.equal(p.id,old.id);assert.deepEqual(p.consent,old.consent);assert.deepEqual(p.questionnaires,old.questionnaires);assert.equal(p.history.length,1);assert.equal(p.resetVersion,1);
+ for(const wave of ['pre','post']){const affected=scope===wave||scope==='both';assert.equal(p.attempts[wave],affected?2:1);if(affected){assert.equal(p.forms[wave],undefined);assert.deepEqual(p.history[0].forms[wave],old.forms[wave]);await assert.rejects(store.action(save(wave)),/reset|changed/);}else assert.deepEqual(p.forms[wave],old.forms[wave]);}
+ assert.equal((await store.action(reset,true)).history.length,1);
+ await assert.rejects(store.action({...reset,scope:scope==='pre'?'post':'pre'},true),/different questionnaire/);
+ await assert.rejects(store.action({...reset,requestId:key()},true),/already changed/);
+ store=await createStore(dir);const status=await store.action({...b,action:'status'});assert.equal(status.id,old.id);assert.equal(status.history,undefined);assert.equal(status.resetVersion,1);assert.equal((await store.action({action:'export'},true)).records[0].history.length,1);
+ assert.equal((await store.action({action:'export'},true)).matchedPairs.length,0);
+ if(scope!=='post') {await assert.rejects(store.action({...b,action:'start',wave:'post',attempt:p.attempts.post,beforeAttempt:2}),/before|changed/);await store.action({...b,action:'start',wave:'pre',attempt:2});p=await store.action({...save('pre'),attempt:2});}
+ if(scope==='pre'){assert.equal(p.pairing.staleAfter,true);assert.equal(p.pairing.matched,false);await assert.rejects(store.action({...save('post'),beforeAttempt:2}),/changed/);p=await store.action({...reset,scope:'post',expectedResetVersion:1,requestId:key()},true);}
+ await store.action({...b,action:'start',wave:'post',attempt:2,beforeAttempt:p.attempts.pre});p=await store.action({...save('post'),attempt:2,beforeAttempt:p.attempts.pre});assert.equal(p.pairing.matched,true);
+ // Even identical old final answers cannot exploit duplicate-save recovery.
+ await assert.rejects(store.action(save('post')),/reset/);assert.equal((await store.action({action:'export'},true)).matchedPairs.length,1);
+ await store.action({...b,action:'withdraw',confirm:true});await assert.rejects(store.action({...reset,expectedResetVersion:p.resetVersion,requestId:key()},true),/withdrawn/);assert.equal((await store.action({action:'export'},true)).records.length,0);
+});
+test('reset atomic ordering, partial and absent attempts, legacy-client rejection',async()=>{
+ const store=await createStore(await mkdtemp(path.join(os.tmpdir(),'study-two-reset-order-'))),b={role:'speaker',access:key(),instrumentVersion:instrumentVersion('speaker'),...researchConsent};let p=await store.action({...b,action:'enrol'});
+ const save={...b,action:'save',wave:'pre',revision:0,page:1,complete:false,answers:{S2S_V2_01:0}};
+ const reset={action:'reset',id:p.id,scope:'both',confirm:true,expectedResetVersion:0,requestId:key()};
+ const outcomes=await Promise.allSettled([store.action(save),store.action(reset,true),store.action(save)]);assert.deepEqual(outcomes.map(x=>x.status),['fulfilled','fulfilled','rejected']);
+ p=(await store.action({action:'export'},true)).records[0];assert.equal(p.history[0].forms.pre.answers.S2S_V2_01,0);assert.equal(p.history[0].forms.post,undefined);assert.deepEqual(p.attempts,{pre:2,post:2});
+ p=await store.action({...reset,expectedResetVersion:1,requestId:key()},true);assert.deepEqual(p.attempts,{pre:3,post:3});assert.deepEqual(p.history[1].forms,{});await assert.rejects(store.action({...b,action:'start',wave:'pre'}),/reset/);
+});

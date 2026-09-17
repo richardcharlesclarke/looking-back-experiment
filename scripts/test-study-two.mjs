@@ -33,3 +33,11 @@ console.log('Study One orb rendering, pointer capture, keyboard and label-select
 const participation=fs.readFileSync('lib/study-two/participation.ts','utf8');
 assert.equal(fs.readFileSync('services/study-two-store/participation.mjs','utf8'),'// Generated from lib/study-two/participation.ts.\n'+ts.transpileModule(participation,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
 console.log('Participant information snapshot matches between browser and durable store.');
+
+const attempts=fs.readFileSync('lib/study-two/attempts.ts','utf8');
+assert.equal(fs.readFileSync('services/study-two-store/attempts.mjs','utf8'),'// Generated from lib/study-two/attempts.ts.\n'+ts.transpileModule(attempts,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+const {draftKey,obsoleteDraftKeys}=compile(attempts),legacy='study-two-speaker-draft:v:person:pre',current=draftKey('v','person','pre',3);
+const old=[legacy,legacy+':unmerged',draftKey('v','person','pre',1),draftKey('v','person','pre',2)+':unmerged'];
+const retained=[draftKey('v','person','pre',4),current,current+':unmerged',draftKey('v','person','post',1),draftKey('v','other','pre',1),draftKey('other','person','pre',1),'study-one-draft','looking_back_admin'];
+assert.deepEqual(obsoleteDraftKeys([...old,...retained],'v','person','pre',3),old);assert.deepEqual(obsoleteDraftKeys([...old,...retained],'v','person','pre',1),[]);
+console.log('Attempt parity and exact-wave/person/version draft invalidation passed.');

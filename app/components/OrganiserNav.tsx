@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function OrganiserNav(){return <header className="organiser-nav"><Link className="mark" href="/results">Study workspace</Link><nav aria-label="Private workspace"><Link href="/results">Results</Link><Link href="/administration">Administration</Link><form action="/api/admin/logout" method="post"><button className="secondary" type="submit">Sign out</button></form></nav></header>;}

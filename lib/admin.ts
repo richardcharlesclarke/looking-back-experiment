@@ -13,11 +13,12 @@ export function signAdminCookie() {
 }
 
 export function verifyAdminCookie(value?: string) {
+  if (process.env.NODE_ENV === "production" && (!process.env.ADMIN_COOKIE_SECRET || !process.env.ADMIN_PASSWORD)) return false;
   if (!value) return false;
   const [timestamp, signature] = value.split(".");
   if (!timestamp || !signature) return false;
   const age = Date.now() - Number(timestamp);
-  if (!Number.isFinite(age) || age > 1000 * 60 * 60 * 8) return false;
+  if (!Number.isFinite(age) || age < 0 || age > 1000 * 60 * 60 * 8) return false;
   const expected = createHmac("sha256", secret()).update(timestamp).digest("hex");
   if (signature.length !== expected.length) return false;
   return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));

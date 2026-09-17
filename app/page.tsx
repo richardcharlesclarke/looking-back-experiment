@@ -16,7 +16,6 @@ const experiments = [
     title: "How We Disagree",
     status: "Live",
     href: "/study-one",
-    guide: "/study-guides/study-one",
     summary: "A Big Brue study of how audience members approach disagreement before and after the festival.",
     meta: "Disagreement / before and after the festival",
     visual: "study-one"
@@ -25,7 +24,6 @@ const experiments = [
     title: "Panel speakers",
     status: "Before and after",
     href: "/study-two/speaker/before",
-    guide: "/study-guides/study-two",
     summary: "21 questions before and 25 after the conversation, about conflict, the issue, yourself and the other panellists.",
     meta: "Study Two / speaker questionnaire",
     visual: "study-one"
@@ -96,12 +94,11 @@ export default function ExperimentsHub() {
                 Soon
               </button>
             )}
-            {experiment.guide && <Link href={experiment.guide} className="experiment-guide">How to run this study →</Link>}
             </div>
           </article>
         ))}
       </section>
-      <section className="hub-review-tools" aria-label="For organisers and reviewers"><Link href="/study-two/review">For organisers: Study Two personal links, setup and downloads →</Link><p>Study Two speakers answer before and after their panel. Organisers can prepare personal links and download saved responses.</p></section>
+
     </main>
   );
 }

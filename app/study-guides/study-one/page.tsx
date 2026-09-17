@@ -1,6 +1,9 @@
-import Link from 'next/link';
+import {requireOrganiser} from '@/lib/organiser/auth';
+import OrganiserNav from '@/app/components/OrganiserNav';
+import '@/app/organiser/workspace.css';
+export const dynamic='force-dynamic';
 import content from './content.json';
 import '../../study-two/review.css';
 export const metadata={title:'Study One — facilitator guide'};
 // Static HTML generated from the separately verified facilitator guide, preserved in docs.
-export default function Guide(){return <main><header className="topbar"><Link className="mark" href="/">Initiatives at evolvable.me</Link><a href="/study-one">Open Study One</a></header><article className="study-guide" dangerouslySetInnerHTML={{__html:content}}/></main>;}
+export default async function Guide(){await requireOrganiser("/study-guides/study-one");return <main><OrganiserNav/><article className="study-guide" dangerouslySetInnerHTML={{__html:content}}/></main>;}

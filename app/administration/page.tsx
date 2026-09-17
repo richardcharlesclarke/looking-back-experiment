@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {requireOrganiser} from '@/lib/organiser/auth';
+import OrganiserNav from '@/app/components/OrganiserNav';
+import '../organiser/workspace.css';
+export const dynamic='force-dynamic';
+export const metadata={title:'Administration — Study workspace',robots:{index:false,follow:false}};
+export default async function Page(){await requireOrganiser('/administration');return <main className="workspace"><OrganiserNav/><section className="workspace-card"><p className="eyebrow">Administration</p><h1>Run the studies</h1><p>Guides, personal links, follow-up records and complete research exports. For individual answers, open <Link prefetch={false} href="/results">Results</Link>.</p><div className="workspace-choices"><section><span>Study One</span><h2>How We Disagree</h2><ul><li><Link prefetch={false} href="/study-guides/study-one">How to run Study One</Link></li><li><Link prefetch={false} href="/administration/study-one">Follow-up contacts, personal links and research exports</Link></li></ul></section><section><span>Study Two</span><h2>Panel speakers</h2><ul><li><Link prefetch={false} href="/study-guides/study-two">How to run Study Two</Link></li><li><Link prefetch={false} href="/study-two/review">Prepare personal links, saved records and complete exports</Link></li></ul></section></div><details><summary>Other existing initiatives</summary><p><Link prefetch={false} href="/admin">Looking Back records</Link> · <Link prefetch={false} href="/admin/conflictbench">ConflictBench records</Link></p></details></section></main>;}

@@ -1,0 +1,28 @@
+'use client';
+import {useRef,useState} from 'react';
+import type {SavedPerson} from '@/lib/study-two/types';
+import {attemptOf,pairing} from '@/lib/study-two/attempts';
+import {answerText} from '@/lib/study-two/results';
+const date=(value:string)=>new Date(value).toLocaleString('en-GB',{timeZone:'Europe/London',dateStyle:'medium',timeStyle:'short'})+' (UK time)';
+export default function AttemptControls({record,onUpdated,onExpired,onReload}:{record:SavedPerson;onUpdated:(record:SavedPerson)=>void;onExpired:()=>void;onReload:()=>void}){
+ const [open,setOpen]=useState(false),[scope,setScope]=useState<'pre'|'post'|'both'>('pre'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[stale,setStale]=useState(false);
+ const requestId=useRef<string|null>(null);
+ const pair=pairing(record),label=scope==='pre'?'BEFORE':scope==='post'?'AFTER':'BOTH before and after';
+ const canReset=!record.withdrawnAt&&record.consent?.kind==='research';
+ async function reset(){
+  setBusy(true);setError('');requestId.current??=crypto.randomUUID();
+  try{
+   const response=await fetch('/study-two/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({action:'reset',id:record.id,scope,confirm:true,expectedResetVersion:record.resetVersion??0,requestId:requestId.current})});
+   if(response.status===401){onExpired();return;}
+   const data=await response.json();if(!response.ok){if(response.status===409)setStale(true);throw new Error(data.error??'Reset could not be saved.');}
+   onUpdated(data);
+  }catch(e){setError((e as Error).message);}finally{setBusy(false);}
+ }
+ return <section id={`attempts-${record.id}`} className="s2-attempt-controls" aria-label="Questionnaire attempts"><p>Before attempt {attemptOf(record,'pre')} · After attempt {attemptOf(record,'post')}{record.forms.post?` (answers linked to before attempt ${pair.afterBeforeAttempt})`:''}.</p>
+ {pair.staleAfter?<p role="note"><strong>Not a matched pair.</strong> The retained after answers belong to an earlier before attempt. Reset AFTER when a new after response is needed; old answers remain in history.</p>:<p>{pair.matched?'The current completed before and after attempts are matched.':'There is no complete matched before/after pair yet.'}</p>}
+ {record.lastReset&&<p>Last reset: {date(record.lastReset.at)}. Previous answers remain in history.</p>}
+ {!canReset?<p>{record.withdrawnAt?'Withdrawn questionnaires cannot be reset or restored.':'Reset requires existing research consent; review acknowledgements cannot be converted into consent.'}</p>:!open?<button className="secondary" onClick={()=>setOpen(true)}>Reset questionnaire</button>:<div className="s2-reset-confirm"><h3>Reset this respondent’s questionnaire?</h3><label htmlFor="reset-wave">Which questionnaire?</label><select id="reset-wave" value={scope} disabled={busy||Boolean(requestId.current)} onChange={e=>setScope(e.target.value as typeof scope)}><option value="pre">BEFORE only</option><option value="post">AFTER only</option><option value="both">BOTH before and after</option></select><p>Reset {label}. Previous answers will be preserved as superseded attempts in protected history, excluded from current answers and matched comparisons. The same participant link will continue to work. Consent and the unreset questionnaire stay unchanged.</p>{scope==='pre'&&record.forms.post&&<p>The existing after answers will remain saved but cannot be paired with the new before attempt.</p>}<div className="s2-results-toolbar"><button className="primary" disabled={busy||stale} onClick={()=>void reset()}>{busy?'Saving reset…':`Confirm reset ${label}`}</button><button className="secondary" disabled={busy} onClick={()=>{setOpen(false);setError('');setStale(false);requestId.current=null;}}>Cancel</button></div>{error&&<p role="alert">{error}</p>}{stale&&<button className="secondary" onClick={onReload}>Refresh this record</button>}</div>}
+ {record.forms.post&&<details><summary>Retained AFTER answers · attempt {attemptOf(record,'post')}{pair.staleAfter?' · not matched to current BEFORE':''}</summary><div className="s2-table-wrap"><table><thead><tr><th>#</th><th>Question</th><th>Saved answer</th></tr></thead><tbody>{record.questionnaires.post.map((q,index)=><tr key={q.id}><td>{index+1}</td><th scope="row">{q.prompt}</th><td className="s2-saved-answer">{answerText(q,record.forms.post?.answers[q.id])}</td></tr>)}</tbody></table></div></details>}
+ <details><summary>Superseded attempt history ({record.history?.length??0} resets)</summary><p>History is excluded from the current response totals. Full attempt metadata and frozen questionnaires are included in the protected JSON export in organiser tools.</p>{!record.history?.length&&<p>No superseded attempts.</p>}{record.history?.map(history=><section key={history.resetVersion}><h3>Reset {history.resetVersion} · {date(history.at)}</h3>{history.waves.map(wave=><details key={wave}><summary>{wave==='pre'?'BEFORE':'AFTER'} attempt {history.attempts[wave]} · {history.forms[wave]?.completedAt?'completed':history.forms[wave]?'partial / started':'not started'}{wave==='post'&&history.forms.post?` · linked to before attempt ${history.forms.post.beforeAttempt??1}`:''}</summary>{history.forms[wave]?<div className="s2-table-wrap"><table><thead><tr><th>#</th><th>Exact question</th><th>Superseded answer</th></tr></thead><tbody>{history.questionnaires[wave].map((q,index)=><tr key={q.id}><td>{index+1}</td><th scope="row">{q.prompt}</th><td className="s2-saved-answer">{answerText(q,history.forms[wave]?.answers[q.id])}</td></tr>)}</tbody></table></div>:<p>No answers had been saved for this attempt.</p>}</details>)}</section>)}</details>
+ </section>;
+}

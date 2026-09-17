@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RATING_DIMENSIONS } from "@/lib/constants";
 import type { Submission } from "@/lib/types";
 
@@ -41,7 +41,10 @@ export default function AdminPage() {
     }
     const data = await response.json();
     setSubmissions(data.submissions);
+    setIsAuthenticated(true);
   }
+
+  useEffect(() => { void load(); }, []);
 
   return (
     <main>

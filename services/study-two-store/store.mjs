@@ -1,3 +1,4 @@
+import {attemptOf,pairing} from './attempts.mjs';
 import {PARTICIPATION,COLLECTION_OPEN,RESEARCH_DELETE_AT} from './participation.mjs';
 import {mkdir,readFile,open,rename} from 'node:fs/promises';
 import path from 'node:path';
@@ -38,7 +39,8 @@ export function validateAnswers(items,raw,complete){
  }
  return answers;
 }
-const publicRecord=p=>({id:p.id,panel:p.panel,role:p.role,speakerId:p.speakerId,instrumentVersion:p.instrumentVersion,isTest:p.isTest,testLabel:p.testLabel,createdAt:p.createdAt,forms:p.forms,questionnaires:p.questionnaires,...(p.participation?{participation:p.participation}:{}),...(p.consent?{consent:p.consent}:{}),...(p.priorRecordId?{priorRecordId:p.priorRecordId}:{}),...(p.panelContext?{panelContext:p.panelContext}:{}),...(p.collectionVersion?{collectionVersion:p.collectionVersion}:{})});
+const publicRecord=p=>({id:p.id,panel:p.panel,role:p.role,speakerId:p.speakerId,instrumentVersion:p.instrumentVersion,isTest:p.isTest,testLabel:p.testLabel,createdAt:p.createdAt,attempts:{pre:attemptOf(p,'pre'),post:attemptOf(p,'post')},resetVersion:p.resetVersion??0,lastReset:p.lastReset,pairing:pairing(p),forms:p.forms,questionnaires:p.questionnaires,...(p.participation?{participation:p.participation}:{}),...(p.consent?{consent:p.consent}:{}),...(p.priorRecordId?{priorRecordId:p.priorRecordId}:{}),...(p.panelContext?{panelContext:p.panelContext}:{}),...(p.collectionVersion?{collectionVersion:p.collectionVersion}:{})});
+const adminRecord=p=>({...publicRecord(p),history:p.history??[]});
 export const nextParticipantKey=access=>hash('study-two-research-consent-v1:'+access);
 const withdrawnRecord=t=>({id:'withdrawn',role:t.role,withdrawnAt:t.at,panel:SPEAKER_PANEL,forms:{},questionnaires:{pre:[],post:[]}});
 export async function createStore(directory,{collectionOpen=COLLECTION_OPEN,now=()=>new Date()}={}){
@@ -71,14 +73,35 @@ export async function createStore(directory,{collectionOpen=COLLECTION_OPEN,now=
   if(p.collectionVersion&&!p.consent)fail('Read the study information and agree before beginning.',409);
   if(p.participation&&!p.participation.acknowledgement)fail('Open the updated participant information before beginning.',409);
  }
- function start(p,wave){requireParticipation(p);checkWave(wave);if(wave==='post'&&!p.forms.pre?.completedAt)fail('Complete the before questionnaire first, then use its personal after-panel link.',409);p.forms[wave]??={answers:{},page:0,revision:0,startedAt:timestamp()};}
+ function start(p,wave){requireParticipation(p);checkWave(wave);if(wave==='post'&&!p.forms.pre?.completedAt)fail('Complete the before questionnaire first, then use its personal after-panel link.',409);if(wave==='post'&&pairing(p).staleAfter)fail('The before questionnaire has changed. Ask the organiser to reset the after questionnaire before answering it again.',409);p.forms[wave]??={answers:{},page:0,revision:0,attempt:attemptOf(p,wave),...(wave==='post'?{beforeAttempt:attemptOf(p,'pre')}:{}),startedAt:timestamp()};}
  function person(b,panel,speakerId,panelContext){return {id:randomUUID(),accessHash:hash(b.access),panel,role:b.role,speakerId,panelContext,instrumentVersion:instrumentVersion(b.role),isTest:b.role==='audience'||b.isTest===true,...(typeof b.testLabel==='string'?{testLabel:b.testLabel.slice(0,100)}:{}),createdAt:timestamp(),...(b.role==='speaker'?{collectionVersion:PARTICIPATION.version}:{}),questionnaires:{pre:questions(panel,b.role,'pre',speakerId),post:questions(panel,b.role,'post',speakerId)},forms:{}};}
  return {
   health:()=>transaction(data=>({ok:true,study:'two',storeId:data.storeId,storage:'persistent-volume',realCollection:collectionAvailable()}),false),
   runRetention:()=>transaction(()=>{}),
   async action(b,admin=false){
    if(!object(b))fail('Invalid request.');
-   if(b.action==='export'){if(!admin)fail('Administrator access required.',403);return transaction(data=>({schema:1,exportedAt:timestamp(),records:data.people.map(publicRecord)}),false);}
+   if(b.action==='export'){if(!admin)fail('Administrator access required.',403);return transaction(data=>({schema:1,exportedAt:timestamp(),records:data.people.map(adminRecord),matchedPairs:data.people.filter(p=>pairing(p).matched).map(p=>({personId:p.id,preAttempt:attemptOf(p,'pre'),postAttempt:attemptOf(p,'post')}))}),false);}
+   if(b.action==='reset'){
+    if(!admin)fail('Administrator access required.',403);
+    return transaction(data=>{
+     const p=data.people.find(p=>p.id===b.id);
+     if(!p||p.withdrawnAt)fail('This record is unavailable or has been withdrawn. Withdrawn questionnaires cannot be reset.',409);
+     if(p.role!=='speaker'||p.consent?.kind!=='research')fail('Only consenting speaker questionnaires can be reset. Earlier review acknowledgements are not research consent.',409);
+     if(!collectionAvailable())fail('The study is not accepting new answers.',409);
+     if(b.confirm!==true||!['pre','post','both'].includes(b.scope))fail('Confirm which questionnaire to reset.');
+     if(typeof b.requestId!=='string'||!/^[a-zA-Z0-9-]{16,80}$/.test(b.requestId))fail('A reset request identifier is required.');
+     const waves=b.scope==='both'?['pre','post']:[b.scope];
+     const previous=p.history?.find(h=>h.requestId===b.requestId);
+     if(previous){if(JSON.stringify(previous.waves)!==JSON.stringify(waves))fail('That reset request was already used for a different questionnaire.',409);return adminRecord(p);}
+     if(!Number.isInteger(b.expectedResetVersion)||b.expectedResetVersion!==(p.resetVersion??0))fail('This record has already changed. Refresh results before resetting.',409);
+     const attempts={pre:attemptOf(p,'pre'),post:attemptOf(p,'post')},at=timestamp();
+     const forms={};for(const wave of waves)if(p.forms[wave])forms[wave]=structuredClone({...p.forms[wave],attempt:attempts[wave],...(wave==='post'?{beforeAttempt:p.forms.post.beforeAttempt??1}:{})});
+     const history={requestId:b.requestId,resetVersion:(p.resetVersion??0)+1,at,waves,attempts:{...attempts},forms,instrumentVersion:p.instrumentVersion,questionnaires:structuredClone(p.questionnaires),...(p.consent?{consent:structuredClone(p.consent)}:{}),...(p.participation?{participation:structuredClone(p.participation)}:{})};
+     for(const wave of waves){delete p.forms[wave];attempts[wave]++;}
+     p.history??=[];p.history.push(history);p.attempts=attempts;p.resetVersion=history.resetVersion;p.lastReset={at,waves};
+     return adminRecord(p);
+    });
+   }
    if(b.action==='enrol'||b.action==='prepare')return transaction(data=>{
     checkRole(b.role);if(!keyValid(b.access))fail('A secure personal key is required.');
     if(b.instrumentVersion!==instrumentVersion(b.role))fail('Reopen the current questionnaire before starting.',409);
@@ -117,6 +140,8 @@ export async function createStore(directory,{collectionOpen=COLLECTION_OPEN,now=
      data.people=data.people.filter(x=>x.id!==p.id);data.withdrawals??=[];data.withdrawals.push(tombstone);return withdrawnRecord(tombstone);
     }
     checkWave(b.wave);if(b.instrumentVersion!==p.instrumentVersion)fail('Use your original questionnaire version.',409);
+    if((b.attempt??1)!==attemptOf(p,b.wave))fail('The organiser reset this questionnaire. Reload your private link to begin the new attempt. Your earlier answers remain in history.',409);
+    if(b.wave==='post'&&((b.beforeAttempt??1)!==attemptOf(p,'pre')||pairing(p).staleAfter))fail('The before questionnaire changed. Reload your link; the organiser may need to reset the after questionnaire. Earlier answers remain saved separately.',409);
     if(b.action==='start'){start(p,b.wave);return publicRecord(p);}
     if(b.action!=='save')fail('Unknown questionnaire request.');requireParticipation(p);
     if(!p.forms[b.wave])fail('Open this questionnaire before saving.');
