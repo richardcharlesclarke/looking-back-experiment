@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';
+import {COOKIE_NAME} from '@/lib/admin';
+export async function POST(request:Request){const origin=request.headers.get('origin');if(origin&&new URL(origin).host!==request.headers.get('host'))return Response.json({error:'Use this website.'},{status:403});const response=new NextResponse(null,{status:303,headers:{Location:'https://experiments.evolvable.me/organiser/sign-in','Cache-Control':'no-store'}});response.cookies.set(COOKIE_NAME,'',{path:'/',maxAge:0,expires:new Date(0),httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax'});return response;}
