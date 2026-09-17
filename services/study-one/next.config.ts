@@ -1,0 +1,2 @@
+import type {NextConfig} from 'next';
+const config:NextConfig={assetPrefix:'/study-one',poweredByHeader:false,async rewrites(){return [{source:'/study-one/api/:path*',destination:'/api/:path*'}]},async headers(){return [{source:'/admin/:path*',headers:[{key:'Cache-Control',value:'private, no-store, max-age=0'}]},{source:'/:path*',headers:[{key:'Referrer-Policy',value:'no-referrer'},{key:'X-Robots-Tag',value:'noindex, nofollow'}]}]}};export default config;
